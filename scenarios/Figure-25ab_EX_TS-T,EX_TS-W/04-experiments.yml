@@ -1,0 +1,11 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+# Figure 25
+# Figure-25ab_EX_TS-T,EX_TS-W
+- {  network: 'net-120', stack: 'stack-120',  action: 'action-1', time: 320, name: '1to7_hops-taprio_nooffload_180txtime_175delta_prio3_singlestrict_shift_200perhop_400windows'}
+- {  network: 'net-119', stack: 'stack-120',  action: 'action-1', time: 320, name: '1to7_hops-taprio_offload_180txtime_175delta_prio3_singlestrict_shift_200perhop_400windows'}
+- {  network: 'net-126', stack: 'stack-119',  action: 'action-1', time: 40, name: '1to7_hops-taprio_nooffload_180txtime_175delta_prio3_singlestrict_shift_20perhop_40windows'}
+- {  network: 'net-128', stack: 'stack-119',  action: 'action-1', time: 40, name: '1to7_hops-taprio_offload_180txtime_175delta_prio3_singlestrict_shift_20perhop_40windows'}

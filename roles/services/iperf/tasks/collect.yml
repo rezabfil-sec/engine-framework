@@ -1,0 +1,14 @@
+---
+# Collect raw iperf artifacts
+# One log file per iperf service
+
+- name: collect iperf log file
+  fetch:
+    src: '{{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}.log'
+    dest: '{{ node_folder }}/'
+    flat: yes
+
+- name: delete node iperf log file
+  file:
+    path: '{{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}.log'
+    state: absent

@@ -1,0 +1,39 @@
+---
+# ETF variables
+log_name: 'send_udp_tai'
+forward_log_name: 'forward_udp_tai'
+
+# Forward
+forward_name: 'forward_udp_tai'
+
+# number of packets to forward
+forward_num_packets: '60000'
+# send to port for traffic
+next_hop_port: '6601'
+# priority for loopback traffic
+forward_priority: '0'
+# time between receiving packets and putting them back on the wire
+# this value is added to the incoming timestamp to get the send timestamp
+forward_delta: '300000'
+
+# Client
+# ----------------------------------
+# program names
+send_udp: 'send_udp_tai'
+
+## default-variables
+# packet priority
+priority: '0'
+# number of packets to receive
+num_packets: '60000'
+# interval between sent packets
+packet_interval: '100000'
+# operating system realtime priority the progam is started with
+realtime_priority: '90'
+# listen on this port for traffic
+source_port: '6600'
+# time between receiving packets and putting them back on the wire
+# this value is added to the incoming timestamp to get the send timestamp
+delay: '300000'
+
+

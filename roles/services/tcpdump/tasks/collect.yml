@@ -1,0 +1,21 @@
+---
+# Collect tcpdump artifacts
+
+- name: collect tcpdump pcap file(s)
+  fetch:
+    src: '{{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
+    dest: '{{ node_folder }}/'
+    flat: yes
+    fail_on_missing: no
+  loop: "{{ node_ifaces | dict2items }}"
+  loop_control:
+    loop_var: iface
+
+- name: delete node tcpdump pcap file
+  file:
+    path: '{{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
+    state: absent
+  loop: "{{ node_ifaces | dict2items }}"
+  loop_control:
+    loop_var: iface
+  ignore_errors: yes

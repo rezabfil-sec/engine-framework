@@ -1,0 +1,58 @@
+---
+# variables for node todd
+
+# network card
+num_interfaces: 11
+node_ifaces:
+  1:
+    name: 'enp8s0'
+    mac: '6c:b3:11:52:54:90'
+    phc: '/dev/ptp0'
+  2:
+    name: 'enp9s0'
+    mac: '6c:b3:11:52:54:91'
+    phc: '/dev/ptp1'
+  3:
+    name: 'enp10s0'
+    mac: '6c:b3:11:52:54:92'
+    phc: '/dev/ptp2'
+  4:
+    name: 'enp11s0'
+    mac: '6c:b3:11:52:54:93'
+    phc: '/dev/ptp3'
+  5:
+    name: 'eno1'
+    mac: '3c:ec:ef:6a:6d:58'
+    phc: '/dev/ptp4'
+  6:
+    name: 'eno2'
+    mac: '3c:ec:ef:6a:6d:59'
+    phc: '/dev/ptp5'
+# Iface eno3 omitted - used for a IPMI connection, so cant be used individually
+  # 7:
+  #   name: 'eno3'
+  #   mac: '3c:ec:ef:6a:6d:5a'
+  #   phc: '/dev/ptp6'
+  7:
+    name: 'eno4'
+    mac: '3c:ec:ef:6a:6d:5b'
+    phc: '/dev/ptp7'
+    offload: no
+  8:
+    name: 'eno5'
+    mac: '3c:ec:ef:6a:6d:5c'
+    phc: '/dev/ptp8'
+    offload: no
+  9:
+    name: 'eno6'
+    mac: '3c:ec:ef:6a:6d:5d'
+    phc: '/dev/ptp9'
+    offload: no
+  10:
+    name: 'eno7'
+    mac: '3c:ec:ef:6a:75:5a'
+    offload: no
+  11:
+    name: 'eno8'
+    mac: '3c:ec:ef:6a:75:5d'
+    offload: no

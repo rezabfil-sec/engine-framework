@@ -1,0 +1,20 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+  # Figure-22_EX_CS2 - Experiments with one iperf3 flow. CBS applied on all hops. 
+  ## Figure-22_EX_CS2 - 1 hop with one cbs flow. CBS applied on all hops.
+  - { network: 'net-41', stack: 'stack-83',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_1-hop_with-hop-cbs-iperf-line-limit100-2min'  }
+  ## Figure-22_EX_CS2 - 2 hop with one cbs flow. CBS applied on all hops.
+  - { network: 'net-42', stack: 'stack-82',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_2-hop_with-hop-cbs-iperf-line-limit100-2min'  }
+  ## Figure-22_EX_CS2 - 3 hop with one cbs flow. CBS applied on all hops.
+  - { network: 'net-44', stack: 'stack-84',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_3-hop_with-hop-cbs-iperf-line-limit100-2min'  }
+  ## Figure-22_EX_CS2 - 4 hop with one cbs flow. CBS applied on all hops.
+  - { network: 'net-46', stack: 'stack-85',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_4-hop_with-hop-cbs-iperf-line-limit100-2min'  }
+  ## Figure-22_EX_CS2 - 5 hop with one cbs flow. CBS applied on all hops.
+  - { network: 'net-148', stack: 'stack-186',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_5-hop_with-hop-cbs-iperf-line-limit100-2min'  }
+  ## Figure-22_EX_CS2 - 6 hop with one cbs flow. CBS applied on all hops.
+  - { network: 'net-1410', stack: 'stack-187',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_6-hop_with-hop-cbs-iperf-line-limit100-2min'  }
+  ## Figure-22_EX_CS2 - 7 hop with one cbs flow. CBS applied on all hops.
+  - { network: 'net-1412', stack: 'stack-188',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_7-hop_with-hop-cbs-iperf-line-limit100-2min'  }

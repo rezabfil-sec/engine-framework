@@ -1,0 +1,16 @@
+---
+# Default network values
+
+## TSN
+# Use cyclictest to get delay+delta value for TAPRIO and ETF
+# sudo cyclictest --mlockall --smp --priority=80 --interval=200 --distance=0
+# Take max value (in us) and add safety margin
+# Important! txtime_delay > etf_delta
+tsn_txtime_delay: '600000'
+tsn_etf_delta: '500000'
+
+# valid priority values
+priority_list: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+
+# name of the flowfile on the node
+remote_flow_file: '/root/flows.json'

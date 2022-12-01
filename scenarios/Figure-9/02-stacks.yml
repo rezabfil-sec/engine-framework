@@ -1,0 +1,14 @@
+---
+# 2. Application and protocol stack
+
+stacks:
+  stack-1:
+    name: 'Iperf measurements, 1 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-3:
+        - { name: iperf, role: server, flow: 1, port: 1003, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+    protocols: {}

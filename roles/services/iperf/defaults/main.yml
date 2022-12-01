@@ -1,0 +1,19 @@
+---
+# Iperf default values
+iperf_port: 5000
+
+## SERVER value
+# bind server to interface with ip address, default listen on all
+iperf_bind: ''
+
+## CLIENT values
+# seconds to wait until trying to establish a connection
+# if the server is not ready until then the client will immediately fail
+iperf_client_wait: 5
+# Timeout for establishing connection in milliseconds
+iperf_client_timeout: 1000
+# time in seconds to transmit - 24h
+iperf_client_time: 86400
+# limit connection bitrate - 0 = unlimited
+iperf_client_limit: 0
+

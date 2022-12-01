@@ -1,0 +1,46 @@
+---
+# Collect and delete etf artifacts
+# One log file per etf service
+
+
+- block:
+  - name: collect forward log file
+    fetch:
+      src: '{{ data_path }}/{{ forward_log_name }}{{ service.role }}_p{{ service.port | default(server_rtt_port) }}_f{{ iface.flow }}.csv'
+      dest: '{{ node_folder }}/'
+      flat: yes
+    when: service.flow is not defined or (service.flow | int) == (iface.flow | int)
+    loop: "{{ flow_ifaces }}"
+    loop_control:
+      loop_var: iface
+  - name: delete forward log file
+    file:
+      path: '{{ data_path }}/{{ forward_log_name }}{{ service.role }}_p{{ service.port | default(server_rtt_port) }}_f{{ iface.flow }}.csv'
+      state: absent
+    when: service.flow is not defined or (service.flow | int) == (iface.flow | int)
+    loop: "{{ flow_ifaces }}"
+    loop_control:
+      loop_var: iface
+  when: service.role == 'forward'
+
+
+- block:
+  - name: collect send_udp_tai server log file
+    fetch:
+      src: '{{ data_path }}/{{ log_name }}{{ service.role }}_p{{ service.port | default(source_port) | string }}_f{{ service.flow | string }}.csv'
+      dest: '{{ node_folder }}/'
+      flat: yes
+    when: service.flow is not defined or (service.flow | int) == (iface.flow | int)
+    loop: "{{ flow_ifaces }}"
+    loop_control:
+      loop_var: iface
+  - name: delete send_udp server log file
+    file:
+      path: '{{ data_path }}/{{ log_name }}{{ service.role }}_p{{ service.port | default(source_port) | string }}_f{{ service.flow | string }}.csv'
+      state: absent
+    when: service.flow is not defined or (service.flow | int) == (iface.flow | int)
+    loop: "{{ flow_ifaces }}"
+    loop_control:
+      loop_var: iface
+  when: service.role == 'source'
+

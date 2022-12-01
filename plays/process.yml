@@ -1,0 +1,54 @@
+---
+# Playbook to post-process a scenario
+# > ansible-playbook plays/process.yml -e scene=basic-cbs -e scene_folder=/srv/testbed/vehiclenet/experiments/...
+#
+# Post-process a scenario. This playbook is usually not called directly.
+# The scene_folder is set by the previously run scenario playbook.
+
+# -------------------- process a scenario --------------------
+- name: process scenario
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+
+  tasks:
+    - fail: msg="Scene variable must be defined (e.g. -e scene=basic-cbs)"
+      when: scene is not defined
+      tags: always
+
+    - fail: msg="Scene Folder variable must be defined (e.g. -e scene_folder=/srv/testbed/..)"
+      when: scene_folder is not defined
+      tags: always
+
+    # 1 - Processing per experiment
+    - name: check single processing script
+      stat:
+        path: '../scenarios/{{ scene }}/scenario-single.py'
+      register: script_single
+      tags: [ process ]
+    - name: single experiment post-processing
+      script: "../scenarios/{{ scene }}/scenario-single.py --dir {{ playbook_dir }} --scene {{ scene }} --folder_scene {{ scene_folder }} 2>&1 | tee -a {{ scene_folder }}/eval_log.txt"
+      when: script_single.stat.exists == true
+      tags: [ process ]
+
+    # 2 - Processing across several experiments, based on categories
+    - name: check cross processing script
+      stat:
+        path: '../scenarios/{{ scene }}/scenario-cross.py'
+      register: script_cross
+      tags: [ process ]
+    - name: cross experiment post-processing
+      script: "../scenarios/{{ scene }}/scenario-cross.py --dir {{ playbook_dir }} --scene {{ scene }} --scene_folder {{ scene_folder }}"
+      when: script_cross.stat.exists == true
+      tags: [ process ]
+
+    - name: change output data permissions
+      file:
+        path: '{{ scene_folder }}'
+        mode: 'u=rwX,g=rwX,o=rX'
+        recurse: yes
+      tags: always
+
+    - debug: msg="finished post-processing scenario {{ scene }}"
+      tags: [ process ]

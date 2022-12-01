@@ -1,0 +1,8 @@
+---
+# 3. Actions to perform during an experiment
+# Inject actions on a node at a certain time
+#
+# For example inject faults, change service or application behaviour
+#
+
+actions: {}

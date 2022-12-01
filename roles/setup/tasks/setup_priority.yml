@@ -1,0 +1,12 @@
+---
+# Prepare cgroup application traffic priorities
+
+- name: copy cgroup priority script to nodes
+  template:
+    src: 'cgroup_priorities.sh'
+    dest: '{{ data_path }}/cgroup_priorities.sh'
+    mode: '0755'
+
+- name: execute cgroup priority script
+  command: 'bash {{ data_path }}/cgroup_priorities.sh'
+

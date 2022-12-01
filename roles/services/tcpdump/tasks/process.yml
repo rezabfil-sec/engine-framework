@@ -1,0 +1,40 @@
+---
+# Experiment service post-processing
+
+# Only process iperf server log files = more information
+# - block:
+#   - name: set tcpdump pcap file
+#     set_fact:
+#       pcap_file: "{{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap"
+
+#   # Convert logfile into csv format and create two graphs
+#   - name: process pcap to csv
+#     script: files/process.py -w -t etf -s {{ pcap_file }} -n {{ "-c " + (service.count|string) if service.count is defined else ""}}
+#     register: etf_raw_artefacts
+
+#   # - name: set graph artefacts
+#   #   set_fact:
+#   #     iperf_artefacts: '{{ raw_iperf_artefacts.stdout_lines[-1] }}'
+
+#   # collect and delete post-processing artefacts
+#   - name: collect tcpdump csv file(s)
+#     fetch:
+#       src: "{{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.csv"
+#       dest: '{{ node_folder }}/'
+#       flat: yes
+#       fail_on_missing: no
+#     loop: "{{ node_ifaces | dict2items }}"
+#     loop_control:
+#       loop_var: iface
+
+#   - name: delete node tcpdump pcap file
+#     file:
+#       path: "{{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.csv"
+#       state: absent
+#     loop: "{{ node_ifaces | dict2items }}"
+#     loop_control:
+#       loop_var: iface
+#     ignore_errors: yes
+    
+#   # block condition
+#   when: 'service.name == "etf"

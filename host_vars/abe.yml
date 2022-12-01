@@ -1,0 +1,29 @@
+---
+# variables for node abe
+
+# hard drive to store data
+data_disk: "sda"
+
+# network card
+num_interfaces: 4
+node_ifaces:
+  1:
+    name: 'enp3s0'
+    mac: '6c:b3:11:52:53:fc'
+    phc: '/dev/ptp0'
+    clock: '6cb311.fffe.5253fc-1'
+  2:
+    name: 'enp4s0'
+    mac: '6c:b3:11:52:53:fd'
+    phc: '/dev/ptp1'
+    clock: '6cb311.fffe.5253fc-2'
+  3:
+    name: 'enp5s0'
+    mac: '6c:b3:11:52:53:fe'
+    phc: '/dev/ptp2'
+    clock: '6cb311.fffe.5253fc-3'
+  4:
+    name: 'enp6s0'
+    mac: '6c:b3:11:52:53:ff'
+    phc: '/dev/ptp3'
+    clock: '6cb311.fffe.5253fc-4'

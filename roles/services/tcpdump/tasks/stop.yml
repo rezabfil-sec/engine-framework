@@ -1,0 +1,6 @@
+---
+# Stop tcpdump
+
+- name: stop tcpdump
+  command: pkill tcpdump
+  ignore_errors: yes

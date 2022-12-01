@@ -1,0 +1,6 @@
+---
+# Cleanup iperf
+
+- name: stop send_udp_tai
+  command: pkill -f _tai
+  ignore_errors: yes

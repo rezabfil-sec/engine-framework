@@ -1,0 +1,53 @@
+---
+# Playbook to (re-)install testbed nodes
+#
+# Define the scenario to run the installation against in the cli:
+# > ansible-playbook plays/install.yml -e scene=basic-cbs
+#
+# NOTE! This playbook can only be run in an environment that
+#       is managed by pos (Plain Orchestrating Service).
+#       Alternative: Manually install all nodes with a suitable
+#       operating system and configure ssh connection.
+
+# -------------------- Execute POS commands --------------------
+- name: node installation
+  hosts: management
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+
+  tasks:
+    - fail: msg="Scene variable must be defined (e.g. -e scene=basic-cbs)"
+      when: scene is not defined
+      tags: always
+    - include_vars: '../scenarios/{{ scene }}/00-nodes.yml'
+      tags: always
+    - include_vars: '../scenarios/topologies/{{ topology }}.yml'
+      when: topology | length > 0
+      tags: always
+    - fail:
+        msg: 'Nodes must be defined in the scenario configuration!'
+      when: nodes | length <= 0
+      tags: always
+    - debug: var=nodes
+    # Differentiate between SW and HW reboot
+    # register two variables for each
+    - name: Extract nodes which have SW reboot
+      set_fact:
+        nodes_sw: "{{ nodes_sw + [node] }}"
+      when: '{{ node | string in SW_reboot_nodes }}'
+      loop: "{{ nodes }}"
+      loop_control:
+        loop_var: node
+    - debug: var=nodes_sw
+
+    - name: Extract nodes which have HW reboot
+      set_fact:
+        nodes_hw: "{{ nodes_hw + [node] }}"
+      when: '{{ node | string not in SW_reboot_nodes }}'
+      loop: "{{ nodes }}"
+      loop_control:
+        loop_var: node
+    - debug: var=nodes_hw
+
+    # Setup here own scripts for installation of nodes OS

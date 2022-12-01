@@ -1,0 +1,6 @@
+---
+# Cleanup iperf
+
+- name: stop iperf server(s)/client(s)
+  command: pkill iperf3
+  ignore_errors: yes

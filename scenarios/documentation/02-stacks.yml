@@ -1,0 +1,54 @@
+---
+# 2. Application and protocol stack
+#
+# Services are usually a synonym for applications
+# Services can be started grouped by nodes. The same service can be run multiple
+# times, with the same or different parameters. The service parameters vary heavily.
+# All available services and their parameters can be seen in the roles/services folder.
+
+# Further information about services:
+# Services are started during an experiment, the experiment can run in a signal
+# or timer mode, both are explained in more detail in the 04-experiment.yml file
+# In both cases every service is sending a signal to the experiment run script when it stops:
+# 0 if the service finished successfully and 1 when an error occurred.
+#
+# In all cases if a failure signal (1) is received by the experiment runner the
+# experiment is aborted.
+# When running the experiment in signal mode, the experiment finishes only when all
+# registered services send a success signal to the runner. To register a service
+# the parameter "signal: yes" must be defined in the service entry. Usually all
+# service are started with the run_service wrapper script that takes care of the
+# signaling and sending registered signals to the experiment runner.
+
+# For more details on applications see roles/services/<application>/tasks/main.yml
+# There you will find more information on available settings.
+
+stacks:
+  stack-1:
+    name: 'Iperf measurements'
+    services:
+      node-1:
+        - { name: iperf, role: client, port: 1001, flow: 1, prio: 3, limit: 0, time: 30, signal: yes}
+        - { name: iperf, role: client, port: 1002, flow: 2, limit: 0, time: 30, signal: yes}
+      node-2:
+        - { name: iperf, role: server, port: 1001, signal: yes }
+        - { name: iperf, role: server, port: 1002, flow: 2 }
+    protocols: {}
+  stack-2:
+    name: ''
+    services:
+      node-1:
+        - { name: iperf, role: client, node: node-1, port: 1001, dest: node-2, prio: 3, limit: 500}
+        - { name: iperf, role: client, node: node-1, port: 1002, dest: node-2, prio: 3, limit: 0}
+        - { name: iperf, role: client, node: node-1, port: 1003, dest: node-2, prio: 2, limit: 500}
+        - { name: iperf, role: client, node: node-1, port: 1004, dest: node-2, prio: 0, limit: 0}
+        - ...
+        - { name: input/lidar, ...}
+        - { name: input/dataset-oxf, ...}
+      node-2:
+        - { name: iperf, role: server, node: node-2, port: 1001 }
+        - { name: iperf, role: server, node: node-2, port: 1002 }
+        - { name: iperf, role: server, node: node-2, port: 1003 }
+        - { name: iperf, role: server, node: node-2, port: 1004 }
+        - { name: input/sink, ...}
+    protocols: {}

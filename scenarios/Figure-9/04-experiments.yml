@@ -1,0 +1,8 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+  # Figure-9 - Experiments with one iperf3 flows. CBS configured only on the source interface.
+  - { network: 'net-41', stack: 'stack-1',  action: 'action-1', time: 8, name: '4-queue_2-cbs_2-be_1-stream_1-hop-cbs100-iperf100'  }
+ 

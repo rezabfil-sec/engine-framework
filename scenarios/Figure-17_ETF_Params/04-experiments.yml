@@ -1,0 +1,35 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+
+# Fig 17 a,b,c
+## Figure-17_ETF_Params
+- {  network: 'net-1', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_25_strict_nooffload_zgw'}
+- {  network: 'net-2', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_50_strict_nooffload_zgw'}
+- {  network: 'net-3', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_75_strict_nooffload_zgw'}
+- {  network: 'net-5', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_100_strict_nooffload_zgw'}
+- {  network: 'net-6', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_125_strict_nooffload_zgw'}
+- {  network: 'net-7', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_150_strict_nooffload_zgw'}
+- {  network: 'net-8', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_175_strict_nooffload_zgw'}
+- {  network: 'net-9', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_200_strict_nooffload_zgw'}
+- {  network: 'net-10', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_225_strict_nooffload_zgw'}
+- {  network: 'net-11', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_250_strict_nooffload_zgw'}
+- {  network: 'net-19', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_275_strict_nooffload_zgw'}
+- {  network: 'net-20', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_300_strict_nooffload_zgw'}
+
+# # offload
+
+- {  network: 'net-40', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_25_strict_offload_zgw'}
+- {  network: 'net-41', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_50_strict_offload_zgw'}
+- {  network: 'net-42', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_75_strict_offload_zgw'}
+- {  network: 'net-43', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_100_strict_offload_zgw'}
+- {  network: 'net-44', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_125_strict_offload_zgw'}
+- {  network: 'net-45', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_150_strict_offload_zgw'}
+- {  network: 'net-46', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_175_strict_offload_zgw'}
+- {  network: 'net-47', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_200_strict_offload_zgw'}
+- {  network: 'net-48', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_225_strict_offload_zgw'}
+- {  network: 'net-49', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_250_strict_offload_zgw'}
+- {  network: 'net-50', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_275_strict_offload_zgw'}
+- {  network: 'net-51', stack: 'stack-3',  action: 'action-1', time: 40, name: '1_hop-etf_300_strict_offload_zgw'}

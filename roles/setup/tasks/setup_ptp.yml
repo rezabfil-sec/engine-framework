@@ -1,0 +1,61 @@
+---
+# Download, compile and configure PTP
+# The PTP daemons/processes are run as service
+#
+# PTP implementations:
+#   *  excelfore gptp implementation to synchronize clocks
+#      https://github.com/xl4-shiro/excelfore-gptp
+#   *  linuxptp implementation to synchronize clocks
+#      phc2sys to synchronize hardware clock to the system clock
+#      http://git.code.sf.net/p/linuxptp/code
+
+# reset running ptp daemons and set time
+- name: kill running clock processes
+  command: 'pkill -f {{ item }}'
+  loop: ["ptp4l", "phc2sys", "gptp2d"]
+  ignore_errors: yes
+
+- name: disable ntp
+  command: timedatectl set-ntp false
+
+- name: oneshot system clock update
+  shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
+
+- name: checkout ptp repositories
+  git:
+    repo: '{{ item.url }}'
+    dest: '{{ data_path }}/{{ item.folder }}'
+    version: '{{ item.branch | default("HEAD") }}'
+    update: yes
+    recursive: yes
+  loop: '{{ ptp_excelfore + ptp_linuxptp }}'
+
+# Excelfore
+- name: configure excelfore
+  shell: './autogen.sh'
+  args:
+    chdir: '{{ data_path }}/{{ item.folder }}'
+  loop: '{{ ptp_excelfore }}'
+- name: compile excelfore
+  shell: '../configure && make install && ldconfig'
+  args:
+    chdir: '{{ data_path }}/{{ item.folder }}/build'
+  loop: '{{ ptp_excelfore }}'
+
+# Linuxptp
+# TODO apply excelfore phc2sys patch
+- name: compile linuxptp
+  command: 'make install'
+  args:
+    chdir: '{{ data_path }}/{{ item.folder }}'
+  loop: '{{ ptp_linuxptp }}'
+
+# Checkclock
+- name: fetch checkclock script
+  get_url:
+    url: '{{ ptp_cc.url }}'
+    dest: '{{ data_path }}/{{ ptp_cc.name }}.c'
+- name: compile checkclock
+  command: 'gcc -o {{ ptp_cc.name }} {{ ptp_cc.name}}.c'
+  args:
+    chdir: "{{ data_path }}"

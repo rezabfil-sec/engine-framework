@@ -1,0 +1,48 @@
+---
+# variables for node lisa
+
+# hard drive to store data
+data_disk: "sda"
+
+# network card
+num_interfaces: 2
+node_ifaces:
+  1:
+    name: 'enp1s0'
+    mac: '64:3f:5f:02:09:14'
+    phc: '/dev/ptp0'
+    clock: '643f5f.fffe.020914-0'
+  2:
+    name: 'enp1s0d1'
+    mac: '64:3f:5f:02:09:15'
+    phc: '/dev/ptp1'
+    clock: '643f5f.fffe.020914-1'
+# ---
+# # variables for node lisa
+
+# # hard drive to store data
+# data_disk: "sda"
+
+# # network card
+# num_interfaces: 4
+# node_ifaces:
+#   1:
+#     name: 'enp3s0'
+#     mac: '6c:b3:11:52:54:64'
+#     phc: '/dev/ptp0'
+#     clock: '6cb311.fffe.525464-1'
+#   2:
+#     name: 'enp4s0'
+#     mac: '6c:b3:11:52:54:65'
+#     phc: '/dev/ptp1'
+#     clock: '6cb311.fffe.525464-2'
+#   3:
+#     name: 'enp5s0'
+#     mac: '6c:b3:11:52:54:66'
+#     phc: '/dev/ptp2'
+#     clock: '6cb311.fffe.525464-3'
+#   4:
+#     name: 'enp6s0'
+#     mac: '6c:b3:11:52:54:67'
+#     phc: '/dev/ptp3'
+#     clock: '6cb311.fffe.525464-4'

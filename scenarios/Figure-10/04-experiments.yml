@@ -1,0 +1,7 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+# Figure 10
+- {  network: 'net-5', stack: 'stack-12',  action: 'action-1', time: 40, name: '1_hop-etf_100_strict_nooffload_d300_zgw'}

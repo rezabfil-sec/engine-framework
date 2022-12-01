@@ -1,0 +1,45 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+# Fig 18 a,b,c
+# no-offload
+- {  network: 'net-124', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_180txtime_175delta' }
+- {  network: 'net-27', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_200txtime_175delta' }
+- {  network: 'net-28', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_225txtime_175delta'}
+- {  network: 'net-29', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_250txtime_175delta'}
+- {  network: 'net-30', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_275txtime_175delta'}
+- {  network: 'net-31', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_300txtime_175delta'}
+- {  network: 'net-86', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_350txtime_175delta'}
+- {  network: 'net-70', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_400txtime_175delta'}
+- {  network: 'net-74', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_450txtime_175delta'}
+- {  network: 'net-75', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_500txtime_175delta'}
+- {  network: 'net-82', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_550txtime_175delta'}
+
+- {  network: 'net-38', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_300txtime_275delta'}
+- {  network: 'net-87', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_350txtime_275delta'}
+- {  network: 'net-71', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_400txtime_275delta'}
+- {  network: 'net-76', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_450txtime_275delta'}
+- {  network: 'net-77', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_500txtime_275delta'}
+- {  network: 'net-83', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_nooffload_550txtime_275delta'}
+
+# offload
+- {  network: 'net-125', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_180txtime_175delta' }
+- {  network: 'net-32', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_200txtime_175delta' }
+- {  network: 'net-33', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_225txtime_175delta'}
+- {  network: 'net-34', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_250txtime_175delta'}
+- {  network: 'net-35', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_275txtime_175delta'}
+- {  network: 'net-36', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_300txtime_175delta'}
+- {  network: 'net-88', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_350txtime_175delta'}
+- {  network: 'net-72', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_400txtime_175delta'}
+- {  network: 'net-78', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_450txtime_175delta'}
+- {  network: 'net-79', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_500txtime_175delta'}
+- {  network: 'net-84', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_550txtime_175delta'}
+
+- {  network: 'net-37', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_300txtime_275delta'}
+- {  network: 'net-89', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_350txtime_275delta'}
+- {  network: 'net-73', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_400txtime_275delta'}
+- {  network: 'net-80', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_450txtime_275delta'}
+- {  network: 'net-81', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_500txtime_275delta'}
+- {  network: 'net-85', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_550txtime_275delta'}

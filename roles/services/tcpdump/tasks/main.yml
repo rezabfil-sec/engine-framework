@@ -1,0 +1,108 @@
+---
+# Tcpdump service
+# Collect packets on a node
+#
+# Usage in stack:
+# - { name: tcpdump, (flows: yes), (iface: [1,2,3,4] / flow: [1,2]), (size: 64000), (count: 60000), (time: 60), (filter: "udp port 5001"), (sync_start: yes/no)}
+#   iface   : capture traffic on interfaces, number correspond to node_ifaces
+#   flow    : capture traffic on flow, the number corresponds to the flow rule
+#   flows   : capture traffic on all flow interfaces, flow and iface must not be used with this
+#   size    : capture bytes of every packets
+#   count   : capture only this number of packets
+#   time    : time in seconds to capture packets
+#   filter  : a filter which packets to capture in tcpdump syntax
+#   use_core : which logical core to use for iperf3. Core numbering starts at 0. Optional, if not defined all cores may be used.
+#   sync_start: synchronize the service start with the start of the experiment
+#
+# By default capture packets on all hardware interfaces, if "flows: yes" is used
+# capture packets on all flow interface hardware interfaces. Use either flow or
+# iface to capture traffic only on specific flow or hardware interfaces.
+#
+# tcpdump command:
+# -i : Interface to collect packets
+# -w : Save capture packets to a file
+# -n : don't convert hosts,ports to names
+# -s : only capture n bytes of every packet
+# -c : capture only a number of packets
+#
+
+- name: initialize interface variable
+  set_fact:
+    tcpdump_iface: "{{ [] }}"
+    hw_ifaces: "{{ [] }}"
+
+- fail:
+    msg: "Only specify either iface or flow/flows, not both at the same time!"
+  when: service.iface is defined and (service.flow is defined or service.flows is defined)
+
+# Operate on flows
+- block:
+  - name: extract flow hw keys
+    set_fact:
+      hw_ifaces: "{{ hw_ifaces + [ iface.hw ] }}"
+    when: (service.flow is not defined or (iface.flow | int) in service.flow) and iface.hw is not in hw_ifaces
+    loop: "{{ flow_ifaces }}"
+    loop_control:
+      loop_var: iface
+
+  - name: extract hardware interfaces
+    set_fact:
+      tcpdump_iface: "{{ tcpdump_iface + [ iface.value.name ] }}"
+    when: iface.key | string in hw_ifaces
+    loop: "{{ node_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+
+  when: service.flow is defined or service.flows is defined
+
+# Operate on hardware interfaces
+- block:
+  - name: extract all hardware interfaces in use
+    set_fact:
+      tcpdump_iface: "{{ tcpdump_iface + [ iface.value.name ] }}"
+    when: service.iface is not defined and (iface.key | string) in use_ifaces
+    loop: "{{ node_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+
+  - name: extract defined hardware interfaces
+    set_fact:
+      tcpdump_iface: "{{ tcpdump_iface + [ iface.value.name ] }}"
+    when: service.iface is defined and iface.key | string in service.iface
+    loop: "{{ node_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+  when: service.iface is defined or (service.iface is not defined and service.flow is not defined and service.flows is not defined)
+
+- name: wait for starting
+  shell: sleep {{ service.tcpdump_wait | default(0) }}
+
+- debug:
+    msg: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      tcpdump -n -i {{ iface }} -j adapter_unsynced -tt --time-stamp-precision=nano
+      -w {{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
+      {{ "-s " + (service.size|string) if service.size is defined else ""}}
+      {{ "-c " + (service.count|string) if service.count is defined else ""}}
+      {{ "-W 1 -G " + (service.time|string) if service.time is defined else ""}}
+      {{ service.filter if service.filter is defined else ""}}
+  loop: "{{ tcpdump_iface }}"
+  loop_control:
+    loop_var: iface
+
+- name: start tcpdump
+  command: >
+    run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
+    taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+    tcpdump -n -i {{ iface }} -j adapter_unsynced -tt --time-stamp-precision=nano
+    -w {{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
+    {{ "-s " + (service.size|string) if service.size is defined else ""}}
+    {{ "-c " + (service.count|string) if service.count is defined else ""}}
+    {{ "-W 1 -G " + (service.time|string) if service.time is defined else ""}}
+    {{ service.filter if service.filter is defined else ""}}
+  async: 2592000  # run in background - for 1 month or until finished/killed
+  poll: 0
+  loop: "{{ tcpdump_iface }}"
+  loop_control:
+    loop_var: iface

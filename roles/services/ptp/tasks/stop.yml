@@ -1,0 +1,7 @@
+---
+# Cleanup ptp
+
+- name: kill running clock processes
+  command: 'pkill -f {{ item }}'
+  loop: ["ptp4l", "phc2sys", "gptp2d", "checkclock", "check_clock", "ptp_master"]
+  ignore_errors: yes

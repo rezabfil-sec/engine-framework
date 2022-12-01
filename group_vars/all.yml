@@ -1,0 +1,114 @@
+---
+## variables listed here are applicable to all nodes
+
+# Data folder path, store experiment data on the local node
+data_folder: 'XXX'
+# Paths on the node
+file_paths:
+  path_service_signal: "/root/service.signal"
+  path_log_file: "/root/experiment_run.log"
+  path_experiment_signal: "/root/experiment.signal"
+  
+# create a data folder on the node
+# if available mount an extra disk to this location / extend storage beyond RAM
+data_path: "/data"
+# path on the node to store the custom scripts folder
+# they can be imported from scripts called by the "script" modules
+script_path: "/root"
+# Path to other repos (better than download due to versions)
+others_path: "../others/"
+
+### POS installation
+
+### Images used to boot the nodes
+# Possible <flag>s: 
+# -s            Staging
+# -u <username> User images
+
+## Normal Ubuntu/Debian (Leave only one uncommented!):
+pos_node_image: '"-s ubuntu-focal@2021-11-10T21:06:06+00:00"'
+
+## Ubuntu/Debian using the low latency kernel (Leave only one uncommented!):
+pos_node_image_low_latency: '"-s ubuntu-focal-lowlatency@2021-11-10T20:58:12+00:00"'
+
+
+## Script flags for install.sh
+## Do not change here, but in a corresponding scenario
+install_disable_cpu_ht: '-p'
+install_disable_cpu_turbo: '-u'
+install_set_cpu_perf: '-e'
+no_flag: ''
+
+## Default ansible group to use for the installation and node setup
+pos_group_default: 'None'
+
+### node setup
+## TSN git repository variables
+git_tsn_branch: 'master'
+git_tsn_repo: 'XXX'
+git_tsn_user: 'XXX'
+git_tsn_token: 'XXX'
+## interface variables
+iface_vlan_id: '2'
+
+# In case SW restart does not work, simple comment out and use line below
+#SW_reboot_nodes: []
+SW_reboot_nodes: [abe,bart,homer,itchy,lisa,maggie,marge,milhouse,nelson,otto,ralph,scratchy]
+nodes_hw: []
+nodes_sw: []
+# map socket buffer priority to vlan priority [skb:vlan-pcp]
+# this information is handed to the vlan interfaces when creating them in the network step
+iface_prio_map: '0:0 1:1 2:2 3:3 4:4 5:5 6:6 7:7'
+
+## default node variables
+
+# A list with the hardware interfaces of a node, this is defined in the host_vars files
+node_ifaces: {}
+# 1: { name: eno1, mac: "xx:xx..", phc: "/dev/ptp0", clock: "24..-1" }, 2: { ... }
+
+# A list with the flow interfaces on a node, this is filled during the network ovs_flows step
+# ip_src = the flow interface ip address, hw = the hardware interface key it is connected to
+flow_ifaces: []
+# - {"name": "flow1", "hw": "1", "role": "sink", "ip_src": <ipsrc>, "ip_dst": <ipdst>, "flow": 1}
+# - {"name": "flow3", "hw": "2", "role": "sink", "ip_src": <ipsrc>, "ip_dst": <ipdst>, "flow": 3}
+# - ...
+
+# A list with the active hardware interfaces that are part of the current experiment topology
+# This is filled during the network ovs_flows step, the number correspond to the node_ifaces keys
+use_ifaces: []
+# [1,2,3,5]
+
+# Some nodes have an extra hard drive that will be formated and mounted during setup
+# This variable is set inside the host_vars files if a node has such a hard drive
+data_disk: ""
+
+# list with available network priorities
+# only 0-7 can be carried in the vlan pcp header field
+net_prio_list: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+
+### ptp clock sync
+# use either 'linuxptp' or 'excelfore', 'taprioSol1', or 'none', 'lidar_all'
+# lidar_all -- not to look for GM clock
+# taprioptp is meant for two nodes setup e.g. Todd and Rod to resolve TAPRIO + PTP issue
+ptp_clockmode: 'linuxptp'
+
+# these are the repositories that are checked out and compiled for PTP
+# if a repository should be fixed to a certain tag/version, specify the branch variable
+ptp_excelfore:
+  - folder: 'xl4unibase'
+    url: 'https://github.com/xl4-shiro/xl4unibase.git'
+  - folder: 'xl4combase'
+    url: 'https://github.com/xl4-shiro/xl4combase.git'
+  - folder: 'excelfore-gptp'
+    url: 'https://github.com/xl4-shiro/excelfore-gptp'
+ptp_linuxptp:
+  - folder: 'linuxptp'
+    url: 'http://git.code.sf.net/p/linuxptp/code'
+    branch: 'v3.1'
+# linuxptp checkclock
+ptp_cc:
+  name: 'check_clocks'
+  url: 'https://tsn.readthedocs.io/_downloads/f329e8dec804247b1dbb5835bd949e6f/check_clocks.c'
+
+# define node that has the Cisco Nexus SmartNIC for GPS sync
+smartnic_equipped: 'lisa'

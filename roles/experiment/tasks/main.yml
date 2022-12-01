@@ -1,0 +1,330 @@
+---
+# Coordinate and run experiment
+
+# Workflow:
+#---------
+# 1 Network
+#   TSN
+#   OVS
+# 2 Stack
+# 3 Actions
+# 4 Start + Stop measurement phase
+# 5 Post-Process
+# 6 Collect artefacts
+# 7 Cleanup
+
+# ---------------------- Load variables --------------------------
+- name: load node
+  set_fact:
+    node: '{{ item.key }}'
+  when: inventory_hostname == item.value
+  loop: '{{ node_mapping | dict2items }}'
+  tags: always
+
+# network variables
+- name: load network paths
+  set_fact:
+    flows: '{{ network[experiment.network].flows }}'
+  tags: always
+
+# merge scenario and pre-defined flows
+- include_vars: '../../../scenarios/topologies/{{ network[experiment.network].topo_flows }}.yml'
+  when: network[experiment.network].topo_flows is defined
+  tags: always
+- name: load pre-defined network paths
+  set_fact:
+    flows: '{{ flows | combine(basic_flows) }}'
+  when: network[experiment.network].topo_flows is defined and basic_flows is defined and basic_flows | length > 0
+  tags: always
+
+# tsn variables
+- name: initialize tsn_config list
+  set_fact: "tsn_configs={{ [] }}"
+  tags: always
+- name: load node tsn config
+  set_fact:
+    tsn_configs: '{{ tsn_configs + [ { "tsn": item.0.key, "ifaces": item.1.split(":")[1] | default("") } ] }}'
+  when: node in item.1.split(":")[0]
+  loop: '{{ network[experiment.network].tsn | dict2items | subelements("value") }}'
+  tags: always
+
+# stack (service + protocol) and action variables
+- name: load stack and actions
+  set_fact:
+    services: '{{ stacks[experiment.stack].services[node] | default([]) }}'
+    protocol: '{{ stacks[experiment.stack].protocols }}'
+    action: '{{ actions[experiment.action][node] | default([]) }}'
+  tags: always
+
+# ---------------------- Output folders --------------------------
+
+- name: set experiment folder
+  set_fact:
+    experiment_folder: '{{ hostvars["localhost"]["scene_folder"] }}/{{ experiment_index}}_{{experiment.network}}_{{experiment.stack}}_{{experiment.action}}{{ "_" + experiment.name if experiment.name is defined else ""}}'
+    node_folder: '{{ hostvars["localhost"]["scene_folder"] }}/{{ experiment_index}}_{{experiment.network}}_{{experiment.stack}}_{{experiment.action}}{{ "_" + experiment.name if experiment.name is defined else ""}}/{{node}}_{{inventory_hostname}}'
+  tags: always
+
+- name: create experiment folders
+  file:
+    path: '{{ item }}'
+    mode: '0775'
+    state: directory
+  #delegate_to: localhost
+  loop:
+    - '{{ experiment_folder }}'
+    - '{{ node_folder }}'
+  tags: always
+
+- name: store experiment metadata
+  copy:
+    content: "{{ item.content | to_nice_json }}"
+    dest: "{{ experiment_folder }}/exp_{{ item.destination }}.config"
+  loop:
+    - { "content": "{{ network[experiment.network] }}", "destination": "network" }
+    - { "content": "{{ stacks[experiment.stack] | default([]) }}", "destination": "stack" }
+    - { "content": "{{ actions[experiment.action] | default([]) }}", "destination": "actions" }
+  #delegate_to: localhost
+  tags: always
+
+
+# ---------------------- [1] Network ---------------------------
+- name: apply tsn configuration
+  include_role:
+    name: roles/network
+    tasks_from: tsn_control.yml
+    apply:
+      tags: [ tsn, network ]
+  vars:
+    tsn_config: "{{ item }}"
+  when: tsn_configs | length > 0
+  loop: "{{ tsn_configs }}"
+  tags: [ tsn, network ]
+
+- name: apply network flows
+  include_role:
+    name: roles/network
+    tasks_from: ovs_flows.yml
+    apply:
+      tags: [ ovs, network ]
+  when: flows | length > 0
+  tags: [ ovs, network ]
+
+- name: check network connectivity
+  include_role:
+    name: roles/services/ping
+    apply:
+      tags: [ network, check ]
+  vars:
+    service: "{{ item }}"
+  when: network[experiment.network].check is defined and network[experiment.network].check
+  loop:
+    - { name: ping, ignore: yes }
+    - { name: ping }
+  tags: [ network, check ]
+
+# ---------------------- [2] Stack -----------------------------
+
+# after network changes the ptp daemons break sometimes
+- name: restart clock synchronization
+  include_role:
+    name: roles/services/ptp
+    apply:
+      tags: [ stack, ptp ]
+  vars:
+    service: '{{ { "name": "ptp", "mode": ptp_clockmode | default("linuxptp") } }}'
+  tags: [ stack, ptp ]
+
+- name: clear service signals, experiment signals, and log file
+  copy:
+    content: ""
+    dest: "{{ item.value }}"
+  loop: '{{ file_paths | dict2items }}'
+  tags: always
+
+- name: start services by level
+  include_role:
+    name: roles/experiment
+    tasks_from: services.yml
+    apply:
+      tags: [ stack, service ]
+  vars:
+    level: '{{ item }}'
+  loop: '{{ service_levels }}'
+  tags: [ stack, service ]
+
+- name: register service signals
+  set_fact:
+    service_signals: '{{ (service_signals | int)  + 1 }}'
+  when: item.signal is defined and item.signal
+  loop: '{{ services }}'
+  tags: [ stack, service ]
+
+# ----------- Measurement Stack ------------
+
+# IDEA add more measurement services
+# - tcpdump on every interface on every node?
+#   - additional/alternative: application that records and adds timestamp of every packet
+# - ping for every existing flow
+# - record ptp offset on all nodes if deployed
+- name: set measurement probe services
+  set_fact:
+    probe_services:
+      - { name: tcpdump, size: 96, file: "probe" }
+  tags: always
+
+- name: start measurement probes
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    apply:
+      tags: [ stack, measurement ]
+  vars:
+    service: '{{ item }}'
+  loop: '{{ probe_services }}'
+  tags: [ stack, measurement ]
+
+# ----------- Protocols ------------
+
+- name: implement protocols
+  include_role:
+    name: 'roles/protocols/{{ item.value.name }}'
+    apply:
+      tags: [ stack, protocols ]
+  vars:
+    protocol: '{{ item }}'
+  loop: '{{ protocols | default({}) | dict2items }}'
+  tags: [ stack, protocols ]
+
+# ---------------------- [3] Actions ---------------------------
+
+# TODO not defined yet
+# Prepare a script with commands to execute to perform actions on certain timestamps.
+# Upload script to the nodes. Choose a global start time of the experiment to which
+# the timestamps are counted relatively.
+# -> the run experiment script (timer/signal) can start the action scripts
+
+# ---------------------- [4] Run -------------------------------
+
+# Environment is ready, this step marks the logical start of the experiment
+# Log the start time in a file, point of reference for later evaluation / tasks
+#
+# Two experiment modes:
+# 1. Time: Run the experiment for a certain number of seconds.
+# 2. Signal: Wait until certain applications are finished (-> signals received)
+# Both modes stop the experiment immediately when an error signal is received
+
+- name: run experiment - time mode
+  command: "bash run_experiment t {{ experiment.time | default(experiment_time) }}"
+  when: experiment.signal is not defined
+
+- name: run experiment - signal mode
+  command: "bash run_experiment s {{ service_signals }} {{ experiment.timeout | default(experiment_timeout) }}"
+  when: experiment.signal is defined
+
+# ----------- Experiment done ------------
+
+- name: stop services
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: stop.yml
+    apply:
+      tags: stop
+  vars:
+    service: '{{ item }}'
+  loop: '{{ services }}'
+  tags: stop
+
+- name: stop measurement probes
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: stop.yml
+    apply:
+      tags: stop
+  vars:
+    service: '{{ item }}'
+  loop: '{{ probe_services }}'
+  tags: stop
+
+- name: stop clock synchronization
+  include_role:
+    name: roles/services/ptp
+    tasks_from: stop.yml
+    apply:
+      tags: [ stop, ptp ]
+  tags: [ stop, ptp ]
+
+# ---------------------- ([5] Post-Process) ----------------------
+# TODO this task can be done after each experiment or one layer above
+#   in the scenario playbook
+#   - Each experiment: Processing can be done on all nodes immediately
+#   - Scenario Playbook: Possible to compare different experiments
+# -> Prefer after each experiment, can be later combined with a scenario level
+#   post-processing approach
+
+- name: post-process service artefacts
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: process.yml
+    apply:
+      tags: process
+  vars:
+    service: '{{ item }}'
+  loop: '{{ services }}'
+  tags: process
+
+# ---------------------- [6] Collect ---------------------------
+
+- name: collect experiment log files and recorded signals
+  fetch:
+    src: '{{ item.value }}'
+    dest: '{{ node_folder }}/'
+    flat: yes
+  loop: '{{ file_paths | dict2items }}'
+  tags: collect
+
+- name: delete experiment log files and recorded signals
+  file:
+    path: '{{ item.value }}'
+    state: absent
+  loop: '{{ file_paths | dict2items }}'
+  tags: collect
+
+- name: collect service artefacts
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: collect.yml
+  vars:
+    service: '{{ item }}'
+  loop: '{{ services }}'
+  tags: collect
+
+# ----------- Measurement Artefacts ------------
+
+- name: collect measurement artefacts
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: collect.yml
+  vars:
+    service: '{{ item }}'
+  loop: '{{ probe_services }}'
+  tags: collect
+
+# ---------------------- [7] Cleanup ---------------------------
+
+- name: cleanup network
+  include_role:
+    name: roles/network
+    tasks_from: cleanup.yml
+    apply:
+      tags: cleanup
+  tags: cleanup
+
+- name: reset experiment variables
+  set_fact:
+    node: ''
+    flows: []
+    tsn_config: ''
+    services: []
+    protocol: []
+    action: []
+    service_signals: 0
+  tags: cleanup

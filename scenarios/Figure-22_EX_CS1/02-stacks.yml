@@ -1,0 +1,80 @@
+---
+# 2. Application and protocol stack
+
+stacks:
+  stack-82:
+    name: 'Iperf measurements, 2 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 2, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-3:
+        - { name: iperf, role: server, flow: 2, port: 1004, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+    protocols: {}
+  
+  stack-83:
+    name: 'Iperf measurements, 1 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-3:
+        - { name: iperf, role: server, flow: 1, port: 1004, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+    protocols: {}
+
+  stack-84:
+    name: 'Iperf measurements, 3 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-4:
+        - { name: iperf, role: server, flow: 1, port: 1004, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+    protocols: {}
+
+  stack-85:
+    name: 'Iperf measurements, 4 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-5:
+        - { name: iperf, role: server, flow: 1, port: 1004, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+    protocols: {}
+  
+  stack-186:
+    name: 'Iperf measurements, 5 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-6:
+        - { name: iperf, role: server, flow: 1, port: 1004, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+    protocols: {}
+  
+  stack-187:
+    name: 'Iperf measurements, 6 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-7:
+        - { name: iperf, role: server, flow: 1, port: 1004, level: 0, signal: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no, use_core: 2}
+    protocols: {}
+
+  stack-188:
+    name: 'Iperf measurements, 7 hop, 1 stream'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-8:
+        - { name: iperf, role: server, flow: 1, port: 1004, level: 0, signal: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no, use_core: 2}
+    protocols: {}

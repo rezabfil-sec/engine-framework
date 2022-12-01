@@ -1,0 +1,29 @@
+---
+# variables for node nelson
+
+# hard drive to store data
+data_disk: "sda"
+
+# network card
+num_interfaces: 4
+node_ifaces:
+  1:
+    name: 'enp3s0'
+    mac: '6c:b3:11:52:54:74'
+    phc: '/dev/ptp0'
+    clock: '6cb311.fffe.525474-1'
+  2:
+    name: 'enp4s0'
+    mac: '6c:b3:11:52:54:75'
+    phc: '/dev/ptp1'
+    clock: '6cb311.fffe.525474-2'
+  3:
+    name: 'enp5s0'
+    mac: '6c:b3:11:52:54:76'
+    phc: '/dev/ptp2'
+    clock: '6cb311.fffe.525474-3'
+  4:
+    name: 'enp6s0'
+    mac: '6c:b3:11:52:54:77'
+    phc: '/dev/ptp3'
+    clock: '6cb311.fffe.525474-4'

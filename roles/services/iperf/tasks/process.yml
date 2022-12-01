@@ -1,0 +1,38 @@
+---
+# Experiment service post-processing
+
+# Only process iperf server log files = more information
+- block:
+  - name: set iperf logfile
+    set_fact:
+      iperf_logfile: "{{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}.log"
+
+  # Convert logfile into csv format and create two graphs
+  - name: create iperf graph per log file
+    script: files/iperf_process.py --logfile {{ iperf_logfile }}
+    register: raw_iperf_artefacts
+
+  - name: set graph artefacts
+    set_fact:
+      iperf_artefacts: '{{ raw_iperf_artefacts.stdout_lines[-1] }}'
+
+  # collect and delete post-processing artefacts
+  - name: collect iperf post-processing artefacts
+    fetch:
+      src: '{{ artefact_file }}'
+      dest: '{{ node_folder }}/'
+      flat: yes
+    loop: "{{ iperf_artefacts }}"
+    loop_control:
+      loop_var: artefact_file
+
+  - name: delete iperf post-processing artefacts
+    file:
+      path: '{{ artefact_file }}'
+      state: absent
+    loop: "{{ iperf_artefacts }}"
+    loop_control:
+      loop_var: artefact_file
+
+  # block condition
+  when: 'service.role == "server"'

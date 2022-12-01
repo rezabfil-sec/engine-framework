@@ -1,0 +1,13 @@
+---
+# Ping default values
+
+# number of send ping_request packets
+ping_count: 10
+# time between packets
+ping_interval: 0.5
+
+# default destination is empty = ping all reachable nodes
+ping_dest: ''
+
+# wait before executing ping
+ping_wait: 10

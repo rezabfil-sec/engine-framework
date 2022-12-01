@@ -1,0 +1,153 @@
+---
+# 2. Application and protocol stack
+
+stacks:
+  stack-1:
+    name: 'Journal Use-Case - version 1'
+    services:
+      node-1:
+        # Flow 2-SR-A-1
+        - { name: iperf, role: client, flow: 2, port: 2201, prio: 3, limit: 13728000, size: 1430, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2201", file: "p2201", level: 0, signal: no } 
+        # Flow 2-SR-A-2
+        - { name: iperf, role: client, flow: 2, port: 2202, prio: 3, limit: 11328000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2202", file: "p2202", level: 0, signal: no } 
+        # Flow 2-BE
+        - { name: iperf, role: client, flow: 2, port: 2203, prio: 1, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2203", file: "p2203", level: 0, signal: no }
+        # Flow 3-SR-B-1
+        - { name: iperf, role: client, flow: 3, port: 2301, prio: 2, limit: 11328000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2301", file: "p2301", level: 0, signal: no }
+        # Flow 3-SR-B-2
+        - { name: iperf, role: client, flow: 3, port: 2302, prio: 2, limit: 530400, size: 442, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2302", file: "p2302", level: 0, signal: no }
+        # Flow 3-SR-B-3
+        - { name: iperf, role: client, flow: 3, port: 2303, prio: 2, limit: 148800, size: 186, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2303", file: "p2303", level: 0, signal: no }
+        # Flow 3-BE
+        - { name: iperf, role: client, flow: 3, port: 2304, prio: 1, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2304", file: "p2304", level: 0, signal: no } 
+
+      node-5:
+        # Flow 1-SR-A-1
+        - { name: iperf, role: client, flow: 1, port: 2101, prio: 3, limit: 45792000, size: 954, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2101", file: "p2101", level: 0, signal: no }
+        # Flow 1-SR-A-2
+        - { name: iperf, role: client, flow: 1, port: 2102, prio: 3, limit: 38129520, size: 1430, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2102", file: "p2102", level: 0, signal: no }
+        # Flow 1-BE
+        - { name: iperf, role: client, flow: 1, port: 2103, prio: 1, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2103", file: "p2103", level: 0, signal: no }
+        # Flow 5 BE 1x 1250B @ 100us
+        - { name: iperf, role: client, flow: 5, port: 2501, prio: 0, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [5], size: 64, filter: "udp dst port 2501", file: "p2501", level: 0, signal: no } 
+
+      node-6:
+        # Flow 4 BE 1x 1250B @ 100us
+        - { name: iperf, role: client, flow: 4, port: 2401, prio: 0, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [4], size: 64, filter: "udp dst port 2401", file: "p2401", level: 0, signal: no } 
+
+      node-7:
+        # Flow 1-1
+        - { name: iperf, role: server, flow: 1, port: 2101, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2101", file: "p2101", level: 0, signal: no }
+        # Flow 1-2
+        - { name: iperf, role: server, flow: 1, port: 2102, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2102", file: "p2102", level: 0, signal: no }
+        # Flow 1-BE
+        - { name: iperf, role: server, flow: 1, port: 2103, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2103", file: "p2103", level: 0, signal: no }
+        # Flow 2-SR-A-1
+        - { name: iperf, role: server, flow: 2, port: 2201, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2201", file: "p2201", level: 0, signal: no }
+        # Flow 2-SR-A-2
+        - { name: iperf, role: server, flow: 2, port: 2202, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2202", file: "p2202", level: 0, signal: no }
+        # Flow 2-BE
+        - { name: iperf, role: server, flow: 2, port: 2203, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2203", file: "p2203", level: 0, signal: no }
+        # Flow 3-SR-B-1
+        - { name: iperf, role: server, flow: 3, port: 2301, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2301", file: "p2301", level: 0, signal: no }
+        # Flow 3-SR-B-2
+        - { name: iperf, role: server, flow: 3, port: 2302, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2302", file: "p2302", level: 0, signal: no }
+        # Flow 3-SR-B-3
+        - { name: iperf, role: server, flow: 3, port: 2303, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2303", file: "p2303", level: 0, signal: no }
+        # Flow 3-BE
+        - { name: iperf, role: server, flow: 3, port: 2304, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2304", file: "p2304", level: 0, signal: no }
+        # Flow 4 BE 1x 1250B @ 100us
+        - { name: iperf, role: server, flow: 4, port: 2401, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [4], size: 64, filter: "udp dst port 2401", file: "p2401", level: 0, signal: no }
+        # Flow 5 BE 1x 1250B @ 100us
+        - { name: iperf, role: server, flow: 5, port: 2501, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [5], size: 64, filter: "udp dst port 2501", file: "p2501", level: 0, signal: no }
+    protocols: {}
+
+  stack-2:
+    name: 'Journal Use-Case - version 1 - just Flow 1 SR-A'
+    services:
+      node-5:
+        # Flow 1-SR-A-1
+        - { name: iperf, role: client, flow: 1, port: 2101, prio: 3, limit: 45792000, size: 954, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2101", file: "p2101", level: 0, signal: no }
+        # Flow 1-SR-A-2
+        - { name: iperf, role: client, flow: 1, port: 2102, prio: 3, limit: 38129520, size: 1430, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2102", file: "p2102", level: 0, signal: no }
+
+      node-7:
+        # Flow 1-1
+        - { name: iperf, role: server, flow: 1, port: 2101, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2101", file: "p2101", level: 0, signal: no }
+        # Flow 1-2
+        - { name: iperf, role: server, flow: 1, port: 2102, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 2102", file: "p2102", level: 0, signal: no }
+    protocols: {}
+
+  stack-3:
+    name: 'Journal Use-Case - version 1 - just Flow 2 SR-A'
+    services:
+      node-1:
+        # Flow 2-SR-A-1
+        - { name: iperf, role: client, flow: 2, port: 2201, prio: 3, limit: 13728000, size: 1430, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2201", file: "p2201", level: 0, signal: no } 
+        # Flow 2-SR-A-2
+        - { name: iperf, role: client, flow: 2, port: 2202, prio: 3, limit: 11328000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2202", file: "p2202", level: 0, signal: no } 
+
+      node-7:
+        # Flow 2-SR-A-1
+        - { name: iperf, role: server, flow: 2, port: 2201, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2201", file: "p2201", level: 0, signal: no }
+        # Flow 2-SR-A-2
+        - { name: iperf, role: server, flow: 2, port: 2202, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 2202", file: "p2202", level: 0, signal: no }
+    protocols: {}
+
+  stack-4:
+    name: 'Journal Use-Case - version 1 - just Flow 3 SR-B'
+    services:
+      node-1:
+        # Flow 3-SR-B-1
+        - { name: iperf, role: client, flow: 3, port: 2301, prio: 2, limit: 11328000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2301", file: "p2301", level: 0, signal: no }
+        # Flow 3-SR-B-2
+        - { name: iperf, role: client, flow: 3, port: 2302, prio: 2, limit: 530400, size: 442, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2302", file: "p2302", level: 0, signal: no }
+        # Flow 3-SR-B-3
+        - { name: iperf, role: client, flow: 3, port: 2303, prio: 2, limit: 148800, size: 186, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2303", file: "p2303", level: 0, signal: no }
+        
+      node-7:
+        # Flow 3-SR-B-1
+        - { name: iperf, role: server, flow: 3, port: 2301, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2301", file: "p2301", level: 0, signal: no }
+        # Flow 3-SR-B-2
+        - { name: iperf, role: server, flow: 3, port: 2302, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2302", file: "p2302", level: 0, signal: no }
+        # Flow 3-SR-B-3
+        - { name: iperf, role: server, flow: 3, port: 2303, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 2303", file: "p2303", level: 0, signal: no }
+    protocols: {}

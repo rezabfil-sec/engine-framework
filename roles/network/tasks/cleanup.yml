@@ -1,0 +1,16 @@
+---
+# Cleanup network
+
+- name: reset queuing disciplines
+  command: tc qdisc del dev {{ iface.value.name }} root
+  loop: '{{ node_ifaces | dict2items }}'
+  when: tsn_config | length > 0
+  loop_control:
+    loop_var: 'iface'
+  tags: tsn
+
+- name: reinitialize ovs - delete flow interfaces
+  include_role:
+    name: roles/setup
+    tasks_from: setup_ovs.yml
+  tags: ovs

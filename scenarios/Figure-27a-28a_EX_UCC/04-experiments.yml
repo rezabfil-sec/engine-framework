@@ -1,0 +1,9 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+# CBS results - Figures 27 and 28
+## Figure-27a-28a_EX_UCC
+### Combined - cross traffic
+  - { network: 'net-1', stack: 'stack-1',  action: 'action-1', time: 30, name: 'journal-use-case-version1_30s' }

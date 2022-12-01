@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+
+{% if tsn.taprio is defined and tsn.taprio | length > 0 %}
+
+  {%- include "taprio.j2" %}
+
+{% else %}
+
+  {%- include "cbs_mqprio.j2" %}
+
+{% endif %}
+
+{% for item in tsn.queues | dict2items %}
+{% if item.value.mode == 'cbs' %}
+qdisc replace dev {{ iface.value.name }} parent 100:{{item.key}} cbs \
+    idleslope {{ item.value.idle }} sendslope {{ item.value.send }} hicredit {{ item.value.high }} locredit {{ item.value.low }} {{ 'offload 1' if item.value.offload is defined and item.value.offload else '' }}
+{% endif %}
+{% if item.value.mode == 'be' %}
+# qdisc del dev {{ iface.value.name }} parent 100:{{item.key}}
+{% endif %}
+{% if item.value.mode == 'etf' %}
+qdisc replace dev {{ iface.value.name }} parent 100:{{item.key}} etf \
+    clockid CLOCK_TAI delta {{ item.value.delta | default(tsn_etf_delta) }} {{ 'offload' if item.value.offload is defined and item.value.offload else ''}} {{ 'deadline_mode' if item.value.deadline is defined and item.value.deadline else ''}} skip_sock_check
+{% endif %}
+{% if item.value.mode == 'mqprio' %}
+{% endif %}
+
+{% endfor %}

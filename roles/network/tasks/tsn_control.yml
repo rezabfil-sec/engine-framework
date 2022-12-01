@@ -1,0 +1,47 @@
+---
+# Manage TSN configurations
+# set up qdiscs for every interface
+# Ctrl-Variable:
+# { "tsn": "tsn-1", "ifaces": "1,2"}
+# ifaces can be empty = apply tsn config to all interfaces
+
+
+- debug: var=tsn_config
+
+- name: load tsn definition
+  set_fact:
+    tsn: '{{ tsnconfigs[tsn_config.tsn] }}'
+
+- name: load priority queue
+  set_fact:
+    queue_default: '{{ (prioq.key | int) - 1}}'
+  when: '"*" in prioq.value.prio'
+  loop: '{{ tsn.queues | dict2items }}'
+  loop_control:
+    loop_var: 'prioq'
+
+- name: copy tsn config to nodes
+  template:
+    src: tsn_config.j2
+    dest: '{{ data_path }}/tsn-{{ iface.value.name }}.config'
+  when: tsn_config.ifaces | length == 0 or (iface.key | string) in tsn_config.ifaces.split(",")
+  loop: '{{ node_ifaces | dict2items }}'
+  loop_control:
+    loop_var: 'iface'
+
+- name: traffic control clear existing configuration
+  command: 'tc qdisc del dev {{ iface.value.name }} root'
+  when: tsn_config.ifaces | length == 0 or (iface.key | string) in tsn_config.ifaces.split(",")
+  loop: '{{ node_ifaces | dict2items }}'
+  loop_control:
+    loop_var: 'iface'
+  ignore_errors: yes
+
+- name: traffic control apply new configuration
+  command: 'tc -batch tsn-{{ iface.value.name }}.config'
+  args:
+    chdir: '{{ data_path }}'
+  when: tsn_config.ifaces | length == 0 or (iface.key | string) in tsn_config.ifaces.split(",")
+  loop: '{{ node_ifaces | dict2items }}'
+  loop_control:
+    loop_var: 'iface'

@@ -1,0 +1,34 @@
+---
+# Start services in the current service level
+# This file is looped on every node for all service levels
+#
+# Service levels are used to fulfill dependencies between services
+# If a service relies on another service it simply needs to be put in a higher
+# level than the service it is depending on: e.g. a server is started in level 0,
+# a client that is accessing the server needs to be in a higher level (>0) to ensure
+# that the server is started before the client.
+
+- debug:
+    msg: "Start service level [{{ level }}]"
+
+- name: start services
+  command: sleep 2
+
+
+- debug:
+    msg: "Starting service {{ service.name }}"
+  when: '(service.level is not defined and (level|int) == 0) or (service.level is defined and (service.level|int) == (level|int))'
+  loop: '{{ services }}'
+  loop_control:
+    loop_var: service
+# Start all services by default in service level 0 (the first one)
+# If service.level is defined start the service in its level
+- name: start services
+  include_role:
+    name: 'roles/services/{{ service.name }}'
+    apply:
+      tags: [ stack, service ]
+  when: '(service.level is not defined and (level|int) == 0) or (service.level is defined and (service.level|int) == (level|int))'
+  loop: '{{ services }}'
+  loop_control:
+    loop_var: service

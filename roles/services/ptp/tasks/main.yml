@@ -1,0 +1,202 @@
+---
+# PTP service
+# Precision-Time-Protocol daemons and processes
+#
+# Usage in stack:
+# - { name: ptp, mode: linuxptp/excelfore }
+#
+# IDEA put checkclock in a wrapper script, continously call it and log output
+
+# reset clock processes
+- name: kill running clock processes
+  command: 'pkill -f {{ item }}'
+  loop: ["ptp4l", "phc2sys", "gptp2d", "checkclock", "ptp_master"]
+  ignore_errors: yes
+
+- name: disable ntp
+  command: timedatectl set-ntp false
+
+- name: oneshot system clock update
+  shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
+
+# -------------------- linuxptp SYNC --------------------
+- block:
+  - name: set linuxptp config files
+    template:
+      src: 'gPTP.cfg'
+      dest: '{{ data_path }}/gPTP.cfg'
+      mode: '0644'
+# TODO update socket priority option
+  - name: start linuxptp for active interfaces
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      ptp4l -f {{ data_path }}/gPTP.cfg --step_threshold=1 -H
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+
+  - name: set TAI-UTC offset
+    shell: 'pmc -u -b 0 -t 1 -i {{ item.value.name }} "SET GRANDMASTER_SETTINGS_NP clockClass 248 clockAccuracy 0xfe offsetScaledLogVariance 0xffff currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 timeSource 0xa0"'
+    loop: '{{ node_ifaces | dict2items }}'
+# TODO socket priority option
+  - name: sync primary clock -> hw clocks
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -a -r --step_threshold=1 --transportSpecific=1 -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  when: service.mode == 'linuxptp' or service.mode == 'lidar_all' and use_ifaces is defined and use_ifaces | length > 0
+- debug: var=use_ifaces
+
+# -------------------- linuxptp SYNC LIDAR SOURCE--------------------
+- block:
+  - name: set linuxptp config files
+    template:
+      src: 'gPTP_lidar.cfg'
+      dest: '{{ data_path }}/gPTP_lidar.cfg'
+      mode: '0644'
+# TODO update socket priority option
+  - name: start linuxptp for active interfaces
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      ptp4l -f {{ data_path }}/gPTP_lidar.cfg --step_threshold=1 -H
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+
+  - name: set TAI-UTC offset
+    shell: 'pmc -u -b 0 -t 1 -i {{ item.value.name }} "SET GRANDMASTER_SETTINGS_NP clockClass 248 clockAccuracy 0xfe offsetScaledLogVariance 0xffff currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 timeSource 0xa0"'
+    loop: '{{ node_ifaces | dict2items }}'
+# TODO socket priority option
+  - name: sync primary clock -> hw clocks
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -a -r --step_threshold=1 --transportSpecific=1 -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  when: service.mode == 'lidar_source' and use_ifaces is defined and use_ifaces | length > 0
+- debug: var=use_ifaces
+
+- block:
+  - name: initialize interface variable
+    set_fact:
+      ptp_iface: "{{ [] }}"
+    
+  - name: extract all hardware interfaces in use
+    set_fact:
+      ptp_iface: "{{ ptp_iface + [ iface.value.name ] }}"
+    when: iface.key | string in use_ifaces
+    loop: "{{ node_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+  - debug: var=ptp_iface
+
+# Taprio solution 1
+# relies on direct eno4 which might be selected as a GM - backup in case PTP does now works among other nodes
+- block:
+  - name: start ifaces
+    shell: 'ip link set {{ iface }} up'
+
+  - name: set linuxptp config files
+    template:
+      src: 'taprioSol1.cfg'
+      dest: '{{ data_path }}/taprioSol1.cfg'
+      mode: '0644'
+# TODO update socket priority option
+  - name: start linuxptp for active interfaces
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      ptp4l -f {{ data_path }}/taprioSol1.cfg --step_threshold=1 -H
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+
+  - name: set TAI-UTC offset
+    shell: 'pmc -u -b 0 -t 1 -i {{ iface }} "SET GRANDMASTER_SETTINGS_NP clockClass 248 clockAccuracy 0xfe offsetScaledLogVariance 0xffff currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 timeSource 0xa0"'
+    loop: '{{ node_ifaces | dict2items }}'
+
+  - name: set TAI-UTC offset
+    shell: 'pmc -u -b 0 -t 1 -i {{ item.value.name }} "SET GRANDMASTER_SETTINGS_NP clockClass 248 clockAccuracy 0xfe offsetScaledLogVariance 0xffff currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 timeSource 0xa0"'
+    loop: '{{ node_ifaces | dict2items }}'
+
+# TODO socket priority option
+  - name: sync primary clock -> hw clocks
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -a -r --step_threshold=1 --transportSpecific=1 -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+
+  - name: finding a master iface
+    script: ptp_master.py -m -i {{ ptp_iface | flatten | join(",") + [',eno4'] | join(",") }} -n {{ use_ifaces | flatten | join(",") + [',7'] | join(",") }}
+    register: gm_iface
+  - debug: var=gm_iface
+  
+  # Should run only successfuly on the GM node
+  - name: sync primary clock -> system clock
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -s {{ gm_iface.stdout_lines[-1] }} -c CLOCK_REALTIME --step_threshold=1 --transportSpecific=1 -w -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    when: gm_iface.stdout_lines[-1] | length > 1
+  
+  - name: check_clocks interfaces
+    shell: '{{ data_path }}/{{ ptp_cc.name }} -d {{ item.value.name }} -v'
+    when: item.key in use_ifaces
+    loop: '{{ node_ifaces | dict2items }}'
+    ignore_errors: yes
+
+  when: service.mode == 'taprioSol1' and use_ifaces is defined and use_ifaces | length > 0
+- debug: var=use_ifaces
+
+- block:
+  # - name: start services
+  #   command: sleep 90
+  # TODO if more than 1 iface return well they are master, it should fail
+  - name: finding a master iface
+    when: inventory_hostname != smartnic_equipped 
+    script: ptp_master.py -m -i {{ ptp_iface | flatten | join(",") }} -n {{ use_ifaces | flatten | join(",") }}
+    register: gm_iface
+  - debug: var=gm_iface 
+  - name: Assigning a variable 
+    when: inventory_hostname == smartnic_equipped 
+    set_fact:
+      gm_iface: ['enp1s0']
+  - debug: var=gm_iface
+  
+  # Should run only successfuly on the GM node
+  - name: sync primary clock -> system clock
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -s {{ gm_iface.stdout_lines[-1] }} -c CLOCK_REALTIME --step_threshold=1 --transportSpecific=1 -w -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    when: inventory_hostname != smartnic_equipped and gm_iface.stdout_lines[-1] | length > 1
+
+  - name: sync primary clock -> system clock
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -s enp1s0 -c CLOCK_REALTIME --step_threshold=1 --transportSpecific=1 -w -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    when: inventory_hostname == smartnic_equipped
+
+  - name: check_clocks interfaces
+    shell: '{{ data_path }}/{{ ptp_cc.name }} -d {{ item.value.name }} -v'
+    when: item.key in use_ifaces
+    loop: '{{ node_ifaces | dict2items }}'
+    ignore_errors: yes
+
+  # condition for all block tasks
+  when: service.mode == 'linuxptp' and use_ifaces is defined and use_ifaces | length > 0
+
+# -------------------- excelfore SYNC --------------------
+- block:
+  - name: start excelfore for all interfaces
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      {{data_path }}/excelfore-gptp/build/gptp2d -d {{ ptp_iface | flatten | join(",") }} > {{data_path }}/gptp.log
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  - debug: var=ptp_iface
+  # TODO phc2sys to sync system/excelfore clock -> hw clocks
+
+  when: service.mode == 'excelfore' and use_ifaces is defined and use_ifaces | length > 0

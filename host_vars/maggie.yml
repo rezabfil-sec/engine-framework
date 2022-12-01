@@ -1,0 +1,29 @@
+---
+# variables for node maggie
+
+# hard drive to store data
+data_disk: "sda"
+
+# network card
+num_interfaces: 4
+node_ifaces:
+  1:
+    name: 'enp3s0'
+    mac: '6c:b3:11:52:54:70'
+    phc: '/dev/ptp0'
+    clock: '6cb311.fffe.525470-1'
+  2:
+    name: 'enp4s0'
+    mac: '6c:b3:11:52:54:71'
+    phc: '/dev/ptp1'
+    clock: '6cb311.fffe.525470-2'
+  3:
+    name: 'enp5s0'
+    mac: '6c:b3:11:52:54:72'
+    phc: '/dev/ptp2'
+    clock: '6cb311.fffe.525470-3'
+  4:
+    name: 'enp6s0'
+    mac: '6c:b3:11:52:54:73'
+    phc: '/dev/ptp3'
+    clock: '6cb311.fffe.525470-4'

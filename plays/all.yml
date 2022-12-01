@@ -1,0 +1,19 @@
+---
+# One-in-all meta playbook
+# Execute install, setup, run and process playbook
+#
+# > ansible-playbook plays/all.yml -e scene=basic-cbs
+
+- name: Run install playbook
+  import_playbook: install.yml
+
+- name: Run setup playbook
+  import_playbook: setup.yml
+
+- name: Run scenario playbook
+  import_playbook: scenario.yml
+  when: scene is defined
+
+- name: Run process playbook
+  import_playbook: process.yml
+  when: scene is defined

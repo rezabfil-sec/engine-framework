@@ -1,0 +1,19 @@
+---
+# default experiment values
+node: 'node-0'
+tsn_config: ''
+flows: []
+services: []
+protocol: []
+action: []
+
+# the number of signals registered by services
+service_signals: 0
+
+# default run time for experiments in seconds
+experiment_time: 30
+# default timeout in seconds for experiments in signal mode
+experiment_timeout: 60
+
+# service level
+service_levels: [ 0, 1, 2 ]

@@ -1,0 +1,60 @@
+---
+# Ping service
+# Execute pings to a destination address
+#
+# Usage in stack:
+# - { name: ping, (dest: node-1), (count: 10), (interval: 0.5), (sync_start: yes/no)}
+#   sync_start: synchronize the service start with the start of the experiment
+#
+# ping command:
+# -D : Print timestamp for every packet
+# -O : Report outstanding ICMP ECHO reply
+# -c : Number of ping_requests to send
+# -w : Timeout in seconds regardless of received/send packets
+# -i : Interval to send packets
+#
+# IDEA:
+# - log ping output in a file ping_<timestamp>.log and collect it
+# - implement not only as one-shot but as a continously running service
+
+- name: initialize ping_ip list
+  set_fact:
+    dest_ip: "{{ [] }}"
+    dest_name: '{{ service.dest | default(ping_dest) }}'
+
+# load ip of one node
+# possible because address of a flow is well-known:
+# 10.0.<flow-id>.<start=1/end=2>
+- block:
+    - name: load destination ip
+      set_fact:
+        dest_ip: '{{ dest_ip + ["10.0." + ((flow_id+1|string) + ".2" if item.value.split(":")[1] == node else "10.0." + ((flow_id+1)|string) + ".1"] }}'
+      when: '(item.value.split(":")[1] == node and item.value.split(":")[-2] == dest_name) or (item.value.split(":")[1] == dest_name and item.value.split(":")[-2] == node)'
+      loop: '{{ flows | dict2items }}'
+      loop_control:
+        index_var: flow_id
+  when: dest_name | length > 0
+
+# load all reachable ips
+- name: get all reachable destination ips
+  block:
+    - name: load all reachable ips
+      set_fact:
+        dest_ip: '{{ dest_ip + [ item.ip_dst ] }}'
+      loop: '{{ flow_ifaces }}'
+  when: dest_name | length <= 0
+
+- name: wait for connections
+  shell: sleep {{ ping_wait }}
+
+- name: execute ping
+  shell: >
+    run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
+    cgexec -g net_prio:{{ service.prio | default(0) }}
+    ping -D -O -c {{ service.count | default(ping_count) }}
+    -w {{ (( (service.count | default(ping_count)) * (service.interval | default(ping_interval))) | round | int) + 5 }}
+    -i {{ service.interval | default(ping_interval) }} {{ ping_ip }}
+  loop: '{{ dest_ip }}'
+  ignore_errors: '{{ "yes" if service.ignore is defined else "no" }}'
+  loop_control:
+    loop_var: ping_ip

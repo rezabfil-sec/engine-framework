@@ -1,0 +1,58 @@
+---
+# 0. Node Mapping
+# Use mappings in the configuration instead of real node names
+#
+# Scenario can be moved around in the infrastructure or
+# updated after a re-wiring of the network more easily.
+#
+
+# Set to "no" if you don't want to use the low-latency kernel
+use_low_latency_kernel: "yes"
+
+# Set the number of isolated cores. Cores starting with core 0 will be isolated. Set to 0, no cores will be isolated!
+# If disable_cpu_ht set to yes, never set this to more than 3!!!!
+num_isolated_cores: 3
+
+# Disable hyperthreading on nodes
+disable_cpu_ht: "no"
+
+# Disable CPU turbo
+disable_cpu_turbo: "no"
+
+# Set CPU to performance mode
+set_cpu_perf: "yes"
+
+# Use a pre-defined topology and node mapping
+# Empty string to use own definition
+topology: ""
+
+# OR
+
+# define your own required hosts and their mapping
+# if topology is defined it takes precedence
+# A list with the  required nodes with real hostname
+nodes:
+  - ralph
+  - milhouse
+  - otto
+  - abe
+  - maggie
+  - nelson
+  - ned
+  - bart
+  - marge
+  - lisa
+
+# The mapping of the above nodes to node-X names
+# the node-X names are used in the rest of the scenario configuration
+node_mapping:
+  node-1: ralph
+  node-2: milhouse
+  node-3: otto
+  node-4: abe
+  node-5: maggie
+  node-6: nelson
+  node-7: ned
+  node-8: bart
+  node-9: marge
+  node-10: lisa

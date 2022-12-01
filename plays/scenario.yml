@@ -1,0 +1,90 @@
+---
+# Playbook to run a scenario
+# > ansible-playbook plays/scenario.yml -e scene=basic-cbs
+#
+# A scenario is one use-case or specific topic to be analyzed.
+# In the context of one scenario different stacks can be defined
+# and several experiments run against each stack.
+
+# -------------------- run a scenario --------------------
+- name: create local scenario folder
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+
+  tasks:
+    - fail: msg="Scene variable must be defined (e.g. -e scene=basic-cbs)"
+      when: scene is not defined
+      tags: always
+
+    # load scenario nodes
+    - include_vars: '../scenarios/{{ scene }}/00-nodes.yml'
+      tags: always
+    - include_vars: '../scenarios/topologies/{{ topology }}.yml'
+      when: topology | length > 0
+      tags: always
+    - fail:
+        msg: 'Nodes and node mapping must be defined in the scenario configuration! Fill nodes + node_mapping or topology variable.'
+      when: nodes | length <= 0 or node_mapping | length <= 0
+      tags: always
+
+    - name: set scenario folder
+      set_fact:
+        scene_folder: '{{ data_folder }}/{{ lookup("pipe", "date +%Y-%m-%dD-%H:%M:%ST") }}_{{ scene }}'
+      tags: always
+
+    - name: create scenario folder
+      file:
+        path: '{{ scene_folder }}'
+        mode: '0775'
+        state: directory
+      tags: always
+
+    # TODO copy all scenario files to scene_folder on mgmt host
+
+- name: scenario execution
+  hosts: '{{ hostvars["localhost"]["nodes"] }}'
+  gather_facts: no
+  any_errors_fatal: true
+
+  tasks:
+    # load scenario variables
+    - include_vars: '{{ item }}'
+      loop:
+        - ../scenarios/{{ scene }}/00-nodes.yml
+        - ../scenarios/{{ scene }}/01-network.yml
+        - ../scenarios/{{ scene }}/02-stacks.yml
+        - ../scenarios/{{ scene }}/03-actions.yml
+        - ../scenarios/{{ scene }}/04-experiments.yml
+      tags: always
+    - include_vars: '../scenarios/topologies/{{ topology }}.yml'
+      when: topology | length > 0
+      tags: always
+
+    # loop through experiments
+    - name: run experiment
+      include_role:
+        name: roles/experiment
+      loop: '{{ experiments }}'
+      loop_control:
+        loop_var: 'experiment'
+        index_var: 'experiment_index'
+      tags: always
+
+- name: finish scenario
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+
+  tasks:
+    - name: change output data permissions
+      file:
+        path: '{{ scene_folder }}'
+        mode: 'u=rwX,g=rwX,o=rX'
+        recurse: yes
+      tags: always
+
+    - debug: msg="finished scenario {{ scene }}"
+      tags: always

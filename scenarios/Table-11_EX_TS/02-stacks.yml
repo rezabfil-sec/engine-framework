@@ -1,0 +1,107 @@
+---
+# 2. Application and protocol stack
+
+stacks:
+  stack-101:
+    name: 'Iperf measurements, 4 streams, a+b+c+d'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 3, time: 10, udp: yes, limit: 20480000, size: 256, level: 1, signal: yes, use_core: 2, wait: 0, sync_stop: yes }
+        - { name: iperf, role: client, flow: 7, port: 1007, prio: 3, time: 10, udp: yes, limit: 20480000, size: 256, level: 1, signal: yes, use_core: 2, wait: 60, sync_stop: yes }
+
+
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
+        - { name: tcpdump, flow: [7], size: 64, filter: "udp dst port 1007", file: "p1007", level: 0, signal: no}
+      node-8:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
+      node-2:  
+        - { name: iperf, role: server, flow: 7, port: 1007, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [7], size: 64, filter: "udp dst port 1007", file: "p1007", level: 0, signal: no}
+    protocols: {}
+  stack-102:
+    name: 'Iperf measurements, 4 streams, a+b+c+d'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 0, sync_stop: yes }
+        - { name: iperf, role: client, flow: 2, port: 1002, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 32, sync_stop: yes }
+        - { name: iperf, role: client, flow: 3, port: 1003, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 62, sync_stop: yes }
+        - { name: iperf, role: client, flow: 4, port: 1004, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 92, sync_stop: yes }
+        - { name: iperf, role: client, flow: 5, port: 1005, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 124, sync_stop: yes }
+        - { name: iperf, role: client, flow: 6, port: 1006, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 155, sync_stop: yes }
+        - { name: iperf, role: client, flow: 7, port: 1007, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 181, sync_stop: yes }
+
+
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 1002", file: "p1002", level: 0, signal: no}
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 1003", file: "p1003", level: 0, signal: no}
+        - { name: tcpdump, flow: [4], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+        - { name: tcpdump, flow: [5], size: 64, filter: "udp dst port 1005", file: "p1005", level: 0, signal: no}
+        - { name: tcpdump, flow: [6], size: 64, filter: "udp dst port 1006", file: "p1006", level: 0, signal: no}
+        - { name: tcpdump, flow: [7], size: 64, filter: "udp dst port 1007", file: "p1007", level: 0, signal: no}
+      node-8:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
+      node-7:
+        - { name: iperf, role: server, flow: 2, port: 1002, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 1002", file: "p1002", level: 0, signal: no}
+      node-6:  
+        - { name: iperf, role: server, flow: 3, port: 1003, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 1003", file: "p1003", level: 0, signal: no}
+      node-5:  
+        - { name: iperf, role: server, flow: 4, port: 1004, level: 0, signal: yes, use_core: 2 }
+        
+        - { name: tcpdump, flow: [4], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-4:  
+        - { name: iperf, role: server, flow: 5, port: 1005, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [5], size: 64, filter: "udp dst port 1005", file: "p1005", level: 0, signal: no}
+      node-3:  
+        - { name: iperf, role: server, flow: 6, port: 1006, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [6], size: 64, filter: "udp dst port 1006", file: "p1006", level: 0, signal: no}
+      node-2:  
+        - { name: iperf, role: server, flow: 7, port: 1007, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [7], size: 64, filter: "udp dst port 1007", file: "p1007", level: 0, signal: no}
+    protocols: {}
+  stack-103:
+    name: 'Iperf measurements, 4 streams, a+b+c+d'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 2, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 0, sync_stop: yes }
+        - { name: iperf, role: client, flow: 2, port: 1002, prio: 2, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 32, sync_stop: yes }
+        - { name: iperf, role: client, flow: 3, port: 1003, prio: 2, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 62, sync_stop: yes }
+        - { name: iperf, role: client, flow: 4, port: 1004, prio: 2, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 92, sync_stop: yes }
+        - { name: iperf, role: client, flow: 5, port: 1005, prio: 2, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 124, sync_stop: yes }
+        - { name: iperf, role: client, flow: 6, port: 1006, prio: 2, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 155, sync_stop: yes }
+        - { name: iperf, role: client, flow: 7, port: 1007, prio: 2, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 181, sync_stop: yes }
+
+
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 1002", file: "p1002", level: 0, signal: no}
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 1003", file: "p1003", level: 0, signal: no}
+        - { name: tcpdump, flow: [4], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+        - { name: tcpdump, flow: [5], size: 64, filter: "udp dst port 1005", file: "p1005", level: 0, signal: no}
+        - { name: tcpdump, flow: [6], size: 64, filter: "udp dst port 1006", file: "p1006", level: 0, signal: no}
+        - { name: tcpdump, flow: [7], size: 64, filter: "udp dst port 1007", file: "p1007", level: 0, signal: no}
+      node-8:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
+      node-7:
+        - { name: iperf, role: server, flow: 2, port: 1002, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 1002", file: "p1002", level: 0, signal: no}
+      node-6:  
+        - { name: iperf, role: server, flow: 3, port: 1003, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [3], size: 64, filter: "udp dst port 1003", file: "p1003", level: 0, signal: no}
+      node-5:  
+        - { name: iperf, role: server, flow: 4, port: 1004, level: 0, signal: yes, use_core: 2 }
+        
+        - { name: tcpdump, flow: [4], size: 64, filter: "udp dst port 1004", file: "p1004", level: 0, signal: no}
+      node-4:  
+        - { name: iperf, role: server, flow: 5, port: 1005, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [5], size: 64, filter: "udp dst port 1005", file: "p1005", level: 0, signal: no}
+      node-3:  
+        - { name: iperf, role: server, flow: 6, port: 1006, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [6], size: 64, filter: "udp dst port 1006", file: "p1006", level: 0, signal: no}
+      node-2:  
+        - { name: iperf, role: server, flow: 7, port: 1007, level: 0, signal: yes, use_core: 2 }
+        - { name: tcpdump, flow: [7], size: 64, filter: "udp dst port 1007", file: "p1007", level: 0, signal: no}
+    protocols: {}

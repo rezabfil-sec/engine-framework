@@ -1,0 +1,110 @@
+---
+# send_udp_tai service
+# Execute send_udp_tai
+# Can be run on a client
+#
+# Usage in stack:
+# - { name: send_udp, flow: 1, (port: 6600), (number_packets: 61000),
+#     (interval: 1000000), (tsn: yes / tsnd: yes), (priority: 0), (delay: 600000), (sync_start: yes/no) }
+#   flow  : send traffic via flow X
+#   port  : port on the server to send traffic to (client will listen on port + 1 for loopback packets)
+#   number_packets: number of packets to send and receive
+#   tsn/tsnd: enable tsn (tsn) or tsn in deadline mode (tsnd)
+#   priority: [tsn/d] packets will be sent with this priority
+#   delay   : [tsn/d] delta from wake up to txtime in nanoseconds
+#   interval: [tsn/d] send packets in this interval, in nanoseconds
+#   sync_start: synchronize the dervice start with the start of the experiment
+#
+# -------------------- Forward UDP TAI ----------------------
+# Forward send UDP traffic on hops until destinations
+- block:
+  - name: forward - copy files
+    copy:
+      src: '{{ forward_name }}.c'
+      dest: '{{ data_path }}/{{ forward_name }}.c'
+  
+  - name: forward - compile files
+    command: 'gcc -o {{ forward_name }} -pthread {{ forward_name }}.c'
+    args:
+      chdir: "{{ data_path }}"
+
+  - name: forward - start forward next hop
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      {{ data_path }}/{{ forward_name }} -i {{ iface.name }}
+      -n {{ service.number_packets | default(forward_num_packets) }}
+      -U {{ service.port | default(next_hop_port) }}
+      -t {{ service.priority | default(forward_priority) }}
+      -f {{ data_path }}/{{ forward_log_name }}{{ service.role }}_p{{ service.port|default(next_hop_port) }}_f{{ iface.flow }}.csv
+      {{ "-d " + (service.delta | default(forward_delta)) if service.tsn is defined or service.tsnd is defined else "" }}
+      {{ "-r" if service.tsn is defined or service.tsnd is defined else "-s" }}
+      {{ "-D" if service.tsnd is defined else "" }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    when: service.flow is not defined or (service.flow | int) == (iface.flow | int)
+    loop: "{{ flow_ifaces }}"
+    loop_control:
+      loop_var: iface
+  
+  when: service.role == 'forward'
+
+# -------------------- Send UDP TAI ----------------------
+# Send on a port and attach to given interface
+- block:
+  - name: send udp tai - copy files
+    copy:
+      src: '{{ send_udp }}.c'
+      dest: '{{ data_path }}/{{ send_udp }}.c'
+  - name: client - compile files
+    command: 'gcc -o {{ send_udp }} -pthread {{ send_udp }}.c'
+    args:
+      chdir: "{{ data_path }}"
+  - name: Sleep before start sending
+    command: sleep 15
+  # - debug: 
+  #     msg: >
+  #     '{{ data_path }}/{{ send_udp }} -i {{ iface.name }}
+  #     -n {{ service.number_packets | default(num_packets) }}
+  #     -f {{ data_path }}/{{ log_name }}_p{{ service.port | default(source_port) | string }}_f{{ service.flow | string }}.csv
+  #     -P {{ service.interval | default(packet_interval) | string }}
+  #     -t {{ service.priority | default(priority) | string }}
+  #     -u {{  service.port | default(source_port) | string }}
+  #     -U {{ ((service.port | default(source_port) | int ) + 1) | string }}
+  #     -S {{ iface.ip_dst }}
+  #     {{ "-d " + (service.delay | default(delay) | string) if service.tsn is defined or service.tsnd is defined else "" }}
+  #     {{ "-p " + realtime_priority if service.tsn is defined or service.tsnd is defined else "" }}
+  #     {{ "-E" if service.tsn is defined or service.tsnd is defined else "" }}
+  #     {{ "-D" if service.tsnd is defined else "" }}
+  #     {{ "-r" if service.tsn is not defined and service.tsnd is not defined else "" }}
+  #     {{ "-s" if service.tsn is not defined and service.tsnd is not defined else "" }}'
+  #   when: (service.flow | int) == (iface.flow | int)
+  #   loop: "{{ flow_ifaces }}"
+  #   loop_control:
+  #     loop_var: iface
+
+  - name: client - start send
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      {{ data_path }}/{{ send_udp }} -i {{ iface.name }}
+      -n {{ service.number_packets | default(num_packets) }}
+      -f {{ data_path }}/{{ log_name }}{{ service.role }}_p{{ service.port | default(source_port) | string }}_f{{ service.flow | string }}.csv
+      -P {{ service.interval | default(packet_interval) | string }}
+      -t {{ service.priority | default(priority) | string }}
+      -u {{  service.port | default(source_port) | string }}
+      -U {{ ((service.port | default(source_port) | int ) + 1) | string }}
+      -S {{ iface.ip_dst }}
+      {{ "-d " + (service.delay | default(delay) | string) if service.tsn is defined or service.tsnd is defined else "" }}
+      {{ "-p " + realtime_priority if service.tsn is defined or service.tsnd is defined else "" }}
+      {{ "-E" if service.tsn is defined or service.tsnd is defined else "" }}
+      {{ "-D" if service.tsnd is defined else "" }}
+      {{ "-r" if service.tsn is not defined and service.tsnd is not defined else "" }}
+      {{ "-s" if service.tsn is not defined and service.tsnd is not defined else "" }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    when: (service.flow | int) == (iface.flow | int)
+    loop: "{{ flow_ifaces }}"
+    loop_control:
+      loop_var: iface
+  when: service.role == 'source'

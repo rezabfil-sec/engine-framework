@@ -1,0 +1,35 @@
+---
+# Initial OVS node configuration
+
+# make sure openvswitch is installed
+- name: check ovs is available
+  command: which ovs-vsctl
+
+# delete and create main ovs bridge
+- name: (re-) create ovs bridge
+  command: "{{ item }}"
+  loop:
+    - ovs-vsctl --if-exists del-br ovs0
+    - ovs-vsctl --may-exist add-br ovs0 -- set bridge ovs0 fail_mode=secure
+    - ip link set ovs0 up
+- name: install ovs default drop flow
+  command: ovs-ofctl mod-flows ovs0 priority=0,actions=drop
+
+# create vlan interfaces and connect to ovs
+#  [OVS] <--> (vlan-ifaceX) <--> (ifaceX)
+- name: delete existing vlan interfaces
+  command: "ip link del v{{ item.value.name }}"
+  loop: '{{ node_ifaces | dict2items }}'
+  ignore_errors: yes
+
+- name: create vlan interfaces
+  command: "ip link add link {{ item.value.name }} name v{{ item.value.name }} type vlan id {{ iface_vlan_id }} egress-qos-map {{ iface_prio_map }} ingress-qos-map {{ iface_prio_map }}"
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: connect vlan interfaces to ovs
+  command: ovs-vsctl --may-exist add-port ovs0 v{{ item.value.name }} -- set interface v{{item.value.name}} ofport_request={{ item.key }}
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: bring interfaces up
+  shell: 'ip link set {{ item.value.name }} up && ip link set v{{ item.value.name }} up'
+  loop: '{{ node_ifaces | dict2items }}'

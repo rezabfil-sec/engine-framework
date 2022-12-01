@@ -1,0 +1,95 @@
+---
+# Basic node setup
+
+# not needed yet - maybe for post-processing
+# - name: checkout tsn repository
+#   git:
+#     repo: 'https://{{ git_tsn_user }}:{{ git_tsn_token }}@{{ git_tsn_repo }}'
+#     dest: '{{ data_path }}/tsn'
+#     version: '{{ git_tsn_branch }}'
+#     update: yes
+
+# grab time from internet and perform one time update
+- name: oneshot system clock update
+  shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
+  register: dateupdate
+
+- debug: msg="{{ dateupdate.stdout }}"
+
+# - name: wait after clock update
+#   shell: sleep 60
+
+# - name: oneshot system clock update
+#   shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
+
+# - name: verify date and time
+#   command: date
+#   register: date
+
+# - debug: msg="{{ date.stdout }}"
+
+# install packages not included in the node base image
+- name: update list of packages
+  apt: update_cache=yes force_apt_get=yes
+  
+- name: install linux dependecies
+  apt: 
+    name:
+      - bison
+      - flex
+
+- name: install extra packages
+  apt:
+    name:
+      - libcmocka-dev
+      - pkg-config
+      - cgroup-tools
+      - python3-pip
+      - scapy
+      - gnuplot
+      - libtool
+      - autoconf
+    state: present
+# install python packages not included in the node base image
+- name: install python packages
+  pip:
+    name: psutil
+# distribute service and experiment script
+- name: copy service and experiment script to nodes
+  template:
+    src: '{{ item }}.sh'
+    dest: '/usr/local/bin/{{ item }}'
+    mode: '0755'
+  loop:
+    - "run_experiment"
+    - "run_service"
+    - "run_service_action"
+
+- name: create data folder
+  file:
+    path: '{{ data_path }}'
+    mode: '0775'
+    state: directory
+
+# format and mount hard drive for data storage
+- block:
+  - name: format data hard drive
+    filesystem:
+      fstype: ext4
+      dev: "/dev/{{ data_disk }}"
+
+  - name: mount hard drive
+    mount:
+      path: '{{ data_path }}'
+      src: '/dev/{{ data_disk }}'
+      fstype: ext4
+      state: mounted
+
+  when: data_disk | length > 0
+
+# copy custom scripts to node in order to later import them
+- name: copy scripts to node
+  copy:
+    dest: '{{ script_path }}'
+    src: ../../../scripts
+    mode: 'u=rwx,g=rwx,o=rx'

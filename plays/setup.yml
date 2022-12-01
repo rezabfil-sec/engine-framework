@@ -1,0 +1,75 @@
+---
+# Playbook for basic node setup
+#
+# Define the scenario to run the setup against in the cli:
+# > ansible-playbook plays/setup.yml -e scene=basic-cbs
+#
+# -------------------- Execute node setup commands --------------------
+- name: load scenario nodes
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+
+  tasks:
+    - fail: msg="Scene variable must be defined (e.g. -e scene=basic-cbs)"
+      when: scene is not defined
+      tags: always
+    - include_vars: '../scenarios/{{ scene }}/00-nodes.yml'
+      tags: always
+    - include_vars: '../scenarios/topologies/{{ topology }}.yml'
+      when: topology | length > 0
+      tags: always
+    - fail:
+        msg: 'Nodes must be defined in the scenario configuration! Fill nodes or topology variable.'
+      when: nodes | length <= 0
+      tags: always
+
+- name: node setup
+  hosts: '{{ hostvars["localhost"]["nodes"] }}'
+  gather_facts: no
+  any_errors_fatal: true
+
+  tasks:
+    # basic node configuration
+    - name: basic setup
+      include_role:
+        name: roles/setup
+        tasks_from: setup_node.yml
+        apply:
+          tags: [ setup, basic ]
+      tags: [ setup, basic ]
+    # installation of SmartNIC driver 
+    # only runs on smartnic_equipped host
+    - name: smartnic setup
+      when: inventory_hostname == smartnic_equipped
+      include_role:
+        name: roles/setup
+        tasks_from: setup_nexus_smartnic.yml
+        apply:
+          tags: [ setup, smartnic ]
+      tags: [ setup, smartnic ]
+    # ovs node configuration
+    - name: ovs setup
+      include_role:
+        name: roles/setup
+        tasks_from: setup_ovs.yml
+        apply:
+          tags: [ setup, basic ]
+      tags: [ setup, basic ]
+    # prepare traffic priority
+    - name: priority setup
+      include_role:
+        name: roles/setup
+        tasks_from: setup_priority.yml
+        apply:
+          tags: [ setup, basic ]
+      tags: [ setup, basic ]
+    # PTP clock synchronization
+    - name: ptp setup
+      include_role:
+        name: roles/setup
+        tasks_from: setup_ptp.yml
+        apply:
+          tags: [ setup, ptp ]
+      tags: [ setup, ptp ]

@@ -1,5 +1,14 @@
-# Methodology and Infrastructure for TSN-based Reproducible Network Experiments
-This repository containes the EnGINE framework and scenarios used within publication titled: Methodology and Infrastructure for TSN-based Reproducible Network Experiments.
+# EnGINE Framework
+**En**vironment for **G**eneric **I**n-vehicular **N**etworking **E**xperiments (EnGINE) is highly manageable orchestration tool built in Ansible.
+EnGINE a configurable, scalable, flexible, and reproducible setup that operates autonomously (once well configured). It can incorporate various real data sources and recorded footage. Besides, multiple probes can be set up to collect data during the experiment run, such as .pcaps or logs. Such data can be interpreted to provide insights into experiment outcomes. The design allows the reuse of various applications and configurations from different scenarios minimizing the overhead on maintenance.
+
+This repository contains the EnGINE framework and scenarios used within publication titled: Methodology and Infrastructure for TSN-based Reproducible Network Experiments.
+
+This is a supplementary repository of the following list of publications:
+* Marcin Bosk, Filip Rezabek, Kilian Holzinger, Angela Gonzalez Mariño, Abdoul Aziz Kane, Francesc Fons, Jörg Ott, Georg Carle: Methodology and Infrastructure for TSN-Based Reproducible Network Experiments. IEEE Access 10: 109203-109239 (2022), [PDF: Methodology and Infrastructure - IEEE Access 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9910175)
+* Filip Rezabek, Marcin Bosk, Thomas Paul, Kilian Holzinger, Sebastian Gallenmüller, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: EnGINE: Flexible Research Infrastructure for Reliable and Scalable Time Sensitive Networks. J. Netw. Syst. Manag. 30(4): 74 (2022), [PDF: EnGINE - JNSM 2022](https://link.springer.com/content/pdf/10.1007/s10922-022-09686-0.pdf)
+* Filip Rezabek, Marcin Bosk, Thomas Paul, Kilian Holzinger, Sebastian Gallenmüller, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: EnGINE: Developing a Flexible Research Infrastructure for Reliable and Scalable Intra-Vehicular TSN Networks. CNSM 2021: 530-536, [PDF: EnGINE - CNSM/HipNET 2021](http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/rezabek_hipnet2021.pdf)
+* Marcin Bosk, Filip Rezabek, Kilian Holzinger, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: Demo: Environment for Generic In-vehicular Network Experiments - EnGINE. VNC 2021: 117-118, [PDF: Demo - VNC 2021](http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/bosk_vnc2021.pdf)
 
 ## EnGINE Framework Brief Overview
 
@@ -28,48 +37,15 @@ Playbooks are executed from the command line in the top-level inside the reposit
 **Example for post-processing of scenarios:** `ansible-playbook plays/process.yml -vvv -e scene=Figure-9 -e scene_folder=/results/Figure-9`
 
 ### Limitations of This Repository
-**TODO**
-* Say that it needs a hardware deployment
-* Say that initial node orchestration is not available
-* Are we listing all required dependencies of the framework?
+To deploy EnGINE in your infrastructure, you need own hardware that is managed from a central management host that has SSH access to the individual nodes. 
+If you have such deployments on hand, you can update the `host_vars` directory with your corresponding nodes. 
 
-
-<!-- During development some tasks can be skipped in order to test only some parts:
-* List parts that can be skipped: `ansible-playbook plays/scenario.yml --list-tags`
-* Skip clock and network setup:`ansible-playbook plays/scenario.yml -e pgroup=nodes -e scene=<scenario-name> --skip-tags "ptp,network"` -->
-
-
- <!-- **Procedure**
-
- 1. Synchronize Time between hosts (linuxptp)
- 2. Set the correct Linux Network Traffic Control - qdisc (Queuing Discipline)
-	 - etf + taprio - time-aware scheduler in conjunction with time-based transmission (802.1Qbv)
-	 - cbs - credit based shaper (802.1Qav) -->
-
-
-<!-- ## PTP - Time Synchronization
-
-Linux PTP Stack - [linuxptp](http://linuxptp.sourceforge.net/)
- - **ptp4l** -> set network adapter as grandmaster clock or client
- - **phc2sys** -> synchronize network card clock with system clock -->
-
-<!-- ## Linux TSN Scheduling
-
-### ETF qdisc
-Not really TSN feature/requirement! Earliest TxTime First (ETF), enables LaunchTime feature supported by the NIC. Send packets at a specific time. Socket-Option must be set SO_TXTIME. Current timestamp goes to CMSG-section and the time the packet should be sent to the SCM-TXTIME field.
-
-### CBS (802.1Qav)
-
-### TAPRIO (802.1Qbv)
-
-# Links / Documentation
-
- - [Scheduled Tx Tool (taprio + etf)](https://gist.github.com/jeez/bd3afeff081ba64a695008dd8215866f)
- - [Extensive documentation how to use TSN with Linux (VLAN, Qdiscs, gPTP)](https://tsn.readthedocs.io/index.html) -->
-
+For our deployments we are using pos [1]. To find out about the architecture navigate to these publications:
+* [1] Pos
+* [2] EnGINE JNSM 
 
 ## Experiments
-In the following, the experiments used in publication "Methodology and Infrastructure for TSN-based Reproducible Network Experiments" are listed. Of note, this repository only contains the used configurations contained in the [scenarios](scenarios) folder. The actual results are available here: **[TODO]()**
+In the following, the experiments used in publication "Methodology and Infrastructure for TSN-based Reproducible Network Experiments" are listed. Of note, this repository only contains the used configurations contained in the [scenarios](scenarios) folder. The actual results are available here: **[Link to data](https://nextcloud.in.tum.de/index.php/s/sWxadG8JeJss2Sy)**
 
 While this repository contains most of the code of EnGINE framework, without a suitable hardware deployment and adequate configuration of the nodes, it can only be used to evaluate the results of the experiments. This can be achieved using the [process.yml](plays/process.yml) playbook. **As an example for post-processing of scenario Figure-9:** `ansible-playbook plays/process.yml -vvv -e scene=Figure-9 -e scene_folder=/results/Figure-9`
 
@@ -104,20 +80,106 @@ EX_UCC-F | Figure 27b-28b | Use case CBS with individual three flows | Figure-27
 EX_UCT,EX_UCT-F | Table 13 | Use case TAPRIO with individual flow with and without cross-traffic | Table-13_EX_UCT,EX_UCT-F | journal-use-case-version2_taprio_deadlinedeadline_30s,<br>journal-use-case-version2_taprio_deadlinedeadline_justFlow1SRA_30s,<br>journal-use-case-version2_taprio_deadlinedeadline_justFlow2SRA_30s,<br>journal-use-case-version2_taprio_deadlinedeadline_justFlow3SRB_30s,<br>journal-use-case-version2_taprio_deadlinestrict_30s,<br>journal-use-case-version2_taprio_deadlinestrict_justFlow1SRA_30s,<br>journal-use-case-version2_taprio_deadlinestrict_justFlow2SRA_30s,<br>journal-use-case-version2_taprio_deadlinestrict_justFlow3SRB_30s,<br>journal-use-case-version2_taprio_strictdeadline_30s,<br>journal-use-case-version2_taprio_strictdeadline_justFlow1SRA_30s,<br>journal-use-case-version2_taprio_strictdeadline_justFlow2SRA_30s,<br>journal-use-case-version2_taprio_strictdeadline_justFlow3SRB_30s,<br>journal-use-case-version2_taprio_strictstrict_30s,<br>journal-use-case-version2_taprio_strictstrict_justFlow1SRA_30s,<br>journal-use-case-version2_taprio_strictstrict_justFlow2SRA_30s,<br>journal-use-case-version2_taprio_strictstrict_justFlow3SRB_30s |
 
 
-<!-- ## Figure 10
-ansible-playbook plays/process.yml -vv -e scene=Figure-10 -e scene_folder=/srv/testbed/vehiclenet/ieee-access-results/Figure-10
+### Examples of post-processing
 
+## Figure 10
+```
+ansible-playbook plays/process.yml -vv -e scene=Figure-10 -e scene_folder=<local_path>/IEEE-Access-Raw/Figure-10
+```
 ## Figure 17
-ansible-playbook plays/process.yml -vv -e scene=Figure-17_ETF_Params -e scene_folder=/srv/testbed/vehiclenet/experiments/2022-07-17D_ETF_parameterStudyDeltaValues
+```
+ansible-playbook plays/process.yml -vv -e scene=Figure-17_ETF_Params -e scene_folder=<local_path>/IEEE-Access-Raw/Figure-17_ETF_Params
+```
 ## Figure 18
-ansible-playbook plays/process.yml -vv -e scene=Figure-25ab_EX_TS-T,EX_TS-W -e scene_folder=/srv/testbed/vehiclenet/ieee-access-results/Figure-18_TAPRIO_Params 
-
+```
+ansible-playbook plays/process.yml -vv -e scene=Figure-25ab_EX_TS-T,EX_TS-W -e scene_folder=<local_path>/IEEE-Access-Raw/Figure-18_TAPRIO_Params 
+```
 ## Figure 25
-ansible-playbook plays/process.yml -vv -e scene=Figure-25ab_EX_TS-T,EX_TS-W -e scene_folder=/srv/testbed/vehiclenet/experiments/2022-07-19D_journal 
-
+```
+ansible-playbook plays/process.yml -vv -e scene=Figure-25ab_EX_TS-T,EX_TS-W -e scene_folder=<local_path>/IEEE-Access-Raw/Figure-25ab_EX_TS-T,EX_TS-W
+```
 ## Table-11
-ansible-playbook plays/process.yml -vv -e scene=Table-11_EX_TS -e scene_folder=/srv/testbed/vehiclenet/experiments/2022-07-17D_singleFlowClassABTxTimeOffload            
+```
+ansible-playbook plays/process.yml -vv -e scene=Table-11_EX_TS -e scene_folder=<local_path>/IEEE-Access-Raw/Table-11_EX_TS        
+```
 ## Table-12
-ansible-playbook plays/process.yml -vv -e scene=Table-12_EX_TM -e scene_folder=/srv/testbed/vehiclenet/experiments/2022-07-17D_multiFlowClassABBE_180TxTime_175delta_Offload_shift 
+```
+ansible-playbook plays/process.yml -vv -e scene=Table-12_EX_TM -e scene_folder=<local_path>/IEEE-Access-Raw/Table-11_EX_TM
+```
 ## Table 13
-ansible-playbook plays/process.yml -vv -e scene=Table-13_EX_UCT,EX_UCT-F -e scene_folder=/srv/testbed/vehiclenet/experiments/2022-07-17D_multiandSingleFlowTAPRIOUseCase_withandwithoutCross    -->
+```
+ansible-playbook plays/process.yml -vv -e scene=Table-13_EX_UCT,EX_UCT-F -e scene_folder=<local_path>/IEEE-Access-Raw/Table-13_EX_UCT,EX_UCT-F
+```
+
+
+## Citations
+If you want to cite the **Methodology and Infrastructure for TSN-Based Reproducible Network Experiments** publication, use this BibTeX format:
+```
+@article{Bosk2022MethodologyInfrastructureIEEEAccess,
+  author = {Bosk*, Marcin and Rezabek*, Filip and Holzinger, Kilian and Marino, Angela G. and Fons, Francesc and Kane, Abdoul A. and Ott, J{\"o}rg and Carle, Georg},
+  title = {Methodology and Infrastructure for TSN-based Reproducible Network Experiments},
+  journal = {IEEE Access},
+  year = {2022},
+  month = sep,
+  issn = {2169-3536},
+  doi = {10.1109/ACCESS.2022.3211969},
+  url = {https://doi.org/10.1109/ACCESS.2022.3211969},
+  pdf = {https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9910175},
+  month_numeric = {9}
+}
+```
+If you want to cite the **EnGINE: Flexible Research Infrastructure for Reliable and Scalable Time Sensitive Networks** publication, use this BibTeX format:
+
+```
+@article{Rezabek2022EngineJNSM,
+  author = {Rezabek*, Filip and Bosk*, Marcin and Paul, Thomas and Holzinger, Kilian and Gallenm{\"u}ller, Sebastian and Gonzalez, Angela and Kane, Abdoul and Fons, Francesc and Haigang, Zhang and Carle, Georg and Ott, J{\"o}rg},
+  title = {EnGINE: Flexible Research Infrastructure for Reliable and Scalable Time Sensitive Networks},
+  journal = {Journal of Network and Systems Management},
+  year = {2022},
+  month = sep,
+  day = {08},
+  volume = {30},
+  number = {4},
+  pages = {74},
+  issn = {1573-7705},
+  doi = {10.1007/s10922-022-09686-0},
+  url = {https://doi.org/10.1007/s10922-022-09686-0},
+  pdf = {https://link.springer.com/content/pdf/10.1007/s10922-022-09686-0.pdf},
+  month_numeric = {9}
+}
+```
+
+If you want to cite the **EnGINE: Developing a Flexible Research Infrastructure for Reliable and Scalable Intra-Vehicular TSN Networks** publication, use this BibTeX format:
+```
+@inproceedings{RezBosk21,
+  title = {{EnGINE: Developing a Flexible Research Infrastructure for Reliable and Scalable Intra-Vehicular TSN Networks}},
+  author = {Rezabek, Filip and Bosk, Marcin and Paul, Thomas and Holzinger, Kilian and Gallenm\"uller, Sebastian and Gonzalez, Angela and Kane, Abdoul and Fons, Francesc and Haigang, Zhang and Carle, Georg and Ott, J\"org},
+  booktitle = {3rd International Workshop on High-Precision, Predictable, and Low-Latency Networking (HiPNet 2021)},
+  year = {2021},
+  address = {Izmir, Turkey},
+  month = oct,
+  pdf = {http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/rezabek_hipnet2021.pdf},
+  month_numeric = {10}
+}
+```
+If you want to cite the **Demo: Environment for Generic In-vehicular Network Experiments - EnGINE** publication, use this BibTeX format:
+```
+@inproceedings{BoskRez21,
+  title = {{Demo: Environment for Generic In-vehicular Network Experiments - EnGINE}},
+  author = {Bosk, Marcin and Rezabek, Filip and Holzinger, Kilian and Gonzalez, Angela and Kane, Abdoul and Fons, Francesc and Haigang, Zhang and Carle, Georg and Ott, J\"org},
+  booktitle = {13th IEEE Vehicular Networking Confernce (VNC 2021)},
+  year = {2021},
+  address = {Ulm, Germany},
+  month = nov,
+  pdf = {http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/bosk_vnc2021.pdf},
+  month_numeric = {11}
+}
+```
+## Licensing
+The source code of EnGINE is published under the MIT license. Its main contributors are (alphabetically):
+* Marcin Bosk
+* Thomas Paul
+* Filip Rezabek
+
+In case other license applies, it is mentioned in the header of the given file e.g.,`send_udp_tai.c`. 
+Externally libraries that are used as a part of the experiment execution have their corresponding licensing e.g., [linuxptp](http://linuxptp.sourceforge.net/), [iperf3](https://github.com/esnet/iperf).

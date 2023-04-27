@@ -1,0 +1,4 @@
+[Config exp-{{exp_index}}]
+description = "{{exp.name}}"
+extends = {{exp.network}}, exp-{{loop.index}}_{{exp.stack}}, exp-{{loop.index}}_{{exp.action}}
+sim-time-limit = {{ warmup_period + (( [(signal_mode_times | max), (exp.timeout|default(experiment_timeout)|float)] | min  + cooldown_period ) if exp.signal is defined else ( exp.time | default(experiment_time) ) ) }}s

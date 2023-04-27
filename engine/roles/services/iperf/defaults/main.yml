@@ -17,3 +17,53 @@ iperf_client_time: 86400
 # limit connection bitrate - 0 = unlimited
 iperf_client_limit: 0
 
+### simulation
+
+per_submodules_statistics:
+  - {
+    submodules: [
+      { name: sink },
+    ],
+    statistics: [
+      ### statistics exposed via extended module PassivePacketSinkBase
+      ## default statistics for comparison with real-world results:
+      # throughput
+      { name: dataRate, vector_recording: yes, default: yes },
+      # jitter plus packet count (for externally calculating packet loss)
+      { name: packetJitter, result_recording_modes: [vector,vector(count)], vector_recording: yes, default: yes },
+      ## additional statistics:
+      # delay
+      { name: meanBitLifeTimePerPacket, vector_recording: yes },
+#      # related:
+#      { name: packetDelayDifferenceToMean, vector_recording: yes },
+#      { name: packetDelayVariation, vector_recording: yes },
+      ]
+    }
+#  - {
+#    submodules: [
+#      { name: io },
+#    ],
+#    statistics: [
+#      { name: packetReceived, result_recording_modes: [vector(packetBytes)], vector_recording: yes },
+#    ]
+#  }
+  - {
+    submodules: [
+      { name: measurementRecorder },
+    ],
+    statistics: [
+      # statistics per flow, using the flowName parameters set for measurementStarter could be enabled via 'flow: yes'; don't use this since the current experiments use only one flow per service
+#      { name: flowDataRate, vector_recording: yes, flow: yes },
+#      { name: meanBitLifeTimePerPacket, vector_recording: yes, flow: yes },
+#      { name: meanBitElapsedTimePerPacket, vector_recording: yes, flow: yes },
+      { name: meanTotalBitDelayingTimePerPacket, vector_recording: yes, flow: yes },
+      { name: meanTotalBitProcessingTimePerPacket, vector_recording: yes, flow: yes },
+      { name: meanTotalBitQueueingTimePerPacket, vector_recording: yes, flow: yes },
+      { name: meanTotalBitPropagationTimePerPacket, vector_recording: yes, flow: yes },
+      { name: meanTotalBitTransmissionTimePerPacket, vector_recording: yes, flow: yes },
+      { name: meanTotalPacketTransmissionTime, vector_recording: yes, flow: yes },
+#      { name: packetJitter, vector_recording: yes, flow: yes },
+#      { name: packetDelayDifferenceToMean, vector_recording: yes, flow: yes },
+#      { name: packetDelayVariation, vector_recording: yes, flow: yes },
+    ]
+  }

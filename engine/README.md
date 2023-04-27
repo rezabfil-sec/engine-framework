@@ -13,7 +13,6 @@ For every step there is a playbook to execute it.
 All playbooks require one extra parameter that needs to be specified when executing the playbook: "pgroup" is the host group  here all the commands should be applied to. The pgroup name points to a group inside the hosts file.
 
 ### Playbook Execution
-#### Original
 Playbooks are executed from the command line in the top-level inside the repository folder. The folder needs to be on a testbed management node in order to execute the "install" step / playbook.
 
 * Run install:  `ansible-playbook plays/install.yml -e pgroup=nodes`

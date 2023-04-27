@@ -1,0 +1,80 @@
+---
+# Do node specific tasks to be started after the simulation
+
+- name: rename vars based on loop item
+  set_fact:
+    node: '{{ node_item }}'
+    node_alias: '{{ node_alias_item }}'
+  tags: always
+
+- name: load stack and actions
+  set_fact:
+    services: '{{ stacks[experiment.stack].services[node] | default([]) }}'
+    protocol: '{{ stacks[experiment.stack].protocols }}'
+    action: '{{ actions[experiment.action][node] | default([]) }}'
+  tags: always
+
+- name: set node folder
+  set_fact:
+    node_folder: '{{ experiment_folder }}/{{node}}_{{node_alias}}'
+  tags: collect
+
+- name: create node folder
+  file:
+    path: '{{ node_folder }}'
+    mode: '0775'
+    state: directory
+  #delegate_to: localhost
+  tags: collect
+
+# Some services use a module in the corresponding device's app[] vector. For extracting service specific results, the respective index has to be known. Thus, this variable has to be updated by each service with the number of modules used.
+- name: (re-)initialize app_index
+  set_fact:
+    app_index: [0]
+  tags: always
+
+- name: include service specific post-simulation task files
+  include_role:
+    name: 'roles/services/{{ service.name }}'
+    tasks_from: post-simulation.yml
+  loop: '{{ services }}'
+  loop_control:
+    loop_var: service
+  tags: always
+
+- name: initialize/set vars
+  set_fact:
+    used_interfaces: '{{ [] }}'
+    flows_keys: "{{ network[experiment['network']]['flows'].keys()|list }}"
+  tags: collect
+- name: get used interfaces
+  set_fact:
+    used_interfaces: '{{ used_interfaces | union(node_to_flow_to_interfaces_mapping[node][flow|string]|default([])) }}'
+  loop: "{{ flows_keys }}"
+  loop_control:
+    loop_var: flow
+  tags: collect
+
+- name: collect default tcpdump pcap files
+  fetch:
+    src: '{{ file_to_move }}'
+    dest: '{{ node_folder }}/tcpdump_probe_{{ interface }}.pcap'
+    flat: yes
+#    fail_on_missing: no
+  vars:
+    file_to_move: '{{ result_path }}/EngineNetwork.{{ node_alias }}.switch.eth[{{ interface }}].macLayer.pcapRecorder[0].pcap'
+  loop: "{{ used_interfaces }}"
+  loop_control:
+    loop_var: interface
+  tags: collect
+
+- name: collect non-default tcpdump pcap files
+  fetch:
+    src: '{{ result_path }}/{{ node_alias }}/{{ file_to_move }}'
+    dest: '{{ node_folder }}/'
+    flat: yes
+#    fail_on_missing: no
+  loop: "{{ files_to_move[node_alias]|default([]) }}"
+  loop_control:
+    loop_var: file_to_move
+  tags: collect

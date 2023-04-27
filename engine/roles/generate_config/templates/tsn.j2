@@ -1,0 +1,40 @@
+{% for tsn_key, tsn_value in network_value.tsn.items() -%}
+{% for s in tsn_value %}
+{% set node_name = s.split(":")[0] -%}
+{% set ifaces = s.split(":")[1] | default("*") -%}
+{% for iface in ifaces.split(",") -%}
+{% if comments > 1 -%}
+# Config for {{tsn_key}} on {{node_name}}, {{iface}}
+{% endif -%}
+{% set prefix = network_ned_short + "." + node_mapping[node_name] + ".switch.eth[" + iface + "].macLayer.queue" -%}
+{% if comments > 1 -%}
+# Config for schedule:
+{% endif -%}
+{% if 'schedule' in tsnconfigs[tsn_key]['taprio'].keys() -%} 
+{% for s in tsnconfigs[tsn_key]['taprio']['schedule'] -%}
+{% if not s['ignore'] -%}
+{{prefix}}.transmissionGate[{{loop.index - 1}}].typename = "PeriodicGate"
+{{prefix}}.transmissionGate[{{loop.index - 1}}].initiallyOpen = false
+{{prefix}}.transmissionGate[{{loop.index - 1}}].offset = {{s['offset']}}us
+{{prefix}}.transmissionGate[{{loop.index - 1}}].durations = [{{s['durations']|join("us, ")}}us]
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+{% if comments > 1 -%}
+# Config for individual queues:
+{% endif -%}
+{% for queues_key, queues_value in tsnconfigs[tsn_key]['queues'].items() -%}
+{% if comments > 1 -%}
+# Config for key '{{queues_key}}', value '{{queues_values}}':
+{% endif -%}
+{% include "queues_mode/" + queues_value['mode'] + ".j2" %}
+{% endfor -%}
+{% if comments > 1 -%}
+# Priority to queue mapping, based on individual queues:
+{% endif -%}
+{{prefix}}.classifier.defaultGateIndex = {{tsnconfigs[tsn_key]['prio2queue_mapping'][0][0]}}
+{{prefix}}.classifier.mapping = [\
+{{tsnconfigs[tsn_key]['prio2queue_mapping']|join(", \\\n")}}]
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}

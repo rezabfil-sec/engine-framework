@@ -1,0 +1,33 @@
+{% if comments > 1 -%}
+# PTP configuration for mode '{{mode}}':
+{% endif -%}
+{% if mode == 'mac' -%}
+{% for node_key, node_value in node_mapping.items() %}
+{% if node_key in ptp_vars[network_key].keys() -%}
+{% if ptp_vars[network_key][node_key]['slave'] == None -%}
+{{network_ned_short}}.{{ node_value }}.switch.gptp.gptpNodeType = "MASTER_NODE"
+{% elif ptp_vars[network_key][node_key]['master'] -%}
+{{network_ned_short}}.{{ node_value }}.switch.gptp.gptpNodeType = "BRIDGE_NODE"
+{% else -%}
+{{network_ned_short}}.{{ node_value }}.switch.gptp.gptpNodeType = "SLAVE_NODE"
+{% endif -%}
+{% if ptp_vars[network_key][node_key]['master'] -%}
+{% set switch_gptp_masterPorts = [] -%}
+{% for iface in ptp_vars[network_key][node_key]['master'] -%}
+{% if switch_gptp_masterPorts.append("\"eth" + iface + "\"") %}{% endif -%} 
+{% endfor -%}
+{{network_ned_short}}.{{ node_value }}.switch.gptp.masterPorts = [{{switch_gptp_masterPorts|join(", ")}}]
+{% endif -%}
+{% if not ptp_vars[network_key][node_key]['slave'] == None -%}
+{{network_ned_short}}.{{ node_value }}.switch.gptp.slavePort = "eth{{ptp_vars[network_key][node_key]['slave']}}"
+{% endif -%}
+{{network_ned_short}}.{{ node_value }}.switch.gptp.*.statistic-recording = true
+{{network_ned_short}}.{{ node_value }}.switch.gptp.*.vector-recording = true
+{% else -%}
+{{network_ned_short}}.{{ node_value }}.switch.hasTimeSynchronization = false
+{% endif -%}
+{% endfor %}
+{{network_ned_short}}.*.switch.clock.oscillator.driftRate = {{ptp.clock_drift}}
+{% else -%}
+{{network_ned_short}}.*.switch.hasTimeSynchronization = false
+{% endif -%}

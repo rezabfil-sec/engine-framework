@@ -1,0 +1,11 @@
+---
+# Stops the tcpdump processes, if not already done.
+#
+# Note:
+# Currently, resulting pcap files are moved via post.yml. Reason is that for the simulation, default tcpdump instances (for each node on all interfaces used by a flow) are not explicitly realized via service instances, but they are implicitly realized in the ini file via the numPcapRecorders parameter plus default ned file parameters for the packet length to be recored. Additionally, the interfaces to be captured on are processed based on given stack parameters in this service's pre_simulation.yml, thus redoing this processing here would be redundant, so the files to be moved are stored in the variable files_to_move, shared between services. 
+
+# Don't use, to allow running simulations in parallel:
+#- name: stop tcpdump
+#  command: pkill tcpdump
+#  ignore_errors: yes
+#  tags: simulate

@@ -1,0 +1,17 @@
+{% if service.role == 'source' -%}
+{% set typename = 'UdpSourceApp' -%}
+{% set port = service.port | default(service_defaults['send_udp']['source_port']) -%}
+{% set prio = service.prio | default(service_defaults['send_udp']['priority']) -%}
+{% include 'services/io_app.j2' -%}
+{% set module = 'source' -%}
+{% set num_packets = service.number_packets | default(service_defaults['send_udp']['num_packets']) -%}
+{% set interval = service.interval | default(service_defaults['send_udp']['packet_interval']) -%}
+{% set delay = service.delay | default(service_defaults['send_udp']['delay']) -%}
+{% include 'services/tsn_app.j2' -%}
+{% if device_numApps.update({services_key: device_numApps[services_key] + 1}) %}{% endif -%}
+{% elif service.role == 'forward' -%}
+# {{node_mapping[services_key]}}, service {{device_numServices[services_key]}} (send_udp, role 'forward') not implemented
+{% else -%}
+# {{node_mapping[services_key]}}, service {{device_numServices[services_key]}} has invalid role
+{% endif -%}
+{% if device_numServices.update({services_key: device_numServices[services_key] + 1}) %}{% endif -%}

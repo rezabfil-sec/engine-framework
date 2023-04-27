@@ -1,0 +1,6 @@
+{% if comments > 1 -%}
+# Config for nodes:
+{% endif -%}
+{% for node in nodes -%}
+{{network_ned_short}}.has{{node.capitalize()}} = true
+{% endfor %}

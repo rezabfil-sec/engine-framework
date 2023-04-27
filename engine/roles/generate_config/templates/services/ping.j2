@@ -1,0 +1,20 @@
+{% if service.signal is defined and service.signal -%}
+{% if signal_mode_times.append((( service.count | default(10) ) * ( service.interval | default(0.5) )) | float) %}{% endif -%}
+{% endif -%}
+{% set flows = network[exp.network]['flows'] -%}
+{% for flows_key, flows_value in flows.items() -%}
+{% set flow_nodes = flows_value.split(',') -%}
+{% set _,flow_start,_ = flow_nodes[0].split(':') -%}
+{% set _,flow_end,_ = flow_nodes[-1].split(':') -%}
+{% if ( services_key == flow_start and ( ( flow_end in ( service.dest | default(service_defaults['ping']['ping_dest'] ) ) or ( ( service.dest | default(service_defaults['ping']['ping_dest']) ) | length == 0 ) ) ) ) -%}
+{% set dest = 2 -%}
+{% set src = 1 -%}
+{% include "services/ping_app.j2" %}
+{% elif ( services_key == flow_end and ( ( flow_start in ( service.dest | default(service_defaults['ping']['ping_dest'] ) ) or ( ( service.dest | default(service_defaults['ping']['ping_dest']) ) | length == 0 ) ) ) ) -%}
+{% set dest = 1 -%}
+{% set src = 2 -%}
+{% include "services/ping_app.j2" %}
+{% else -%}
+{% endif -%}
+{% endfor -%}
+{% if device_numServices.update({services_key: device_numServices[services_key] + 1}) %}{% endif -%}

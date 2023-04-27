@@ -1,10 +1,19 @@
 # EnGINE Framework
 **En**vironment for **G**eneric **I**n-vehicular **N**etworking **E**xperiments (EnGINE) is highly manageable orchestration tool built in Ansible.
-EnGINE a configurable, scalable, flexible, and reproducible setup that operates autonomously (once well configured). It can incorporate various real data sources and recorded footage. Besides, multiple probes can be set up to collect data during the experiment run, such as .pcaps or logs. Such data can be interpreted to provide insights into experiment outcomes. The design allows the reuse of various applications and configurations from different scenarios minimizing the overhead on maintenance.
+EnGINE a configurable, scalable, flexible, and reproducible setup that operates autonomously (once well configured). It can incorporate various real data sources and recorded footage. Besides, multiple probes can be set up to collect data during the experiment run, such as .pcaps or logs. Such data can be interpreted to provide insights into experiment outcomes. The design allows the reuse of various applications and configurations from different scenarios minimizing the overhead on maintenance. 
+The latest extension includes the translation functionality of the scenario configuration to the OMNeT++ configuration, individual playbooks for running the simulation flow, and results post-processing.
+Reasoning why EnGINE and OMNeT++ have been selected for a hybrid experimentation platform can be found in the submitted paper that appears at [IFIP 2023](https://networking.ifip.org/2023/).
+
+
+The repository is structured as follows:
+* [engine](engine) - contains the modified codebase of the EnGINE framework, which includes provisions for the simulation capability
+* [results](results) - contains the simulation results used for results in the publication
+* [simulation](simulation) - contains the installation scripts for OMNeT++ and provisions for given simulations
 
 This repository contains the EnGINE framework and scenarios used within publication titled: Methodology and Infrastructure for TSN-based Reproducible Network Experiments.
 
 This is a supplementary repository of the following list of publications:
+* Marcin Bosk, Filip Rezabek, Johannes Abel, Max Helm, Kilian Holzinger, Georg Carle, Jörg Ott: Simulation and Practice: A Hybrid Experimentation Platform for TSN. To appear at the [IFIP 2023](https://networking.ifip.org/2023/)
 * Marcin Bosk, Filip Rezabek, Kilian Holzinger, Angela Gonzalez Mariño, Abdoul Aziz Kane, Francesc Fons, Jörg Ott, Georg Carle: Methodology and Infrastructure for TSN-Based Reproducible Network Experiments. IEEE Access 10: 109203-109239 (2022), [PDF: Methodology and Infrastructure - IEEE Access 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9910175)
 * Filip Rezabek, Marcin Bosk, Thomas Paul, Kilian Holzinger, Sebastian Gallenmüller, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: EnGINE: Flexible Research Infrastructure for Reliable and Scalable Time Sensitive Networks. J. Netw. Syst. Manag. 30(4): 74 (2022), [PDF: EnGINE - JNSM 2022](https://link.springer.com/content/pdf/10.1007/s10922-022-09686-0.pdf)
 * Filip Rezabek, Marcin Bosk, Thomas Paul, Kilian Holzinger, Sebastian Gallenmüller, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: EnGINE: Developing a Flexible Research Infrastructure for Reliable and Scalable Intra-Vehicular TSN Networks. CNSM 2021: 530-536, [PDF: EnGINE - CNSM/HipNET 2021](http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/rezabek_hipnet2021.pdf)
@@ -36,6 +45,20 @@ Playbooks are executed from the command line in the top-level inside the reposit
 
 **Example for post-processing of scenarios:** `ansible-playbook plays/process.yml -vvv -e scene=Figure-9 -e scene_folder=/results/Figure-9`
 
+You can try the custom OMNeT++ [project](../simulation/engine) standalone. See [README](../simulation/README) for the required OMNeT++ and INET framework versions.
+
+The translation scripts and templates that generate an INI-file based on an EnGINE scenario definition via YAML files can be found in the Ansible role [generate_ini](roles/generate_ini). In subfolder [files](roles/generate_ini/files), run `./generate_ini.py -o <scenario-name>.ini -m mac <scenario-name>`.
+
+The playbook for running the simulation requires that appropriate versions of OMNeT++ and the INET framework, as well as the custom simulation project are installed at certain locations (see [README](../simulation/README)). We use a [playbook](plays/sim_setup.yml) that does this installation (plus installation of any dependencies) from scratch at a selectable testbed node. See the playbook for details.
+* Run setup:    `ansible-playbook plays/sim_setup.yml -e simulation_node=<node-name>`
+
+Once everything is setup, the actual simulation can be run by passing the respective scenario.
+* Run scenario: `ansible-playbook plays/sim_scenario.yml -e simulation_node=<node-name> -e scene=<scenario-name>`
+
+Processing of the (simulation) result files can be done manually via the script [process.py](roles/process/files/process.py)
+* Run result processing script: `./process.py -d ../../plays -f <folder-with-scenario-results> <scenario-name> -c -p -s`
+  * The `-s` flag is required for the results produced by the simulation playbooks. Without this flag the scripts can also be used to process results produced by the original engine playbooks.
+
 ### Limitations of This Repository
 To deploy EnGINE in your infrastructure, you need own hardware that is managed from a central management host that has SSH access to the individual nodes. 
 If you have such deployments on hand, you can update the `host_vars` directory with your corresponding nodes. 
@@ -50,6 +73,11 @@ In the following, the experiments used in publication "Methodology and Infrastru
 While this repository contains most of the code of EnGINE framework, without a suitable hardware deployment and adequate configuration of the nodes, it can only be used to evaluate the results of the experiments. This can be achieved using the [process.yml](plays/process.yml) playbook. **As an example for post-processing of scenario Figure-9:** `ansible-playbook plays/process.yml -vvv -e scene=Figure-9 -e scene_folder=/results/Figure-9`
 
 The plots used within the aforementioned publication can be plotted using the [Journal Plotting](scripts/plotting/plot_journal.py) script. **Importantly, you need to specify the [path to your folder](scripts/plotting/plot_journal.py#L665) containing all result artefacts!!!** After doing that, the plotting script can be run by switching to the [plotting](scripts/plotting) folder and running `python3 plot_journal.py`. Note that you need to have all dependecies installed. 
+
+### Plotting Script
+To obtain the plots for Figures 4 and 5 of IFIP Publication, you need to first unzip the `results/simulationResults.zip` file and then specify adequate paths in the [plot_paper.py](engine/scripts/plotting/plot_paper.py) script. Please note that you also need to download the results provided with the original EnGINE repository.
+
+We build on top of the EnGINE framework, which cannot be used without a suitable hardware deployment and adequate configuration of the nodes. Nevertheless, it can still be used to evaluate the results of the experiments. This can be achieved using the [process.yml](plays/process.yml) playbook following the similar instructions like for the simulation. To note, you need to download the data provided in the EnGINE repository.
 
 ### Available Experiment Campaigns/Scenarios List
 
@@ -181,5 +209,7 @@ The source code of EnGINE is published under the MIT license. Its main contribut
 * Thomas Paul
 * Filip Rezabek
 
-In case other license applies, it is mentioned in the header of the given file e.g.,`send_udp_tai.c`. 
+In case other license applies, it is mentioned in the header of the given file e.g.,`send_udp_tai.c`.
+Similarly, in case other license applies, it is mentioned in the header of the given file e.g., `Iperf3LikePacketSource.ned`. 
 Externally libraries that are used as a part of the experiment execution have their corresponding licensing e.g., [linuxptp](http://linuxptp.sourceforge.net/), [iperf3](https://github.com/esnet/iperf).
+OMNeT++ is distributed under the Academic Public License. For commercial purposes navigate to the [https://omnest.com/](https://omnest.com/).

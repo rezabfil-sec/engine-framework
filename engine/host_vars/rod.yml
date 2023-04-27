@@ -58,7 +58,9 @@ node_ifaces:
     name: 'eno7'
     mac: '3c:ec:ef:46:69:b6'
     offload: no
+    bandwidth: 10
   11:
     name: 'eno8'
     mac: '3c:ec:ef:46:69:b7'
     offload: no
+    bandwidth: 10

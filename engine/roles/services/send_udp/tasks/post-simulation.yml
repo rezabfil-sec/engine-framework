@@ -1,0 +1,9 @@
+---
+# Tasks to start after the simulation
+
+- fail:
+    msg: "TODO: extract results"
+
+- name: update app_index
+  set_fact:
+    app_index: '{{ app_index + [1] }}'

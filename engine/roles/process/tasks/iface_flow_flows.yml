@@ -1,0 +1,38 @@
+---
+# Calculate list of interfaces based on given stack parameters
+
+- name: Find interfaces on which the service should be started
+  block:
+  - fail:
+      msg: "Only specify either iface or flow/flows, not both at the same time!"
+    when: service.iface is defined and (service.flow is defined or service.flows is defined)
+  - name: Find interfaces based on flows, or use all flow interfaces (default)
+    block:
+    - name: initialize empty list of flows
+      set_fact:
+        flows_keys: "{{ [] }}"
+    - name: add given flows
+      set_fact:
+        flows_keys: "{{ flows_keys | union(service.flow) }}"
+      when: service.flow is defined # if 'flow' in service.keys():
+    - name: add all flows, and thus use all flow interfaces (default)
+      set_fact:
+        flows_keys: "{{ flows_keys | union(network[experiment['network']]['flows'].keys()) }}"
+      when: (service.flows is defined and service.flows) or ( not (service.iface is defined or service.flow is defined or (service.flows is defined and service.flows ) ) ) # if flows in service.keys() and service.flows:
+    - name: initialize empty list of interfaces
+      set_fact:
+        interfaces: "{{ [] }}"
+    - name: find corresponding interfaces
+      set_fact:
+        interfaces: "{{ interfaces | union(node_to_flow_to_interfaces_mapping[node][flow|string]) }}"
+      loop: "{{ flows_keys }}"
+      loop_control:
+        loop_var: flow
+    when: (service.flow is defined or ( service.flows is defined and service.flows )) or ( not (service.iface is defined or service.flow is defined or (service.flows is defined and service.flows)) )
+  - name: use directly provided interfaces
+    set_fact:
+      interfaces: "{{ service.iface }}"
+    when: service.iface is defined
+  - name: remove duplicates
+    set_fact:
+      interfaces: "{{ [] | union(interfaces) }}"

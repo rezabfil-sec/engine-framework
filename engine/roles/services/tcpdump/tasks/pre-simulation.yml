@@ -1,0 +1,66 @@
+---
+# Starts additional tcpdump processes on the pcap files to be produced by the simulation
+#
+# Creates named pipes for the files where the simulation's pcap files will be written to,
+# then starts tcpdump using stack parameters
+#
+# TODO:
+# - Doesn't support default mode to capture on all hardware interfaces (no iface|flow|flows stack paramter)
+#   (the tcpdump instance started by default is fully supported by the simulation and doesn't require additional processing via tcpdump)
+# - Some of the optional stack parameters may not work
+
+- name: 
+  include_role:
+    name: roles/process
+    tasks_from: iface_flow_flows.yml
+    apply:
+      tags: always
+  tags: always
+
+- name: create lists for filenames and corresponding interfaces
+  block:
+  - name: (re-)initialize filenames and corresponding interfaces
+    set_fact:
+      file_names: "{{ [] }}"
+      ifaces: "{{ [] }}"
+  - name: determine filenames and corresponding interfaces; increase service per node per interface counter
+    set_fact:
+      file_names: "{{ file_names | default([]) + [( result_path  + '/EngineNetwork.' + node_alias + '.switch.eth[' + interface + '].macLayer.pcapRecorder[' + ( ( num_tcpdump_per_interface[node][interface] | default(0) ) + 1 ) | string + '].pcap')] }}" # TODO: do not hardcode topo
+      ifaces: "{{ ifaces | default([]) + [ interface ] }}"
+      num_tcpdump_per_interface: "{{ num_tcpdump_per_interface | default({}) | combine( { node: { interface: ( num_tcpdump_per_interface[node][interface] | default(0) ) + 1 } } ) }}"
+    loop: "{{ interfaces }}"
+    loop_control:
+      loop_var: interface
+  tags: always
+
+- name: make named pipe
+  command: mkfifo {{ file_name }}
+  loop: "{{ file_names }}"
+  loop_control:
+    loop_var: file_name
+  tags: simulate
+- name: start tcpdump
+  command: >
+    tcpdump -r {{ file_name }} -n -j adapter_unsynced -tt --time-stamp-precision=nano
+    -w {{ result_path }}/{{ node_alias }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
+    {{ "-s " + (service.size|string) if service.size is defined else ""}}
+    {{ "-c " + (service.count|string) if service.count is defined else ""}}
+    {{ "-W 1 -G " + (service.time|string) if service.time is defined else ""}}
+    "{{ ( "(" + service.filter + ") or (vlan and " + service.filter + ")" ) if service.filter is defined else ""}}"
+  async: 2592000  # run in background - for 1 month or until finished/killed
+  poll: 0
+  vars:
+    file_name: '{{ item.0 }}'
+    iface: '{{ item.1 }}'
+  loop: "{{ file_names | zip(ifaces) | list }}"
+  tags: simulate
+
+- name: remember files to be moved
+  set_fact:
+    files_to_move: "{{ files_to_move | combine( { node_alias : ( ( files_to_move[node_alias] | default([]) ) + [tcpdump_filename] ) } ) }}"
+  vars:
+    tcpdump_filename: 'tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap'
+  loop: "{{ ifaces }}"
+  loop_control:
+    loop_var: iface
+  tags: collect

@@ -1,0 +1,50 @@
+{% macro flow_address(flow, value_if_start, value_if_end) -%}
+{% set flow_nodes = flow.split(',') -%}
+{% set _,flow_start,start_iface = flow_nodes[0].split(':') -%}
+{% set end_iface,flow_end,_ = flow_nodes[-1].split(':') -%}
+{% if services_key == flow_start -%}{{value_if_start}}{% elif services_key == flow_end -%}{{value_if_end}}{% endif -%}
+{% endmacro -%}
+{% if service.signal is defined and service.signal -%}
+{% if signal_mode_times.append( service.time | default('inf') | float ) %}{% endif -%}
+{% endif -%}
+{% if service.role == 'client' -%}
+{% if service.udp is defined and service.udp -%}
+{% set typename = 'UdpSourceApp' -%}
+{% else -%}
+{% set typename = 'TcpClientApp' -%}
+{% endif -%}
+{% set port = service.port | default(service_defaults['iperf']['iperf_port']) %}
+{%include 'services/io_app.j2' %}
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".device.app[" + device_numApps[services_key]|string + "].source" -%}
+{{prefix}}.typename = "Iperf3LikePacketSource"
+{{prefix}}.initialProductionOffset = {{warmup_period}}s
+{% set packet_size = service.size | default(default_packet_size.udp if typename == 'UdpSourceApp' else default_packet_size.tcp) -%}
+{% set flow_nodes = network[exp.network]['flows'][service.flow].split(',') -%}
+{% set _,flow_start,start_iface = flow_nodes[0].split(':') -%}
+{% set end_iface,flow_end,_ = flow_nodes[-1].split(':') -%}
+{% if services_key == flow_start -%}{% set iface = start_iface %}{% elif services_key == flow_end -%}{% set iface = end_iface %}{% endif -%}
+{{prefix}}.productionInterval = {{ ( ( ( 8 * packet_size * 1000000000 ) / ( service.limit | float ) ) | int ) if ( service.limit is defined and service.limit > 0 ) else ( ( 8 * (packet_size + default_header_size['udp' if service.udp is defined and service.udp else 'tcp'] ) / ( host_vars[node_mapping[services_key]]['node_ifaces'][(iface|int)]['bandwidth'] | default (1) | float ) ) | int ) }}ns
+{{prefix}}.packetLength = {{packet_size}}B
+{% if service.time is defined -%}
+{{prefix}}.productionStopTime = {{warmup_period + ( service.time | default(service_defaults['iperf']['iperf_client_time']) ) if ( service.time | default(service_defaults['iperf']['iperf_client_time']) ) > 0 else 0}}s
+{% endif -%}
+{% if device_numApps.update({services_key: device_numApps[services_key] + 1}) %}{% endif -%}
+{% elif service.role == 'server' -%}
+{% set port = service.port | default(service_defaults['iperf']['iperf_port']) -%}
+{% set typename = "UdpSinkApp" -%}
+{%include 'services/io_app.j2' %}
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".device.app[" + device_numApps[services_key]|string + "]" -%}
+{%include 'services/statistics.j2' %}
+{% if device_numApps.update({services_key: device_numApps[services_key] + 1}) %}{% endif -%}
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".device.app[" + device_numApps[services_key]|string + "]" -%}
+{{prefix}}.typename = "TcpSinkApp"
+{{prefix}}.display-name = "s-{{device_numServices[services_key]}}_{{service.name}}_{{service.role}}_{{typename}}_flow-{{service.flow}}"
+{{prefix}}.localAddress = "10.0.{{service.flow}}.{{flow_address(
+network[exp.network]['flows'][service.flow],1,2)}}"
+{{prefix}}.localPort = {{port}}
+{{prefix}}.packetReceived.statistic-recording = true
+{{prefix}}.packetReceived:vector(packetBytes).vector-recording = true
+{% if device_numApps.update({services_key: device_numApps[services_key] + 1}) %}{% endif -%}
+{% else -%}
+{% endif -%}
+{% if device_numServices.update({services_key: device_numServices[services_key] + 1}) %}{% endif -%}

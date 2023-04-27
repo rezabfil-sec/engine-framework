@@ -1,0 +1,26 @@
+{% set network_ned_short = network_ned.split('.')[-1] -%}
+[General]
+
+description = "{{ scene }}, comment level {{comments}}"
+
+output-vector-file = "results/${inifile}/${configname}/${runnumber}.vec"
+output-scalar-file = "results/${inifile}/${configname}/${runnumber}.sca"
+
+network = {{ network_ned }}
+warmup-period = {{ warmup_period }}s
+
+**.param-recording = false
+**.statistic-recording = false
+**.bin-recording = false
+**.scalar-recording = false
+**.vector-recording = false
+
+{% include "nodes.j2" -%}
+{% include "network.j2" -%}
+{% for exp in experiments -%}
+{% set exp_index = loop.index -%}
+{% set signal_mode_times = [0] -%}
+{% include "actions.j2" -%}
+{% include "stack.j2" -%}
+{% include "experiment.j2" -%}
+{% endfor -%}

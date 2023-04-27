@@ -1,0 +1,35 @@
+---
+# Do node specific tasks to be started before the simulation is run
+
+- name: rename vars based on loop item
+  set_fact:
+    node: '{{ node_item }}'
+    node_alias: '{{ node_alias_item }}'
+  tags: always
+
+- name: load stack and actions
+  set_fact:
+    services: '{{ stacks[experiment.stack].services[node] | default([]) }}'
+    protocol: '{{ stacks[experiment.stack].protocols }}'
+    action: '{{ actions[experiment.action][node] | default([]) }}'
+  tags: always
+
+- name: (re-) initialize dict for shared info between this node's tcpdump services
+  set_fact:
+    num_tcpdump_per_interface: "{{ {} }}"
+  tags: always
+
+- name: create directory
+  file:
+    path: '{{ result_path }}/{{ node_alias }}'     
+    state: directory
+  tags: simulate
+
+- name: include service specific pre-simulation task files
+  include_role:
+    name: 'roles/services/{{ service.name }}'
+    tasks_from: pre-simulation.yml
+  loop: '{{ services }}'
+  loop_control:
+    loop_var: service
+  tags: always

@@ -1,0 +1,140 @@
+---
+# Coordinate and run experiment
+
+# Based on roles/experiment/tasks/main.yml
+
+# ---------------------- Load variables --------------------------
+
+- block:
+  - name: set vars, round one
+    set_fact:
+      ini_file: '{{ scene }}.ini'
+      experiment_config: 'exp-{{ experiment_index + 1 }}'
+  - name: set vars, round two
+    set_fact:
+      result_path: '{{simulation.setup.engine.location}}/{{simulation.setup.engine.dir}}/simulations/results/{{ ini_file }}/{{ experiment_config }}'
+  - name: (re-) initialize dict for remembering files to be moved after the simulation (used by tcpdump)
+    set_fact:
+      files_to_move: "{{ {} }}"
+  tags: always
+
+# network variables
+- name: load network paths
+  set_fact:
+    flows: '{{ network[experiment.network].flows }}'
+  tags: always
+
+# merge scenario and pre-defined flows
+- include_vars: '../../../scenarios/topologies/{{ network[experiment.network].topo_flows }}.yml'
+  when: network[experiment.network].topo_flows is defined
+  tags: always
+- name: load pre-defined network paths
+  set_fact:
+    flows: '{{ flows | combine(basic_flows) }}'
+  when: network[experiment.network].topo_flows is defined and basic_flows is defined and basic_flows | length > 0
+  tags: always
+
+# ---------------------- Output folders --------------------------
+
+- name: set experiment folder
+  set_fact:
+    experiment_folder: '{{ hostvars["localhost"]["scene_folder"] }}/{{ experiment_index}}_{{experiment.network}}_{{experiment.stack}}_{{experiment.action}}{{ "_" + experiment.name if experiment.name is defined else ""}}'
+  tags: collect
+
+- name: create experiment folder
+  file:
+    path: '{{ experiment_folder }}'
+    mode: '0775'
+    state: directory
+  #delegate_to: localhost
+  tags: collect
+
+- name: clear data from previous experiments
+  file:
+    path: '{{ result_path }}'
+    state: absent
+  tags: simulate
+
+# ------------------- pre-simulation tasks -----------------------
+
+- name: calculate additonal information to be used by tcpdump services
+  block:
+  - name: store flows in a file
+    copy:
+      content: "{{ flows | tojson }}"
+      dest: "{{ script_path }}/flows.json"
+  - name: store tsn in a file
+    copy:
+      content: "{{ network[experiment.network].tsn | tojson }}"
+      dest: "{{ script_path }}/tsn.json"
+  - name: use script to calculate additional information
+    script: files/process_mappings.py -f {{ script_path }}/flows.json -t {{ script_path }}/tsn.json
+    register: processed_raw
+    args:
+      chdir: '{{ script_path }}'
+  - name: delete file
+    file:
+      path: '{{ script_path }}/flows.json'
+      state: absent
+  - name: delete file
+    file:
+      path: '{{ script_path }}/tsn.json'
+      state: absent
+  - name: set variable
+    set_fact:
+      node_to_flow_to_interfaces_mapping: '{{ processed_raw.stdout_lines[-1] }}'
+      node_to_interface_to_tsn_mapping: '{{ processed_raw.stdout_lines[-2] }}'
+  tags: always
+
+- name: execute node specific pre-simulation tasks
+  include_role:
+    name: roles/simulation
+    tasks_from: pre.yml
+  vars:
+    node_item: '{{ item.key }}'
+    node_alias_item: '{{ item.value }}'
+  loop: '{{ node_mapping | dict2items }}'
+  tags: always
+
+# ---------------------- run simulation --------------------------
+
+- name: simulate experiment
+  command: >
+    ../src/engine -r 0 -m -u Cmdenv -c {{ experiment_config }} --cmdenv-redirect-output=true --cmdenv-output-file=${resultdir}/${inifile}/${configname}/${iterationvarsf}#${repetition}.out
+    -n .:../src:{{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/examples:{{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/showcases:{{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/src:{{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/tests/validation:{{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/tests/networks:{{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/tutorials
+    -x inet.common.selfdoc;inet.linklayer.configurator.gatescheduling.z3;inet.emulation;inet.showcases.visualizer.osg;inet.examples.emulation;inet.showcases.emulation;inet.transportlayer.tcp_lwip;inet.applications.voipstream;inet.visualizer.osg;inet.examples.voipstream
+    --image-path={{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/images -l {{simulation.setup.inet.location}}/{{simulation.setup.inet.dir}}/src/INET {{ ini_file }}
+  args:
+    chdir: '{{simulation.setup.engine.location}}/{{simulation.setup.engine.dir}}/simulations'
+  ignore_errors: True
+  tags: simulate
+
+# ------------------- post-simulation tasks ----------------------
+
+- name: execute node specific post-simulation tasks
+  include_role:
+    name: roles/simulation
+    tasks_from: post.yml
+  vars:
+    node_item: '{{ item.key }}'
+    node_alias_item: '{{ item.value }}'
+  loop: '{{ node_mapping | dict2items }}'
+  tags: always
+
+- name: collect node independent files
+  fetch:
+    src: '{{ result_path }}/{{ item }}'
+    dest: '{{ experiment_folder }}/'
+    flat: yes
+  loop:
+    - '0.vci'
+    - '0.vec'
+    - '0.sca'
+    - '#0.out'
+  tags: collect
+
+- name: delete experiment specific result files
+  file:
+    path: '{{ result_path }}'
+    state: absent
+  tags: collect

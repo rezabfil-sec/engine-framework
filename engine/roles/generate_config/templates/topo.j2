@@ -1,0 +1,22 @@
+package engine.networks.topology;
+
+import {{nodes_ned}};
+import engine.node.EngineLink*;
+
+{% if comments > 0 -%}
+// auto generation based on {{topo}}
+// comment level {{comments}}
+{% endif -%}
+network {{name}} extends {{nodes_ned.split('.')[-1]}}
+{
+    connections allowunconnected:
+        {%- for basic_flows_key, basic_flows_value in basic_flows.items() %}
+        {% set flow_nodes = basic_flows_value.split(',') -%}
+        {% set _,flow_start,start_iface = flow_nodes[0].split(':') -%}
+        {% set end_iface,flow_end,_ = flow_nodes[-1].split(':') -%}
+        {% if comments > 0 -%}
+        // basic_flow {{basic_flows_key}}:
+        {% endif -%}
+        {{node_mapping[flow_start]}}.ethg[{{start_iface}}] <--> EngineLink{{('%0.1f'|format(([(host_vars[node_mapping[flow_start]]['node_ifaces'][start_iface|int]['bandwidth']|default(1)|float), (host_vars[node_mapping[flow_end]]['node_ifaces'][end_iface|int]['bandwidth']|default(1)|float)] | min))).split('.')|join('_')}}G <--> {{node_mapping[flow_end]}}.ethg[{{end_iface}}] if exists({{node_mapping[flow_start]}}) && exists({{node_mapping[flow_end]}});
+        {%- endfor %}
+}

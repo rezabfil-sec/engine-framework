@@ -1,0 +1,96 @@
+---
+# Extract results from base .sca and .vec files
+# First extract all service specific results to separate .vec and .sca files
+# Second extract those vector statistics which can be used for comparison with the real world testbed to individual csv files
+# 
+# Requires some variables to be set beforhand (see first task), i.e.
+# - the base module that is relevant for the service, e.g. an instance in the app[] array,
+# - a string that will be used for created files
+#
+# Uses the statistics defined in the service's default variable file 
+
+- name: calculate additonal information
+  block:
+  - name: store statistics per submodules in a file
+    copy:
+      content: "{{ per_submodules_statistics | tojson }}"
+      dest: "{{ script_path }}/per_submodules_statistics.json"
+  - name: calculate statistic submodules and names # required for step 1
+    script: files/stat.py -p {{ script_path }}/per_submodules_statistics.json -i "{{ indexes|default([])|join(',') }}"
+    register: submodules_names_list_raw
+    args:
+      chdir: '{{ script_path }}'
+  - name: calculate list of default statistic names joined with submodules # required for step 2
+    script: files/stat.py -d -p {{ script_path }}/per_submodules_statistics.json -i "{{ indexes|default([])|join(',') }}"
+    register: default_statistics_list_raw
+    args:
+      chdir: '{{ script_path }}'
+  - name: delete file
+    file:
+      path: '{{ script_path }}/per_submodules_statistics.json'
+      state: absent
+  - name: set variables
+    set_fact:
+      submodules_names_list: '{{ submodules_names_list_raw.stdout_lines[-1] }}'
+      default_statistics_list: '{{ default_statistics_list_raw.stdout_lines[-1] }}'
+  tags: collect
+
+- name: set var
+  set_fact:
+    opp_scavetool: '{{simulation.setup.opp.location}}/{{simulation.setup.opp.dir}}/{{simulation.setup.opp.scavetool}}'
+  tags: collect
+
+# step 1:
+- name: export service specific statistics to separate files
+  block:
+  - name: prepare opp_scavetool filter
+    block:
+    - name: initialize filter statistics
+      set_fact:
+        filter_statistics: []
+    - name: update filter statistics 
+      set_fact:
+        filter_statistics: '{{ filter_statistics + [filter_statistics_append] }}'
+      vars:
+        submodules: '{{item.0}}'
+        statistics: '{{item.1}}'
+        filter_statistics_append: (((module =~ "{{module}}.{{ item.0|join('") OR (module =~ "' + (module) + '.') }}")) AND ((name =~ "{{ item.1|join('") OR (name =~ "') }}")))
+      loop: '{{submodules_names_list}}'
+    - name: set filter
+      set_fact:
+        filter: type =~ vector AND ({{filter_statistics|join(' OR ')}})
+  - name: export statistics to separate files
+    block:
+    - name: export scalar and vector files
+      command: >
+        {{ opp_scavetool }} x -f '{{filter}}' -o {{ result_path }}/{{ node_alias }}/{{file_name_base}}.{{item}} -T vsth {{ result_path }}/0.{{item}}
+      register: result
+      with_items:
+        - 'sca'
+        - 'vec'
+    - name: remember files to be moved
+      set_fact:
+        files_to_move: "{{ files_to_move | combine( { node_alias : ( ( files_to_move[node_alias] | default([]) ) + [ file_name_base + '.' + item.item ] ) } ) }}"
+      when: '"Exported empty data set" not in item.stdout'
+      with_items: '{{result.results}}'
+  tags: collect
+
+# step 2:
+- name: export service specific default statistics to individual csv files
+  block:
+  - name: export csv files
+    command: >
+      {{ opp_scavetool }} x -f 'type =~ vector AND module =~ "{{module}}.{{submodule}}" AND name =~ "{{name}}"' -o {{ result_path }}/{{ node_alias }}/{{file_name_base}}_{{submodule}}-{{name}}.csv -T vsth -F CSV-S {{ result_path }}/{{ node_alias }}/{{file_name_base}}.vec
+    vars:
+      submodule: '{{item.0}}'
+      name: '{{item.1}}'
+    loop: '{{default_statistics_list}}'
+  - name: remember files to be moved
+    set_fact:
+      files_to_move: "{{ files_to_move | combine( { node_alias : ( ( files_to_move[node_alias] | default([]) ) + [ file_name ] ) } ) }}"
+    vars:
+      file_name: "{{file_name_base}}_{{item.0}}-{{item.1}}.csv"
+      submodule: '{{item.0}}'
+      name: '{{item.1}}'
+    loop: '{{default_statistics_list}}'
+  tags: collect

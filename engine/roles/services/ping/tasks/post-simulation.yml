@@ -1,0 +1,11 @@
+---
+# Tasks to start after the simulation
+
+- fail:
+    msg: "TODO: extract results"
+
+- fail:
+    msg: "TODO: update app_index"
+#- name: "TODO update app_index"
+#  set_fact:
+#    app_index: '{{ app_index +  }}'

@@ -1,0 +1,6 @@
+{% set actions_key = exp.action %}
+{% set actions_value = actions[exp.action] %}
+[Config exp-{{exp_index}}_{{actions_key}}]
+{% if comments > 0 -%}
+# Actions aren't supported!
+{% endif -%}

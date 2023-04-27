@@ -1,0 +1,19 @@
+{% if comments > 1 -%}
+# Config for networks:
+{% endif -%}
+{% for network_key,network_value in network.items() %}
+[Config {{network_key}}]
+{% if comments > 0 -%}
+{% if network_value.name is defined -%}
+# {{network_value.name}}
+{% endif -%}
+{% endif -%}
+{% include "ptp.j2" %}
+{% include "tsn.j2" -%}
+{% include "flows.j2" -%}
+{% if network_value.check is defined and network_value.check -%}
+{% if comments > 1 -%}
+# No config based on variable check
+{% endif -%}
+{% endif -%}
+{% endfor %}

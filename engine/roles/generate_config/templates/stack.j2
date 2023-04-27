@@ -1,0 +1,53 @@
+{% set stacks_key = exp.stack %}
+{% set stacks_value = stacks[exp.stack] %}
+[Config exp-{{exp_index}}_{{stacks_key}}]
+{% if comments > 0 -%}
+{% if stacks_value.name is defined -%}
+# {{stacks_value.name}}
+{% endif -%}
+{% endif -%}
+{% set device_numServices = dict() -%}
+{% set device_numApps = dict() -%}
+{% set device_bridging_streamIdentifier_identifier_mapping = dict() -%}
+{% set device_bridging_streamCoder_encoder_mapping = dict() -%}
+{% set switch_eth_macLayer_numPcapRecorders = dict() -%}
+{% for node_mapping_key, node_mapping_value in node_mapping.items() -%}
+{% if device_numServices.update({node_mapping_key: 0}) %}{% endif -%}
+{% if device_numApps.update({node_mapping_key: 0}) %}{% endif -%}
+{% if device_bridging_streamIdentifier_identifier_mapping.update({node_mapping_key: []}) %}{% endif -%}
+{% if device_bridging_streamCoder_encoder_mapping.update({node_mapping_key: []}) %}{% endif -%}
+{% if switch_eth_macLayer_numPcapRecorders.update({node_mapping_key: dict()}) %}{% endif -%}
+{% endfor -%}
+{% for services_key in node_mapping.keys() %}
+{% set services_value = stacks_value.services[services_key] -%}
+{% if comments > 1 -%}
+# Config for {{services_key}}:
+{% endif -%}
+{% for service in services_value -%}
+{% set interfaces = [] -%}
+{% if comments > 1 -%}
+# Config for {{service.name}}:
+{% endif -%}
+{% include "services/" + service.name + ".j2" -%}
+{% endfor -%}
+{% if comments > 1 -%}
+# Config for general parameters:
+{% endif -%}
+{% if device_numApps[services_key] > 0 -%}
+{{network_ned_short}}.{{node_mapping[services_key]}}.device.numApps = {{device_numApps[services_key]}}
+{% if device_bridging_streamIdentifier_identifier_mapping[services_key].append("{packetFilter: \"*\", stream: \"all\"}") %}{% endif -%}
+{{network_ned_short}}.{{node_mapping[services_key]}}.device.bridging.streamIdentifier.identifier.mapping = [{{device_bridging_streamIdentifier_identifier_mapping[services_key]|join(", ")}}]
+{% if device_bridging_streamCoder_encoder_mapping[services_key].append("{stream: \"all\", vlan: " + group_vars['all']['iface_vlan_id'] + "}") %}{% endif -%}
+{{network_ned_short}}.{{node_mapping[services_key]}}.device.bridging.streamCoder.encoder.mapping = [{{device_bridging_streamCoder_encoder_mapping[services_key]|join(", ")}}]
+{% endif -%}
+{% for interface in network[exp.network]['node_to_used_interfaces_mapping'][services_key] -%}
+{{network_ned_short}}.{{node_mapping[services_key]}}.switch.eth[{{interface}}].macLayer.numPcapRecorders = {{1 + ( switch_eth_macLayer_numPcapRecorders[services_key][interface] | default(0) ) }}
+{% endfor -%}
+{% endfor -%}
+{% if stacks_value.protocols is defined -%}
+{% for protocols_key, protocols_value in stacks_value.protocols.items() -%}
+{% if comments > 1 -%}
+# Protocols aren't supported!
+{% endif -%}
+{% endfor -%}
+{% endif -%}

@@ -1,0 +1,41 @@
+{#
+Sets basic parameters for INET apps that share a similar architecture, i.e. have a 'io' submodule: TcpClientApp (iperf, role 'client', tcp mode), UdpSinkApp (iperf, role 'server'), and UdpSourceApp (iperf, role 'client', udp mode; send_udp)
+When including this template, the variable 'typename' has to be set, i.e:
+{% set typename = '[...]App'
+{% include '[...]/io_app.j2' %}
+-#}
+{% macro remote(typename) -%}
+{% if ('Tcp' in (typename | string)) %}connect{% elif ('Udp' in (typename | string)) %}dest{% else %}{# All typenames either have 'Tcp' or 'Udp' as substring.#}{% endif -%}
+{% endmacro -%}
+{% macro transport(typename) -%}
+{% if 'Tcp' in (typename | string) %}Tcp{% elif 'Udp' in (typename | string) %}Udp{% else %}{# All typenames either have 'Tcp' or 'Udp' as substring.#}{% endif -%}
+{% endmacro -%}
+{% macro local_port(typename) -%}
+{% if typename == 'UdpApp' %}{{port + 1}}{% else %}{{port}}{% endif -%}
+{% endmacro -%}
+{% macro remote_port(typename) -%}
+{% if typename == 'RecvSendUdpApp' %}{{port + 1}}{% else %}{{port}}{% endif -%}
+{% endmacro -%}
+{% macro flow_address(flow, value_if_start, value_if_end) -%}
+{% set flow_nodes = flow.split(',') -%}
+{% set _,flow_start,start_iface = flow_nodes[0].split(':') -%}
+{% set end_iface,flow_end,_ = flow_nodes[-1].split(':') -%}
+{% if services_key == flow_start -%}{{value_if_start}}{% elif services_key == flow_end -%}{{value_if_end}}{% endif -%}
+{% endmacro -%}
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".device.app[" + device_numApps[services_key]|string + "]" -%}
+{{prefix}}.typename = "{{typename}}"
+{{prefix}}.display-name = "s-{{device_numServices[services_key]}}_{{service.name}}_{{service.role}}_{{typename}}_flow-{{service.flow}}"
+{% if typename in ['UdpApp', 'RecvSendUdpApp', 'UdpSourceApp', 'TcpClientApp'] -%}
+{% if device_bridging_streamIdentifier_identifier_mapping[services_key].append("{packetFilter: expr(has(Ipv4Header) && has(" + transport(typename) + "Header) && " + transport(typename) + "Header.destinationPort == " + (((port + 1) |string) if service.role == 'server' else port |string) + "), stream: \"s-" + device_numServices[services_key]|string + "\"}") %}{% endif -%}
+{% if device_bridging_streamCoder_encoder_mapping[services_key].append("{stream: \"s-" + device_numServices[services_key]|string + "\", pcp: " + service.prio|default(0)|string + ", vlan: " + group_vars['all']['iface_vlan_id'] + "}") %}{% endif -%}
+{{prefix}}.io.{{remote(typename)}}Address = "10.0.{{service.flow}}.{{flow_address(network[exp.network]['flows'][service.flow],2,1)}}"
+{{prefix}}.io.{{remote(typename)}}Port = {{remote_port(typename)}}
+{{prefix}}.measurementStarter.typename = "FlowMeasurementStarter"
+{{prefix}}.measurementStarter.flowName = "{{services_key}}_{{service.name}}_{{service.role|default("")}}_{{service.flow|default("")}}_{{service.port|default("")}}"
+{% endif -%}
+{{prefix}}.io.localAddress = "10.0.{{service.flow}}.{{flow_address(
+network[exp.network]['flows'][service.flow],1,2)}}"
+{% if typename in ['UdpApp', 'RecvSendUdpApp', 'UdpSinkApp', 'TcpClientApp'] -%}
+{{prefix}}.io.localPort = {{local_port(typename)}}
+{{prefix}}.measurementRecorder.typename = "FlowMeasurementRecorder"
+{% endif -%}

@@ -1,0 +1,53 @@
+---
+# Tasks to start after the simulation
+
+- name: use task file to export service specific modules
+  block:
+  - name: set variables
+    set_fact:
+      module: '{{ "EngineNetwork." + node_alias + ".device.app[" + app_index|sum|string + "]" }}'
+      file_name_base: '{{ "iperf_server_" + service.port|string }}'
+    tags: collect
+  - name: export service specific results
+    include_role:
+      name: roles/process
+      tasks_from: export.yml
+  when: service.role == "server"
+  tags: collect
+
+# Only process iperf server log files = more information
+- block:
+  - name: set iperf file name base
+    set_fact:
+      iperf_file_name_base: "{{ result_path }}/{{ node_alias }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}"
+  # Convert csv files into single csv file and create two graphs
+  - name: create iperf graph per log file
+    script: files/iperf_process.py -f {{ iperf_file_name_base }}
+    register: raw_iperf_artefacts
+  - name: set graph artefacts
+    set_fact:
+      iperf_artefacts: '{{ raw_iperf_artefacts.stdout_lines[-1] }}'
+  # collect and delete post-processing artefacts
+  - name: collect iperf post-processing artefacts
+    fetch:
+      src: '{{ artefact_file }}'
+      dest: '{{ node_folder }}/'
+      flat: yes
+    loop: "{{ iperf_artefacts }}"
+    loop_control:
+      loop_var: artefact_file
+  - name: delete iperf post-processing artefacts
+    file:
+      path: '{{ artefact_file }}'
+      state: absent
+    loop: "{{ iperf_artefacts }}"
+    loop_control:
+      loop_var: artefact_file
+  # block condition
+  when: 'service.role == "server"'
+  tags: collect
+
+- name: update app_index # uses tcp and udp sink module
+  set_fact:
+    app_index: '{{ app_index + ([1] if service.role == "client" else [2]) }}'
+  tags: collect

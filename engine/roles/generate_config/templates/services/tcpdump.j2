@@ -1,0 +1,12 @@
+{% include "services/iface_flow_flows.j2" %}
+{% for interface in interfaces -%}
+{% if interface in switch_eth_macLayer_numPcapRecorders[services_key].keys() -%}
+{% if switch_eth_macLayer_numPcapRecorders[services_key].update({interface : switch_eth_macLayer_numPcapRecorders[services_key][interface] + 1}) %}{% endif -%}
+{% else -%}
+{% if switch_eth_macLayer_numPcapRecorders[services_key].update({interface : 1}) %}{% endif -%}
+{% endif -%}
+{% if service.size is defined -%}
+{{network_ned_short}}.{{node_mapping[services_key]}}.switch.eth[{{interface}}].macLayer.pcapRecorder[{{switch_eth_macLayer_numPcapRecorders[services_key][interface]}}].snaplen = {{service.size}}
+{% endif -%}
+{% endfor -%}
+{% if device_numServices.update({services_key: device_numServices[services_key] + 1}) %}{% endif -%}

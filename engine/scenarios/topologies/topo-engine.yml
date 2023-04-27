@@ -1,0 +1,64 @@
+---
+# Master Topology 
+
+nodes:
+  - milhouse
+  - otto
+  - ralph
+  - abe
+  - nelson
+  - maggie
+  - bart
+  - marge
+  - homer
+  - ned
+  - rod
+  - todd
+
+node_mapping:
+  node-1: milhouse
+  node-2: otto
+  node-3: ralph
+  node-4: abe
+  node-5: nelson
+  node-6: maggie
+  node-7: bart
+  node-8: marge
+  node-9: homer
+  nodex-10: ned
+  nodex-11: rod
+  nodex-12: todd
+
+basic_flows:
+  51: ':node-1:1,4:node-5:'
+  52: ':node-2:1,4:node-1:'
+  53: ':node-2:2,4:node-6:'
+  54: ':node-3:1,3:node-1:'
+  55: ':node-3:3,3:node-5:'
+  56: ':node-4:1,3:node-6:'
+  57: ':node-4:2,3:node-2:'
+  58: ':node-5:1,2:node-6:'
+  59: ':node-7:1,4:node-4:'
+  60: ':node-8:2,3:node-7:'
+  61: ':node-9:1,4:node-8:'
+  62: ':node-9:2,2:node-7:'
+  65: ':node-10:1,1:node-8:'
+  66: ':node-10:2,4:node-9:'
+  67: ':node-10:3,4:node-2:'
+  68: ':node-10:4,3:node-4:'
+  69: ':node-10:5,2:node-3:'
+  70: ':node-10:6,2:node-5:'
+  71: ':node-10:7,2:node-1:'
+  72: ':node-10:10,10:node-12:'
+  73: ':node-10:11,10:node-11:'
+  74: ':node-11:1,9:node-12:'
+  75: ':node-12:1,9:node-11:'
+  76: ':node-11:4,8:node-12:'
+  77: ':node-12:4,8:node-11:'
+  78: ':node-11:6,3:node-8:'
+  79: ':node-12:6,3:node-9:'
+  80: ':node-11:2,2:node-12:'
+  81: ':node-11:3,3:node-12:'
+  82: ':node-11:5,5:node-12:'
+  83: ':node-11:7,7:node-12:'
+  84: ':node-11:11,11:node-12:'

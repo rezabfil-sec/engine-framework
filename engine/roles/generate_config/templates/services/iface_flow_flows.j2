@@ -1,0 +1,23 @@
+{% if 'iface' in service.keys() -%}
+{% if interfaces.extend(service.iface) %}{% endif -%}
+{% elif 'flow' in service.keys() or (flows in service.keys() and service.flows) -%}
+{% set flows_keys = [] -%}
+{% if 'flow' in service.keys() -%}
+{% if flows_keys.extend(service.flow) %}{% endif -%}
+{% elif flows in service.keys() and service.flows -%}
+{% if flows_keys.extend(network[exp.network]['flows'].keys()) %}{% endif -%}
+{% endif -%}
+{% for flows_key in flows_keys -%}
+{% set flows_value = network[exp.network]['flows'][flows_key] -%}
+{% set flow_nodes = flows_value.split(',') -%}
+{% set _,flow_start,start_iface = flow_nodes[0].split(':') -%}
+{% set end_iface,flow_end,_ = flow_nodes[-1].split(':') -%}
+{% if services_key == flow_start -%}
+{% if interfaces.append(start_iface) %}{% endif -%}
+{% elif services_key == flow_end -%}
+{% if interfaces.append(end_iface) %}{% endif -%}
+{% else -%}
+{% endif -%}
+{% endfor -%}
+{% else -%}
+{% endif -%}

@@ -1,0 +1,92 @@
+---
+# Playbook to run a (simulated) scenario
+# > ansible-playbook plays/sim_scenario.yml -e simulation_node=rod -e scene=basic-rtt
+#
+# Based on the scenario.yml playbook
+#
+# Requires Jinja2 to be installed: pip install -U Jinja2
+#
+# -------------------- run a scenario --------------------
+- name: create local scenario folder
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+    - fail: msg="Scene variable must be defined (e.g. -e scene=basic-rtt)"
+      when: scene is not defined
+      tags: always
+    - name: set scenario folder
+      set_fact:
+        scene_folder: '{{ data_folder }}/{{ lookup("pipe", "date +%Y-%m-%dD-%H:%M:%ST") }}_simulation_{{ scene }}'
+      tags: collect
+    - name: create scenario folder
+      file:
+        path: '{{ scene_folder }}'
+        mode: '0775'
+        state: directory
+      tags: collect
+
+- name: locally generate ini file
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+  - name: locally generate ini file
+    include_role:
+      name: roles/generate_config
+      tasks_from: generate_ini.yml
+    tags: simulate
+- name: move ini file to simulation node
+  hosts: '{{ simulation_node }}'
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+  - name: move ini file to simulation node
+    include_role:
+      name: roles/generate_config
+      tasks_from: move_ini.yml
+    tags: simulate
+
+- name: scenario execution
+  hosts: '{{ simulation_node }}'
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+    # load scenario variables
+    - include_vars: '{{ item }}'
+      loop:
+        - ../scenarios/{{ scene }}/00-nodes.yml
+        - ../scenarios/{{ scene }}/01-network.yml
+        - ../scenarios/{{ scene }}/02-stacks.yml
+        - ../scenarios/{{ scene }}/03-actions.yml
+        - ../scenarios/{{ scene }}/04-experiments.yml
+      tags: always
+    - include_vars: '../scenarios/topologies/{{ topology }}.yml'
+      when: topology | length > 0
+      tags: always
+    # loop through experiments
+    - name: run experiments
+      include_role:
+        name: roles/simulation
+      loop: '{{ experiments }}'
+      loop_control:
+        loop_var: 'experiment'
+        index_var: 'experiment_index'
+      tags: always
+
+- name: finish scenario
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+    - name: change output data permissions
+      file:
+        path: '{{ scene_folder }}'
+        mode: 'u=rwX,g=rwX,o=rX'
+        recurse: yes
+      tags: collect
+    - debug: msg="finished scenario {{ scene }}"
+      tags: always

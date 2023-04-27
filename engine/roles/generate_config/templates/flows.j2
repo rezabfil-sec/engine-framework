@@ -1,0 +1,52 @@
+{% if comments > 1 -%}
+# Config for flows:
+{% endif -%}
+{% set numFlows = dict() -%}
+{% set switch_macTable_addressTable = dict() -%}
+{% set use_ifaces = dict() -%}
+{% set configurator_config = [] -%}
+{% for node_mapping_key, node_mapping_value in node_mapping.items() -%}
+{% if numFlows.update({node_mapping_key: 0}) %}{% endif -%}
+{% if switch_macTable_addressTable.update({node_mapping_key: []}) %}{% endif -%}
+{% if use_ifaces.update({node_mapping_key: []}) %}{% endif -%}
+{% endfor -%}
+{% for flows_key, flows_value in network_value.flows.items() -%}
+{% set flow_nodes = flows_value.split(',') -%}
+{% for flow_node in flow_nodes -%}
+{% set iface_in, node_name, iface_out = flow_node.split(':') -%}
+{% if iface_in %}{% set ifacein = iface_in|string %}{% if use_ifaces[node_name].append(iface_in) %}{% endif %}{% else %}{% set ifacein = (1 + host_vars[node_mapping[node_name]]['num_interfaces'] + numFlows[node_name])|string %}{% endif -%}
+{% if switch_macTable_addressTable[node_name].append('{address: "82:a3:c2:4a:a8:' + (((flows_key/10)|int)|string) + ((flows_key%10)|string) + '", vlan: 2, interface: "eth' + ifacein + '"}, \\') %}{% endif -%}
+{% if iface_out %}{% set ifaceout = iface_out|string %}{% if use_ifaces[node_name].append(iface_out) %}{% endif %}{% else %}{% set ifaceout = (1 + host_vars[node_mapping[node_name]]['num_interfaces'] + numFlows[node_name])|string %}{% endif -%}
+{% if switch_macTable_addressTable[node_name].append('{address: "82:a3:c2:4a:a9:' + (((flows_key/10)|int)|string) + ((flows_key%10)|string) + '", vlan: 2, interface: "eth' + ifaceout + '"}, \\') %}{% endif -%}
+{% if not iface_in or not iface_out -%}
+{% if iface_out %}{% set lastbyte = 1 %}{% else %}{% set lastbyte = 2 %}{%endif-%}
+{% if configurator_config.append('<interface hosts=\'' + network_ned_short + '.' + node_mapping[node_name] + '.device\' names=\'eth' + numFlows[node_name]|string + '\' address=\'10.0.' + flows_key|string + '.' + lastbyte |string + '\' netmask=\'255.255.255.0\'/> \\') %}{% endif -%}
+{{network_ned_short}}.{{node_mapping[node_name]}}.device.eth[{{numFlows[node_name]}}].address = "82:a3:c2:4a:a{% if iface_out %}8{% else %}9{%endif%}:{{(flows_key/10)|int}}{{flows_key%10}}"
+{% if numFlows.update({node_name: numFlows[node_name]+1}) %}{% endif -%}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
+
+{{network_ned_short}}.configurator.config = xml("<config> \
+{% if configurator_config|length > 0 -%}
+{{ configurator_config|join("\n") }}
+{% endif -%}
+</config>")
+
+{% for node_mapping_key, node_mapping_value in node_mapping.items() %}
+{% if switch_macTable_addressTable[node_mapping_key] | length > 0 -%}
+
+{{network_ned_short}}.{{node_mapping_value}}.numFlows = {{numFlows[node_mapping_key]}}
+
+{{network_ned_short}}.{{node_mapping_value}}.switch.macTable.addressTable = [\
+{{switch_macTable_addressTable[node_mapping_key]|join("\n")}}
+]
+{{network_ned_short}}.{{node_mapping_value}}.switch.macTable.forwardingTable = [\
+{{switch_macTable_addressTable[node_mapping_key]|join("\n")}}
+]
+
+{% endif -%}
+{% for use_iface in use_ifaces[node_mapping_key] -%}
+{{network_ned_short}}.{{node_mapping_value}}.switch.eth[{{use_iface}}].macLayer.recordPcap = true
+{% endfor -%}
+{% endfor %}

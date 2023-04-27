@@ -1,0 +1,25 @@
+{#
+Sets common parameters for the SendUdp* modules.
+When including this template, the variable 'module' has to be set, i.e: 
+{% set module = '(source|sink|s)'
+{% include '[...]/tsn_app.j2' %}
+-#}
+{% if service.signal is defined and service.signal -%}
+{% if signal_mode_times.append( ( ( service.number_packets | default(60000) ) * ( service.interval | default(0.001) ) ) | float ) %}{% endif -%}
+{% endif -%}
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".device.app[" + device_numApps[services_key]|string + "]." + module -%}
+{% if module != 's' -%}
+{{prefix}}.typename = "{{"Send" if module == 'source' else 'Recv'}}UdpPacket{{module.capitalize()}}"
+{% endif -%}
+{% if service.mode is defined -%}
+{{prefix}}.mode = "{% if 'tsn' in service.keys() %}tsn{% elif 'tsnd' in service.keys() %}tsnd{% else %}none{% endif %}"
+{% endif -%}
+{% if num_packets is defined -%}
+{{prefix}}.numPackets = {{num_packets}}
+{% endif -%}
+{% if delay is defined -%}
+{{prefix}}.delay = {{delay}}ns
+{% endif -%}
+{% if interval is defined -%}
+{{prefix}}.interval = {{interval}}ns
+{% endif -%}

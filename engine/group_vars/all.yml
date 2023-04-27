@@ -112,3 +112,18 @@ ptp_cc:
 
 # define node that has the Cisco Nexus SmartNIC for GPS sync
 smartnic_equipped: 'lisa'
+
+simulation:
+  setup:
+    engine:
+      location: '/data'
+      dir: 'engine'
+    inet:
+      location: '/opt'
+      dir: 'inet4.4'
+    opp:
+      location: '/opt'
+      dir: 'omnetpp-6.0'
+      scavetool: 'bin/opp_scavetool'
+    script:
+      install: '../../simulation/install.sh'

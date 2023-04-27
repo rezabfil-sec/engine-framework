@@ -1,0 +1,117 @@
+---
+# Playbook for setup of the simulation node, i.e. installation of dependencies,
+# OMNeT++, INET, and the custom engine project
+#
+# Define the simulation node in the cli, or use a default:
+# > ansible-playbook plays/sim_install.yml -e simulation_node=rod
+#
+# -------------------- Execute simulation node setup commands --------------------
+- name: simulation node setup
+  hosts: '{{ simulation_node }}'
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+
+  - name: create data folder
+    file:
+      path: '{{ data_path }}'
+      mode: '0775'
+      state: directory
+  - name: format data hard drive
+    filesystem:
+      fstype: ext4
+      dev: "/dev/{{ data_disk }}"
+    when: data_disk | length > 0
+  - name: mount hard drive
+    mount:
+      path: '{{ data_path }}'
+      src: '/dev/{{ data_disk }}'
+      fstype: ext4
+      state: mounted
+    when: data_disk | length > 0
+
+  - name: copy scripts to node
+    copy:
+      dest: '{{ script_path }}'
+      src: ../scripts
+      mode: 'u=rwx,g=rwx,o=rx'
+
+  - name: prepare installation
+    block:
+    - name: copy tar files
+      block:
+      - name: copy opp
+        copy:
+          dest: '{{ simulation.setup.opp.location }}'
+          src: /srv/testbed/vehiclenet/simulation/omnetpp-6.0-linux-x86_64.tgz
+          mode: 'u=rwx,g=rwx,o=rx'
+          force: no
+      - name: copy inet
+        copy:
+          dest: '{{ simulation.setup.inet.location }}'
+          src: /srv/testbed/vehiclenet/simulation/inet-4.4.0-src.tgz
+          mode: 'u=rwx,g=rwx,o=rx'
+          force: no
+    - name: install OMNeT++ 6.0 dependencies
+      block:
+      - name: install linux packages
+        apt:
+          update_cache: true
+          upgrade: yes
+      - name: install linux packages
+        apt:
+          name:
+            - build-essential
+            - clang
+            - lld
+            - gdb
+            - bison
+            - flex
+            - perl
+            - python3
+            - python3-pip
+            - qtbase5-dev
+            - qtchooser
+            - qt5-qmake
+            - qtbase5-dev-tools
+            - libqt5opengl5-dev
+            - libxml2-dev
+            - zlib1g-dev
+            - doxygen
+            - graphviz
+            - libwebkit2gtk-4.0-37
+      - name: install python packages
+        pip:
+          name:
+            - numpy
+            - pandas
+            - matplotlib
+            - scipy
+            - seaborn
+            - posix_ipc
+
+  - name: install additional packages for use by plotting scripts
+    block:
+    - name: install linux packages
+      apt:
+        update_cache: true
+        upgrade: yes
+    - name: install linux packages
+      apt:
+        name:
+          - gnuplot
+
+  - name: delete existing simulation project
+    file:
+      path: '{{ simulation.setup.engine.location }}/{{ simulation.setup.engine.dir }}'
+      state: absent
+  - name: copy engine
+    copy:
+      dest: '{{ simulation.setup.engine.location }}'
+      src: ../../simulation/engine
+      mode: 'u=rwx,g=rwx,o=rx'
+
+  - name: run installation script
+    script: '{{simulation.setup.script.install}} -e {{simulation.setup.engine.location}}/{{simulation.setup.engine.dir}} -i {{simulation.setup.inet.location}} -o {{simulation.setup.opp.location}}'
+    args:
+      chdir: '{{simulation.setup.engine.location}}'

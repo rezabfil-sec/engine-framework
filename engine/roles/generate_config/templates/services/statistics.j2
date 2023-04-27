@@ -1,0 +1,37 @@
+{#
+Generates cofiguration for a service's statistics recording, as defined in the respective service's role's default variable file.
+When including this template, the variable 'prefix' has to be set to the service specific module, i.e:
+{% set prefix = [...] -%}
+{% set indexes = [...] -%}
+{% include '[...]/statistics.j2' -%}
+-#}
+{% for submodules_statisics in service_defaults[service.name].per_submodules_statistics -%}
+{% for submodule in submodules_statisics.submodules|default([]) -%}
+{% if not (submodule.array|default(False)) %}{% set indexes = ['*'] %}{% endif -%}
+{% for index in (indexes|default(['*'])) %}
+{% for statistic in submodules_statisics.statistics -%}
+{% set stat_prefix = prefix + '.' + submodule.name + ( '[' + index|string + ']' if submodule.array|default(False) else "" ) + '.' + statistic.name -%}
+{% set vars = { 'found': False } -%}
+{% for queue_type in (service.queue_types|default("be,cbs,etf,mqprio,taprio")).split(',') -%}
+{% if queue_type in submodule.queue_types|default(['be', 'cbs', 'etf', 'mqprio', 'taprio']) %}{%- if vars.update({'found': True}) -%}{%- endif -%}{% endif -%}
+{% endfor -%}
+{% if vars.found -%}
+{{stat_prefix}}.statistic-recording = true
+{% if statistic.result_recording_modes is defined -%}
+{{stat_prefix}}.result-recording-modes = +{{statistic.result_recording_modes|join(',+')}}
+{% endif -%}
+{% if statistic.vector_recording | default(false) -%}
+{% for mode in statistic.result_recording_modes | default(['vector']) -%}
+{% if 'vector' in mode -%}
+{% if statistic.flow|default(False) -%}
+{% set stat_prefix = prefix + '.' + submodule.name + ( '[' + index|string + ']' if submodule.array|default(False) else "" ) + '.*:' + statistic.name -%}
+{% endif -%}
+{{stat_prefix}}:{{mode}}.vector-recording = true
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}

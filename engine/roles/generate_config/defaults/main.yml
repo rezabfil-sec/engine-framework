@@ -1,0 +1,22 @@
+---
+# This file will be loaded by the configuration generation scripts. Avoid any conflicting variable names.
+
+# generation of ptp configuration (as specified below) for the generated ini file
+ptp_config: yes
+
+# defaults to be used by configuration generation templates
+nodes_ned: "engine.networks.nodes.EngineNetworkNodes"
+network_ned: "engine.networks.topology.EngineNetwork"
+warmup_period: 5
+cooldown_period: 1
+default_packet_size:
+  udp: 1448
+  tcp: 1436
+default_header_size:
+  udp: 70
+  tcp: 82
+ptp:
+  topo: "topo-engine"
+  ## clock drift
+  # FIXME: could find more accurate clock drift for testbed nodes, or even use more accurate clock setup in general (by setting other parameters or using e.g. RandomDriftOscillator)
+  clock_drift: "0ppm" # uniform(-100ppm, 100ppm)"

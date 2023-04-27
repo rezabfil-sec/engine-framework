@@ -1,0 +1,14 @@
+---
+# Generate ini file (on management node)
+
+- name: set ini file name
+  set_fact:
+    ini_file: '{{ scene }}.ini'
+  tags: simulate
+
+# use script module instead?
+- name: generate ini
+  shell: ./generate_ini.py {{ "-m mac" if ptp_config else "" }} -o {{ ini_file }} {{ scene }}
+  args:
+    chdir: '../roles/generate_config/files'
+  tags: simulate

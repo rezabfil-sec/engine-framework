@@ -6,8 +6,8 @@ stacks:
     name: 'Iperf measurements, 2 hop, 4 streams'
     services:
       node-1:
-        - { name: iperf, role: client, flow: 2, port: 1001, prio: 0, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2 }
-        - { name: iperf, role: client, flow: 2, port: 1002, prio: 1, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 2, port: 1001, prio: 0, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 2, port: 1002, prio: 1, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2 }
         - { name: iperf, role: client, flow: 2, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
         - { name: iperf, role: client, flow: 2, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2 }
         - { name: tcpdump, flow: [2], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
@@ -29,8 +29,8 @@ stacks:
     name: 'Iperf measurements, 1 hop, 4 streams'
     services:
       node-1:
-        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
-        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
@@ -52,8 +52,8 @@ stacks:
     name: 'Iperf measurements, 3 hop, 4 streams'
     services:
       node-1:
-        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
-        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
@@ -75,8 +75,8 @@ stacks:
     name: 'Iperf measurements, 4 hop, 4 streams'
     services:
       node-1:
-        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
-        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
@@ -99,8 +99,8 @@ stacks:
     name: 'Iperf measurements, 5 hop, 4 streams'
     services:
       node-1:
-        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
-        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
@@ -122,8 +122,8 @@ stacks:
     name: 'Iperf measurements, 6 hop, 4 streams'
     services:
       node-1:
-        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
-        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}
@@ -145,8 +145,8 @@ stacks:
     name: 'Iperf measurements, 7 hop, 4 streams'
     services:
       node-1:
-        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
-        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 0, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1001, prio: 0, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
+        - { name: iperf, role: client, flow: 1, port: 1002, prio: 1, limit: 382320000, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1003, prio: 2, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: iperf, role: client, flow: 1, port: 1004, prio: 3, limit: 94400000, size: 1180, level: 1, signal: yes, udp: yes, use_core: 2}
         - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, signal: no}

@@ -1,0 +1,19 @@
+---
+# Move ini file (from management node to simulation node)
+
+- name: set ini file name
+  set_fact:
+    ini_file: '{{ scene }}.ini'
+  tags: simulate
+
+- block:
+  - name: copy ini
+    copy:
+      dest: '{{simulation.setup.engine.location}}/{{simulation.setup.engine.dir}}/simulations/{{ ini_file }}'
+      src: files/{{ ini_file }}
+      mode: 'u=rwx,g=rwx,o=rx'
+  - name:  remove ini
+    file:
+      path: files/{{ ini_file }}
+      state: absent
+  tags: simulate

@@ -1,0 +1,6 @@
+{% set prefix = network_ned_short + "." + node_mapping[node_name] + ".switch.eth[" + iface + "].macLayer.queue.transmissionSelectionAlgorithm[" + (queues_key-1)| string + "]" -%}
+{{prefix}}.typename = "Ieee8021qCreditBasedShaper"
+{{prefix}}.idleSlope = {{((queues_value['idle']|int) / 1000)|int}}Mbps
+{{prefix}}.sendSlope = {{((queues_value['send']|int) / 1000)|int}}Mbps
+{{prefix}}.minCredit = {{(queues_value['low']|int) * 8}}
+{{prefix}}.maxInterferenceSize = {{((queues_value['high']|int) * (host_vars[node_mapping[node_name]]['node_ifaces'][iface]|default(1)|float * 1000000) / (queues_value['idle']|int)) | int}}B

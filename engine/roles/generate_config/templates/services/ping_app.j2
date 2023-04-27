@@ -1,0 +1,13 @@
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".device.app[" + device_numApps[services_key]|string + "]" -%}
+{{prefix}}.typename = "PingApp"
+{{prefix}}.display-name = "s-{{device_numServices[services_key]}}_ping"
+{{prefix}}.destAddr = "10.0.{{flows_key}}.{{dest}}"
+#{{prefix}}.srcAddr = "10.0.{{flows_key}}.{{src}}"
+{{prefix}}.sendInterval = {{service.interval | default(0.5)}}s
+{{prefix}}.count = {{service.count | default(service_defaults['ping']['ping_count'])}}
+{{prefix}}.startTime = {{warmup_period}}s
+{{prefix}}.stopTime = {{'{:f}'.format((warmup_period + (( service.count | default(service_defaults['ping']['ping_count']) ) * (service.interval | default(service_defaults['ping']['ping_interval']) ) )))| string}}s
+{{prefix}}.*.statistic-recording = true
+{{prefix}}.*.vector-recording = true
+{{prefix}}.*.scalar-recording = true
+{% if device_numApps.update({services_key: device_numApps[services_key] + 1}) %}{% endif -%}

@@ -1,0 +1,11 @@
+out/
+simulations/results/
+simulations/.qtenvrc
+simulations/*/results/
+simulations/*/.qtenvrc
+src/engine
+src/engine_dbg
+src/Makefile
+.settings/
+.nedexclusions
+.oppfeaturestate

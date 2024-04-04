@@ -13,6 +13,22 @@ To obtain the plots for Figures 4 and 5 of IFIP Publication, you need to first u
 
 We build on top of the EnGINE framework, which cannot be used without a suitable hardware deployment and adequate configuration of the nodes. Nevertheless, it can still be used to evaluate the results of the experiments. This can be achieved using the [process.yml](plays/process.yml) playbook following the similar instructions like for the simulation. To note, you need to download the data provided in the EnGINE repository.
 
+**Example for post-processing of scenarios:** `ansible-playbook plays/process.yml -vvv -e scene=Figure-9 -e scene_folder=/results/Figure-9`
+
+You can try the custom OMNeT++ [project](../simulation/engine) standalone. See [README](../simulation/README) for the required OMNeT++ and INET framework versions.
+
+The translation scripts and templates that generate an INI file based on an EnGINE scenario definition via YAML files can be found in the Ansible role [generate_ini](roles/generate_ini). In subfolder [files](roles/generate_ini/files), run `./generate_ini.py -o <scenario-name>.ini -m mac <scenario-name>`.
+
+The playbook for running the simulation requires that appropriate versions of OMNeT++ and the INET framework, as well as the custom simulation project, are installed at certain locations (see [README](../simulation/README)). We use a [playbook](plays/sim_setup.yml) that does this installation (plus installation of any dependencies) from scratch at a selectable testbed node. See the playbook for details.
+* Run setup:    `ansible-playbook plays/sim_setup.yml -e simulation_node=<node-name>`
+
+Once everything is setup, the actual simulation can be run by passing the respective scenario.
+* Run scenario: `ansible-playbook plays/sim_scenario.yml -e simulation_node=<node-name> -e scene=<scenario-name>`
+
+Processing of the (simulation) result files can be done manually via the script [process.py](roles/process/files/process.py)
+* Run result processing script: `./process.py -d ../../plays -f <folder-with-scenario-results> <scenario-name> -c -p -s`
+  * The `-s` flag is required for the results produced by the simulation playbooks. Without this flag, the scripts can also be used to process results produced by the original engine playbooks.
+
 ### Available Experiment Campaigns/Scenarios List
 
 | Experiment Identifier | Journal Figure/Table | Brief Experiment Description | Associated Folder | Subexperiment Names |

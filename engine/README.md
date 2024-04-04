@@ -12,6 +12,7 @@ The experiment campaigns are managed in four steps:
 For every step there is a playbook to execute it.
 All playbooks require one extra parameter that needs to be specified when executing the playbook: "pgroup" is the host group  here all the commands should be applied to. The pgroup name points to a group inside the hosts file.
 
+
 ### Playbook Execution
 Playbooks are executed from the command line in the top-level inside the repository folder. The folder needs to be on a testbed management node in order to execute the "install" step / playbook.
 
@@ -36,3 +37,12 @@ Once everything is setup, the actual simulation can be run by passing the respec
 Processing of the (simulation) result files can be done manually via the script [process.py](roles/process/files/process.py)
 * Run result processing script: `./process.py -d ../../plays -f <folder-with-scenario-results> <scenario-name> -c -p -s`
   * The `-s` flag is required for the results produced by the simulation playbooks. Without this flag the scripts can also be used to process results produced by the original engine playbooks.
+
+
+### Limitations of This Repository
+To deploy EnGINE in your infrastructure, you need hardware managed from a central management host with SSH access to the individual nodes. 
+If you have such deployments on hand, you can update the `host_vars` directory with your corresponding nodes. 
+
+For our deployments we are using pos [1]. To find out about the architecture, navigate to these publications:
+* [1] Pos
+* [2] EnGINE JNSM 

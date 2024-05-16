@@ -22,6 +22,27 @@ This is a supplementary repository of the following list of publications:
 ```*``` Authors with * contributed to the publications equally
 
 ## Relevant publications using & Extending EnGINE
+Extension of **EnGINE** supporting NDN is fully available since [this commit](https://github.com/rezabfil-sec/engine-framework/commit/21110b0c30a10ae6a49103e81e877d5b4beee43c) and is described in publication **Towards Domain-Specific Time-Sensitive Information-Centric Networking Architecture**. If you want to cite this publication, use this BibTeX format:
+```
+@INPROCEEDINGS{bosk2024tsnicn,
+  author={Marcin Bosk and J{\"o}rg Ott},
+  title={Towards {Domain-Specific} {Time-Sensitive} {Information-Centric} Networking Architecture},
+  booktitle={2024 IFIP Networking Conference (IFIP Networking)  (IFIP Networking 2024)},
+  address={Thessaloniki, Greece},
+  pages={5.99},
+  days={2},
+  month={jun},
+  year={2024},
+  keywords={TSN; IVN; IACS; ICN; Network Architecture}
+}
+```
+The associated implementation code for long-lived interests is available in the following repositories:
+* [NDN-CXX extension](https://github.com/m-bosk/ndn-cxx/tree/long-lived-interests)
+* [NFD extension](https://github.com/m-bosk/NFD/tree/long-lived-interests)
+* [Customized ndn-traffic-generator](https://github.com/m-bosk/ndn-traffic-generator/tree/long-lived-interests)
+
+---
+
 Extension of EnGINE is present in **Multilayer Environment and Toolchain for Holistic NetwOrk Design and Analysis**:
 ```
 @misc{rezabek2023multilayer,
@@ -34,6 +55,8 @@ Extension of EnGINE is present in **Multilayer Environment and Toolchain for Hol
 }
 ```
 
+---
+
 **EnGINE** was used in **Playing the MEV Game on a First-Come-First-Served Blockchain**:
 ```
 @misc{öz2024playing,
@@ -45,6 +68,8 @@ Extension of EnGINE is present in **Multilayer Environment and Toolchain for Hol
       primaryClass={cs.CR}
 }
 ```
+
+---
 
 **EnGINE** was used in **TSN Experiments Using COTS Hardware and Open-Source Solutions: Lessons Learned**:
 ```
@@ -61,7 +86,7 @@ Extension of EnGINE is present in **Multilayer Environment and Toolchain for Hol
 
 ```
 
-
+---
 
 If you want to cite the **Simulation and Practice: A Hybrid Experimentation Platform for TSN** publication, use this BibTeX format:
 ```
@@ -76,6 +101,8 @@ If you want to cite the **Simulation and Practice: A Hybrid Experimentation Plat
 }
 ```
 
+---
+
 **EnGINE** was used in **PTP Security Measures and their Impact on Synchronization Accuracy**:
 ```
 @INPROCEEDINGS{9964658,
@@ -89,6 +116,8 @@ If you want to cite the **Simulation and Practice: A Hybrid Experimentation Plat
   keywords={Protocols;Power system protection;Peer-to-peer computing;Topology;Security;Synchronization;Power system faults;PTP;security;clocks;synchronicity;TSN},
   doi={10.23919/CNSM55787.2022.9964658}}
 ```
+
+---
 
 If you want to cite the **Methodology and Infrastructure for TSN-Based Reproducible Network Experiments** publication, use this BibTeX format:
 ```
@@ -105,6 +134,9 @@ If you want to cite the **Methodology and Infrastructure for TSN-Based Reproduci
   month_numeric = {9}
 }
 ```
+
+---
+
 If you want to cite the **EnGINE: Flexible Research Infrastructure for Reliable and Scalable Time Sensitive Networks** publication, use this BibTeX format:
 
 ```
@@ -126,6 +158,8 @@ If you want to cite the **EnGINE: Flexible Research Infrastructure for Reliable 
 }
 ```
 
+---
+
 If you want to cite the **EnGINE: Developing a Flexible Research Infrastructure for Reliable and Scalable Intra-Vehicular TSN Networks** publication, use this BibTeX format:
 ```
 @inproceedings{RezBosk21,
@@ -139,6 +173,9 @@ If you want to cite the **EnGINE: Developing a Flexible Research Infrastructure 
   month_numeric = {10}
 }
 ```
+
+---
+
 If you want to cite the **Demo: Environment for Generic In-vehicular Network Experiments - EnGINE** publication, use this BibTeX format:
 ```
 @inproceedings{BoskRez21,

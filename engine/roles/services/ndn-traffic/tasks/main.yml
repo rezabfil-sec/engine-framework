@@ -1,0 +1,91 @@
+---
+
+- name: set id for ndn-traffic service
+  set_fact: 
+    id: 'flow_{{ service.role }}_{{ service.content | replace("/", "_")}}'
+
+- name: remove any stale ndn-traffic service configuration file with id
+  file:
+    path: '/root/{{ id }}.conf'
+    state: absent
+
+- name: create logfile folder for ndn-traffic service
+  file:
+    path: '/root/ndn-logs'
+    state: directory
+
+- block:
+  - name: send config to server 
+    copy: 
+      content: |
+        Name={{ service.content }}
+        ContentBytes={{ service.bytes | default(1000) }}
+        ContentDelay={{ service.content_delay | default(0) }}
+        FreshnessPeriod={{ service.freshness_period | default(1) }}
+      dest: '/root/{{ id }}.conf'
+  - name: start server 
+    shell: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      ndn-traffic-server /root/{{ id }}.conf
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    environment:
+      NDN_TRAFFIC_LOGFOLDER: /root/ndn-logs
+  when: service.role == 'source'
+  # ndn-traffic-server /root/{{ id }}.conf | tee /root/{{ id }}.log
+
+- block:
+  - name: send push_source config to server 
+    copy: 
+      content: |
+        Name={{ service.content }}
+        ContentBytes={{ service.bytes | default(1000) }}
+        ContentDelay={{ service.content_delay | default(0) }}
+        GenerationInterval={{ service.generation_interval | default(10) }}
+        FreshnessPeriod={{ service.freshness_period | default(10) }}
+      dest: '/root/{{ id }}.conf'
+  - name: start server 
+    shell: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      ndn-traffic-push -q /root/{{ id }}.conf
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    environment:
+      NDN_TRAFFIC_LOGFOLDER: /root/ndn-logs
+  when: service.role == 'push_source'
+
+- block:
+  - name: send config to client 
+    copy: 
+      content: |
+        TrafficPercentage=100
+        Name={{ service.content }}
+        MustBeFresh={{ '0' if service.fresh is defined and not service.fresh else '1' }}
+        CanBePrefix={{ '1' if service.prefix is defined and service.prefix else '0' }}
+        {% if service.sequence is defined and service.sequence %}
+        NameAppendSequenceNumber=1
+        {% else %}{% endif -%}
+        {% if service.int_lifetime is defined %}
+        {{ 'InterestLifetime=' ~ service.int_lifetime }}
+        {% else %}{% endif -%}
+      dest: '/root/{{ id }}.conf'
+  - name: start client 
+    shell: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      ndn-traffic-client /root/{{ id }}.conf -i {{ service.interval }} {{ '-c' if service.count is defined else '' }} {{ service.count if service.count is defined else '' }} {{ '-s' if service.soft is defined and service.soft else '' }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    environment:
+      NDN_TRAFFIC_LOGFOLDER: /root/ndn-logs
+  when: service.role == 'client'
+  # ndn-traffic-client /root/{{ id }}.conf -i {{ service.interval }} | tee /root/{{ id }}.log
+
+# - name: start ndn-traffic service for each flow
+#   include_tasks: start.yml
+#   loop: '{{ service.flows }} '
+#   loop_control:
+#     loop_var: flow
+

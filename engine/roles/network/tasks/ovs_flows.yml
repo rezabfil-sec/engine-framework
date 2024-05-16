@@ -11,31 +11,70 @@
 - name: default ovs drop flow
   command: ovs-ofctl mod-flows ovs0 priority=0,actions=drop
 
+- name: check if OvS running and get its PID
+  shell: pidof ovs-vswitchd
+  register: check_ovs_vswitchd
+  failed_when: check_ovs_vswitchd.rc != 0
+
+- name: set affinity of OvS Switch to use net cores
+  shell: "taskset -p $(((1 << {{ network[experiment.network].num_net_cores }}) - 1)) {{ check_ovs_vswitchd.stdout_lines[0] }}"
+  when: network[experiment.network].num_net_cores is defined and network[experiment.network].num_net_cores > 0
+
 - name: store ovs flows in a file
   copy:
     content: "{{ flows | tojson }}"
     dest: "{{ remote_flow_file }}"
 
-- name: create ovs flows
-  script: files/ovs_flows.py --flowfile {{ remote_flow_file }} --vlanid {{ iface_vlan_id }} --node {{ node }}
-  register: flow_ifaces_raw
+# Used for NDN where per-flow priorities are needed
+- name: store flow priorities
+  copy:
+    content: "{{ flow_prio | tojson }}"
+    dest: "{{ remote_flow_prio_file }}"
+  when: flow_prio is defined
 
-- name: set flow interfaces
-  set_fact:
-    flow_ifaces: '{{ flow_ifaces_raw.stdout_lines[-1] }}'
+- name: create ovs flows without priorities
+  script: files/ovs_flows.py --flowfile {{ remote_flow_file }} --vlanid {{ iface_vlan_id }} --node {{ node }} {{ "--arp_entries" if ( network[experiment.network].arp_entries is defined and network[experiment.network].arp_entries ) }}
+  register: flow_ifaces_raw
 
 - name: set used raw interfaces
   set_fact:
-    use_ifaces: '{{ flow_ifaces_raw.stdout_lines[-2] }}'
+    use_ifaces: '{{ flow_ifaces_raw.stdout_lines[-3] }}'
 
-- name: copy flow cgroup priority script to node
-  template:
-    src: 'cgroup_priorities_flow.sh'
-    dest: '{{ data_path }}/cgroup_priorities_flow.sh'
-    mode: '0755'
+- name: set flow interfaces
+  set_fact:
+    flow_ifaces: '{{ flow_ifaces_raw.stdout_lines[-2] }}'
 
-- name: execute flow cgroup priority script
-  command: 'bash {{ data_path }}/cgroup_priorities_flow.sh'
+- name: set used raw peer interface tuples
+  set_fact:
+    peer_ifaces: '{{ flow_ifaces_raw.stdout_lines[-1] }}'
+
+# Cgroups setup per application
+- block:
+  - name: copy flow cgroup priority script to node
+    template:
+      src: 'cgroup_priorities_flow.sh'
+      dest: '{{ data_path }}/cgroup_priorities_flow.sh'
+      mode: '0755'
+
+  - name: execute flow cgroup priority script
+    command: 'bash {{ data_path }}/cgroup_priorities_flow.sh'
+  
+  # when: ndn is defined and not ndn or ndn is not defined
+
+# Cgroups setup per flow
+- block:
+  - name: get flow - prio pairing
+    script: files/flow_prio.py --flowfile {{ remote_flow_file }} --flowprios {{ remote_flow_prio_file }} --vlanid {{ iface_vlan_id }} --node {{ node }}
+    register: flow_prio_mapping
+
+  - debug:
+      msg: "flow-prio pairing: {{ flow_prio_mapping.stdout_lines }}"
+      
+  - name: apply global flow priorities
+    shell: 'echo "{{ item }}" > /sys/fs/cgroup/net_prio/net_prio.ifpriomap'
+    loop: '{{ flow_prio_mapping.stdout_lines }}'
+
+  when: ndn is defined and ndn
 
 # disable all hardware interfaces, only enable the ones used in a flow
 # -> prevent message leaking to other topologies running concurrently in the testbed
@@ -63,9 +102,9 @@
 # TODO change here to only use the ifaces which are supported
 - debug:
     msg: "Used interfaces {{ node_ifaces | dict2items }}"
+
 # Pin NIC IRQs to the first two of the isolated CPUS
 - name: set affinity for IRQs related to the used interfaces
-  # shell: 'ls /sys/class/net/{{ item.value.name }}/device/msi_irqs/ | while read -r p; do printf "%x" $((1 << $p%5)) > /proc/irq/$p/smp_affinity; done'
   shell: 'ls /sys/class/net/{{ item.value.name }}/device/msi_irqs/ | while read -r p; do printf "%x" $((1 << $p% {{ network[experiment.network].num_net_cores }})) > /proc/irq/$p/smp_affinity; done'
   loop: '{{ node_ifaces | dict2items }}'
   when: (item.key | string ) in use_ifaces and network[experiment.network].num_net_cores is defined and network[experiment.network].num_net_cores > 0 # and network[experiment.network].num_net_cores <= num_isolated_cores

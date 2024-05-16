@@ -1,0 +1,45 @@
+---
+
+
+# - name: collect and delete log/conf files
+#   include_tasks: collect_loop.yml
+#   loop: '{{ service.flows }} '
+#   loop_control:
+#     loop_var: flow
+
+- name: set id for ndn-traffic service
+  set_fact: 
+    id: 'flow_{{ service.role }}_{{ service.content | replace("/", "_")}}'
+
+- name: find ndn log files to copy
+  find: 
+    paths: '/root/ndn-logs'
+    recurse: no 
+    patterns: '*.log'
+  register: files_to_copy
+  ignore_errors: yes
+
+- name: collect log files 
+  fetch: 
+    src: '{{ item.path }}'
+    dest: '{{ node_folder }}/'
+    flat: yes
+  with_items: "{{ files_to_copy.files }}"
+  ignore_errors: yes
+
+# - name: collect log files 
+#   fetch: 
+#     src: '/root/ndn-logs'
+#     dest: '{{ node_folder }}/ndn-logs/'
+#     flat: yes
+#   ignore_errors: yes
+
+- name: delete node ndn log files folder
+  file:
+    path: '/root/ndn-logs'
+    state: absent
+
+- name: delete node ndn conf file
+  file:
+    path: '/root/{{ id }}.conf'
+    state: absent

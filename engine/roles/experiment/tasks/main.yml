@@ -27,6 +27,30 @@
     flows: '{{ network[experiment.network].flows }}'
   tags: always
 
+- name: Prepare NDN-related variables
+  block:
+    # load forwarders variable if experiment is an ndn experiment
+    - name: load NDN forwarders
+      set_fact:
+        forwarders: '{{ network[experiment.network].forwarders }}'
+
+    # load push_sources variable if experiment is an ndn experiment
+    - name: load NDN push_sources
+      set_fact:
+        push_sources: '{{ network[experiment.network].push_sources }}'
+      when: network[experiment.network].push_sources is defined
+
+    # load flow priorities if experiment is an ndn experiment
+    - name: load NDN/ICN flows
+      set_fact:
+        icn_flows: '{{ network[experiment.network].icn_flows }}'
+
+    # load flow priorities if experiment is an ndn experiment
+    - name: load NDN/ICN flow prios
+      set_fact:
+        flow_prio: '{{ network[experiment.network].flow_prio }}'
+  when: ndn is defined and ndn
+
 # merge scenario and pre-defined flows
 - include_vars: '../../../scenarios/topologies/{{ network[experiment.network].topo_flows }}.yml'
   when: network[experiment.network].topo_flows is defined
@@ -56,6 +80,20 @@
     action: '{{ actions[experiment.action][node] | default([]) }}'
   tags: always
 
+# adds tcpdump services if auto_tcpdump_collection is true
+- name: add tcpdump collection automatically
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: measurement.yml
+    apply:
+      tags: [ stack, service ]
+  loop: '{{ services }}'
+  when: auto_tcpdump_collection is defined and auto_tcpdump_collection and item.name in ['iperf', 'send_udp'] and
+        (item.tcpdump is not defined or item.tcpdump)
+  vars:
+    service: '{{ item }}'
+  tags: [ stack, service, measurement ] 
+
 # ---------------------- Output folders --------------------------
 
 - name: set experiment folder
@@ -73,6 +111,7 @@
   loop:
     - '{{ experiment_folder }}'
     - '{{ node_folder }}'
+    - '{{data_path}}/process{{ node_folder }}'
   tags: always
 
 - name: store experiment metadata
@@ -109,6 +148,15 @@
   when: flows | length > 0
   tags: [ ovs, network ]
 
+- name: apply ndn flows
+  include_role:
+    name: roles/network
+    tasks_from: ndn_flows.yml
+    apply:
+      tags: [ network ]
+  when: flows | length > 0 and ndn is defined and ndn and node in forwarders
+  tags: [ network ]
+
 - name: check network connectivity
   include_role:
     name: roles/services/ping
@@ -122,6 +170,15 @@
     - { name: ping }
   tags: [ network, check ]
 
+- name: setup macsec interfaces
+  include_role:
+    name: roles/network
+    tasks_from: macsec.yml
+    apply:
+      tags: [ network, macsec ]
+  when: use_ifaces | length > 0 and network[experiment.network].macsec is defined and network[experiment.network].macsec
+  tags: [ network, macsec ]
+
 # ---------------------- [2] Stack -----------------------------
 
 # after network changes the ptp daemons break sometimes
@@ -131,7 +188,7 @@
     apply:
       tags: [ stack, ptp ]
   vars:
-    service: '{{ { "name": "ptp", "mode": ptp_clockmode | default("linuxptp") } }}'
+    service: '{{ { "name": "ptp", "mode": ptp_clockmode | default("linuxptp") , "ptp_conf": ptp_linuxptp_conf | default("gPTP")} }}'
   tags: [ stack, ptp ]
 
 - name: clear service signals, experiment signals, and log file
@@ -140,6 +197,26 @@
     dest: "{{ item.value }}"
   loop: '{{ file_paths | dict2items }}'
   tags: always
+
+# ----------- Measurement Stack ------------
+
+# IDEA add more measurement services
+# - tcpdump on every interface on every node?
+#   - additional/alternative: application that records and adds timestamp of every packet
+# - ping for every existing flow
+# - record ptp offset on all nodes if deployed
+- name: set measurement probe services
+  set_fact:
+    probe_services:
+      # - { name: tcpdump, file: "probe_in", direction: "in", level: 0 }
+      # - { name: tcpdump, file: "probe_out", direction: "out", level: 0 }
+      - { name: tcpdump, size: 96, file: "probe_in", direction: "in", level: 0 }
+      - { name: tcpdump, size: 96, file: "probe_out", direction: "out", level: 0 }
+  tags: always
+
+- name: append probe_services to services
+  set_fact:
+    services: "{{ services + probe_services }}"
 
 - name: start services by level
   include_role:
@@ -158,29 +235,6 @@
   when: item.signal is defined and item.signal
   loop: '{{ services }}'
   tags: [ stack, service ]
-
-# ----------- Measurement Stack ------------
-
-# IDEA add more measurement services
-# - tcpdump on every interface on every node?
-#   - additional/alternative: application that records and adds timestamp of every packet
-# - ping for every existing flow
-# - record ptp offset on all nodes if deployed
-- name: set measurement probe services
-  set_fact:
-    probe_services:
-      - { name: tcpdump, size: 96, file: "probe" }
-  tags: always
-
-- name: start measurement probes
-  include_role:
-    name: 'roles/services/{{ item.name }}'
-    apply:
-      tags: [ stack, measurement ]
-  vars:
-    service: '{{ item }}'
-  loop: '{{ probe_services }}'
-  tags: [ stack, measurement ]
 
 # ----------- Protocols ------------
 
@@ -211,6 +265,8 @@
 # 1. Time: Run the experiment for a certain number of seconds.
 # 2. Signal: Wait until certain applications are finished (-> signals received)
 # Both modes stop the experiment immediately when an error signal is received
+
+# - pause:
 
 - name: run experiment - time mode
   command: "bash run_experiment t {{ experiment.time | default(experiment_time) }}"
@@ -271,7 +327,48 @@
   loop: '{{ services }}'
   tags: process
 
+- name: parse pcaps into csv and plots on nodes
+  block:
+  - name: create subdirectories for engine
+    file:
+      path: '{{ data_path }}/process/{{engine_path}}'
+      state: directory
+  - name: copy engine folder to node
+    synchronize:
+      dest: '{{ data_path }}/process/{{ engine_path }}'
+      src: '{{ engine_path }}/'
+
+  # convert pcap's to csv on the node
+  - name: convert pcaps to csv and plots
+    shell: 'python3 process.py -d ../../plays -f {{data_path}}/process/{{ hostvars["localhost"]["scene_folder"] }} {{ scene }} -c -p -pn -n {{inventory_hostname}} -e {{ experiment.name }} -i {{ num_isolated_cores }} 2>&1 | tee -a {{data_path}}/process/{{ hostvars["localhost"]["scene_folder"] }}/eval_log.txt'
+    args:
+      chdir: '{{data_path}}/process/{{engine_path}}/engine/roles/process/files'
+  when: parse_pcap_on_nodes is defined and parse_pcap_on_nodes
+
+
 # ---------------------- [6] Collect ---------------------------
+
+- name: collect converted csv's and plots
+  block:
+    - synchronize:
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/{{ experiment.name }}'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}'
+    - synchronize: 
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/plots'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}'
+    - synchronize: 
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/pythonLog.txt'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}/{{ experiment.name }}/{{ node }}/parseLog.txt'
+    - synchronize: 
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/eval_log.txt'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}/{{ experiment.name }}/{{ node }}/parse_eval_log.txt'
+  when: parse_pcap_on_nodes is defined and parse_pcap_on_nodes
+  ignore_errors: true
+
 
 - name: collect experiment log files and recorded signals
   fetch:
@@ -310,9 +407,23 @@
 
 # ---------------------- [7] Cleanup ---------------------------
 
+- name: delete processing files
+  file:
+    state: absent
+    path: '{{data_path}}/process/'
+
+
 - name: cleanup network
   include_role:
     name: roles/network
+    tasks_from: cleanup.yml
+    apply:
+      tags: cleanup
+  tags: cleanup
+
+- name: cleanup NDN
+  include_role:
+    name: roles/ndn
     tasks_from: cleanup.yml
     apply:
       tags: cleanup

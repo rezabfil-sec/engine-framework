@@ -1,0 +1,164 @@
+---
+# 1. Network
+# Define the network properties
+#
+# Concepts:
+# --------
+# Network: The "network" variable has different network instances (net-1, net-2, etc.)
+#   as subelements. Every instance is split into two main parts:
+#  1 Flows: The network topology is entirely defined through the flows.
+#      Only nodes and interfaces that occur in a flow are part of the topology!
+#      It is recommended to add node-to-node flows to build the basic topology and
+#      on top of that add "long-distance" or more complex flows that are later used
+#      by services/applications.
+#  2 TSN: Map TSN configurations to nodes and interfaces
+#
+# TSNConfigs: The "tsnconfigs" variable contains the full tsn configurations
+#   that are referenced in the network instances.
+#
+
+# ------------------------------ FLOWS + TSN-map -------------------------------
+network:
+  # 7 hops - only mqprio
+  net-07:
+    tsn: 
+      tsn-1: ["node-1", "node-2", "node-3", "node-4", "node-5", "node-6", "node-7", "node-8"]
+    flows:
+      # Prio 3
+      1: ':node-1:2,2:node-2:'
+      2: ':node-2:3,2:node-3:'
+      3: ':node-3:3,3:node-4:'
+      4: ':node-4:1,1:node-5:'
+      5: ':node-5:3,3:node-6:'
+      6: ':node-6:1,1:node-7:'
+      7: ':node-7:3,3:node-8:'
+      # Prio 2
+      8: ':node-1:2,2:node-2:'
+      9: ':node-2:3,2:node-3:'
+      10: ':node-3:3,3:node-4:'
+      11: ':node-4:1,1:node-5:'
+      12: ':node-5:3,3:node-6:'
+      13: ':node-6:1,1:node-7:'
+      14: ':node-7:3,3:node-8:'
+    flow_prio: 
+      3: { 1,2,3,4,5,6,7 }
+      2: { 8,9,10,11,12,13,14 }
+    forwarders: ['node-1', 'node-2', 'node-3', 'node-4', 'node-5', 'node-6', 'node-7', 'node-8']
+    icn_flows: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ]
+    check: false
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel
+
+  # 7 hops - cbs - normal
+  net-207:
+    tsn: 
+      tsn-201: ["node-1:2", "node-2:3", "node-3:3", "node-4:1", "node-5:3", "node-6:1", "node-7:3"]
+      tsn-202: ["node-8:3", "node-7:1", "node-6:3", "node-5:1", "node-4:3", "node-3:2", "node-2:2"]
+    flows:
+      # Prio 3
+      1: ':node-1:2,2:node-2:'
+      2: ':node-2:3,2:node-3:'
+      3: ':node-3:3,3:node-4:'
+      4: ':node-4:1,1:node-5:'
+      5: ':node-5:3,3:node-6:'
+      6: ':node-6:1,1:node-7:'
+      7: ':node-7:3,3:node-8:'
+      # Prio 2
+      8: ':node-1:2,2:node-2:'
+      9: ':node-2:3,2:node-3:'
+      10: ':node-3:3,3:node-4:'
+      11: ':node-4:1,1:node-5:'
+      12: ':node-5:3,3:node-6:'
+      13: ':node-6:1,1:node-7:'
+      14: ':node-7:3,3:node-8:'
+    flow_prio: 
+      3: { 1,2,3,4,5,6,7 }
+      2: { 8,9,10,11,12,13,14 }
+    forwarders: ['node-1', 'node-2', 'node-3', 'node-4', 'node-5', 'node-6', 'node-7', 'node-8']
+    icn_flows: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ]
+    check: false
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel
+
+  # 7 hops - cbs - soft interests
+  net-307:
+    tsn: 
+      tsn-301: ["node-1:2", "node-2:3", "node-3:3", "node-4:1", "node-5:3", "node-6:1", "node-7:3"]
+      tsn-302: ["node-8:3", "node-7:1", "node-6:3", "node-5:1", "node-4:3", "node-3:2", "node-2:2"]
+    flows:
+      # Prio 3
+      1: ':node-1:2,2:node-2:'
+      2: ':node-2:3,2:node-3:'
+      3: ':node-3:3,3:node-4:'
+      4: ':node-4:1,1:node-5:'
+      5: ':node-5:3,3:node-6:'
+      6: ':node-6:1,1:node-7:'
+      7: ':node-7:3,3:node-8:'
+      # Prio 2
+      8: ':node-1:2,2:node-2:'
+      9: ':node-2:3,2:node-3:'
+      10: ':node-3:3,3:node-4:'
+      11: ':node-4:1,1:node-5:'
+      12: ':node-5:3,3:node-6:'
+      13: ':node-6:1,1:node-7:'
+      14: ':node-7:3,3:node-8:'
+    flow_prio: 
+      3: { 1,2,3,4,5,6,7 }
+      2: { 8,9,10,11,12,13,14 }
+    forwarders: ['node-1', 'node-2', 'node-3', 'node-4', 'node-5', 'node-6', 'node-7', 'node-8']
+    icn_flows: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ]
+    check: false
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel
+
+# ------------------------------ TSN configs -----------------------------------
+# Holds all TSN configurations
+tsnconfigs:
+  # TAPRIO TSN configuration with three child qdiscs - two with etf in offload (one also in deadline mode) and one best-effort queue
+  # Taprio with 1ms schedule split across the queues with 300us, 300us, and 400us respectively
+  tsn-1:
+    name: 'Basic MQPRIO without TSN child qdiscs'
+    taprio: {}
+    queues:
+      1: { mode: be, prio: [3] }
+      2: { mode: be, prio: [2] }
+      3: { mode: be, prio: [1] }
+      4: { mode: be, prio: ['*'] }
+
+  # Normal
+  tsn-201:
+    name: 'Data direction - MQPRIO with CBS on prios 3 and 2; best effort for the rest'   
+    taprio: {}
+    queues:
+      1: { mode: cbs, prio: [3], idle: '43936', send: '-956064', high: '68', low: '-1313' }
+      2: { mode: cbs, prio: [2], idle: '43936', send: '-956064', high: '132', low: '-1313' }
+      3: { mode: be, prio: [1] }
+      4: { mode: be, prio: ['*'] }
+  
+  tsn-202:
+    name: 'Interest direction - MQPRIO with CBS on prios 3 and 2; best effort for the rest'   
+    taprio: {}
+    queues:
+      1: { mode: cbs, prio: [3], idle: '2816', send: '-997184', high: '5', low: '-88' }
+      2: { mode: cbs, prio: [2], idle: '2816', send: '-997184', high: '5', low: '-88' }
+      3: { mode: be, prio: [1] }
+      4: { mode: be, prio: ['*'] }
+
+  # Soft
+  tsn-301:
+    name: 'Data direction - MQPRIO with CBS on prios 3 and 2; best effort for the rest'   
+    taprio: {}
+    queues:
+      1: { mode: cbs, prio: [3], idle: '43648', send: '-956352', high: '68', low: '-1305' }
+      2: { mode: cbs, prio: [2], idle: '43648', send: '-956352', high: '130', low: '-1305' }
+      3: { mode: be, prio: [1] }
+      4: { mode: be, prio: ['*'] }
+  
+  tsn-302:
+    name: 'Interest direction - MQPRIO with CBS on prios 3 and 2; best effort for the rest'   
+    taprio: {}
+    queues:
+      1: { mode: cbs, prio: [3], idle: '2', send: '-999998', high: '1', low: '-88' }
+      2: { mode: cbs, prio: [2], idle: '2', send: '-999998', high: '1', low: '-88' }
+      3: { mode: be, prio: [1] }
+      4: { mode: be, prio: ['*'] }

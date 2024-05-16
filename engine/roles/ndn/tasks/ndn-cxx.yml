@@ -1,0 +1,51 @@
+---
+
+- name: install ndn-cxx dependencies 
+  apt: 
+    pkg: "{{ ndn_cxx_dependencies | list }}"
+  tags: [ ndn, cxx, apt ]
+
+- name: send ndn-cxx folder to node
+  synchronize:
+    src: ../files/ndn-cxx
+    dest: "{{ data_path }}"
+    mode: push
+    delete: true
+  tags: [ ndn, cxx ]
+
+- name: change ndn-cxx folder permissions
+  file:
+    path: '{{ data_path }}/ndn-cxx'
+    mode: "0755"
+    recurse: yes
+  tags: [ ndn, cxx ]
+
+- name: build ndn-cxx (takes some time)
+  shell: 
+    chdir: "{{ data_path }}/ndn-cxx"
+    cmd: |
+      ./waf configure
+      ./waf
+      ./waf install
+      ldconfig
+  tags: [ ndn, compile, cxx ]
+
+- name: check if ndn user group exists
+  shell: id -u ndn
+  register: check_ndn_user
+  ignore_errors: true
+  tags: [ ndn, cxx ]
+
+- name: set up ndn user group if non existant
+  shell: 
+    cmd: |
+      addgroup ndn
+      useradd -g ndn ndn
+  when: check_ndn_user.rc
+  tags: [ ndn, cxx ]
+
+- name: delete ndn-cxx folder
+  file:
+    state: absent
+    path: '{{ data_path }}/ndn-cxx'
+  tags: [ ndn, cxx, delete ]

@@ -1,0 +1,41 @@
+---
+
+- name: install NFD dependencies 
+  apt: 
+    pkg: "{{ nfd_dependencies | list }}"
+  tags: [ ndn, nfd, apt ]
+
+- name: send NFD folder to node
+  synchronize:
+    src: ../files/NFD
+    dest: "{{ data_path }}"
+    mode: push
+    delete: false
+  tags: [ ndn, nfd ]
+
+- name: change NFD folder permissions
+  file:
+    path: '{{ data_path }}/NFD'
+    mode: "0755"
+    recurse: yes
+  tags: [ ndn, nfd ]
+
+- name: build NFD (takes some time)
+  shell: 
+    chdir: "{{ data_path }}/NFD"
+    cmd: |
+      ./waf configure
+      ./waf
+      ./waf install
+  tags: [ ndn, compile, nfd ]
+
+# TODO: Make this config editable per experiment
+# - name: copy config file 
+#   shell:
+#     cmd: cp /usr/local/etc/ndn/nfd.conf.sample /usr/local/etc/ndn/nfd.conf
+
+- name: delete NFD folder
+  file:
+    state: absent
+    path: '{{ data_path }}/NFD'
+  tags: [ ndn, nfd, delete ]

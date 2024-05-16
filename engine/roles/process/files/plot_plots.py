@@ -33,7 +33,7 @@ def prepare(topic, processing_descriptor):
     ''' do common tasks at the start of all functions '''
     fl = processing_descriptor.log_file()
     with open(fl, "a") as myFile:
-        print('Plotting ' + topic + ' for', processing_descriptor.experiment, end='...\t', file=myFile)
+        print('Plotting ' + topic + ' for', processing_descriptor.experiment + ' for node ' + processing_descriptor.node, end='...\t', file=myFile)
     start_time = time.time()
 
     fig, ax = plt.subplots(1, figsize=figSize)
@@ -41,15 +41,26 @@ def prepare(topic, processing_descriptor):
     return fl, start_time, fig, ax
 
 def follow_up(plot_name, processing_descriptor, topic_short, fl, start_time, fig):
-    ''' do common tasks at the end of all functions '''
-    paths = ['/plots/', '/plots/' + topic_short + '/', '/plots/' + processing_descriptor.experiment + '/']
+    ''' do common tasks at the end of all plotting functions '''
+    paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
 
     for path in paths:
         pre_out_path = processing_descriptor.folder + path
         if not os.path.exists(pre_out_path):
-            os.makedirs(pre_out_path)
+            os.makedirs(pre_out_path, exist_ok=True)
         fig.savefig(pre_out_path + '/' + plot_name, dpi=100, bbox_inches='tight', format='png')
     plt.close('all')
 
     with open(fl, "a") as myFile:
-        print('It took', time.time() - start_time, 's\n', file=myFile)
+        print('It took', time.time() - start_time, 's for', processing_descriptor.node, 'ports', processing_descriptor.dst_ports, '\n', file=myFile)
+
+def plots_exist(plot_name, processing_descriptor, topic_short):
+    ''' check if plots already exists, to not compute them again '''
+    paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
+
+    for path in paths:
+        plot_path = processing_descriptor.folder + path + plot_name
+        if not os.path.isfile(plot_path):
+            return False
+
+    return True

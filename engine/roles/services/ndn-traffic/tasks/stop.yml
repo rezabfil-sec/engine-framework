@@ -1,0 +1,7 @@
+---
+
+- name: kill ndn-traffic processes 
+  shell: |
+    killall ndn-traffic-server
+    killall ndn-traffic-client
+  ignore_errors: true

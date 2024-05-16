@@ -1,0 +1,18 @@
+---
+
+- name: set id for ndn-traffic service
+  set_fact: 
+    id: 'flow_{{ service.role }}_{{ service.content | replace("/", "_")}}'
+- name: collect log file 
+  fetch: 
+    src: '/root/{{ id }}.log'
+    dest: '{{ node_folder }}/'
+    flat: yes
+- name: delete node ndn log file
+  file:
+    path: '/root/{{ id }}.log'
+    state: absent
+- name: delete node ndn conf file
+  file:
+    path: '/root/{{ id }}.conf'
+    state: absent

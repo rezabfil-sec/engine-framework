@@ -1,0 +1,60 @@
+---
+# 0. Nodes
+# Define and map nodes required for the scenario
+#
+# Scenario can be moved around in the infrastructure or
+# updated after a re-wiring of the network more easily.
+#
+# Set to "no" if you don't want to use the low-latency kernel
+use_low_latency_kernel: "yes"
+
+# Set the number of isolated cores. Cores starting with core 0 will be isolated. Set to 0, no cores will be isolated!
+num_isolated_cores: 4
+
+
+# ---------------------------------------------
+# 1. Option
+# Load the nodes for a pre-defined topology and its node mapping
+# Empty string to use own definition
+
+# A topology from the scenarios/topologies folder
+topology: ""
+# //
+# topology: "topo-01"
+
+
+# ---------------------------------------------
+# 2. Option
+# Define your own required hosts and their mapping
+# if the topology variable is defined it takes precedence
+
+# A list with the required nodes with real hostname
+nodes:
+  - homer
+  - bart
+  - marge
+  - scratchy
+  - itchy
+  - ralph
+  - milhouse
+  - nelson
+
+# The mapping of the above nodes to node-X names
+# the node-X names are used in the rest of the scenario configuration
+node_mapping:
+  node-1: homer
+  node-2: bart
+  node-3: marge
+  node-4: scratchy
+  node-5: itchy
+  node-6: ralph
+  node-7: milhouse
+  node-8: nelson
+
+processing_node: itchy
+parse_pcap_on_nodes: false
+auto_tcpdump_collection: false
+ndn: true
+emacsec_use: false
+
+

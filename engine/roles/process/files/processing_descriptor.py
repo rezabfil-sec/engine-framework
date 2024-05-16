@@ -7,7 +7,7 @@ import glob
 import sys
 
 class ProcessingDescriptor:
-    def __init__(self, folder, experiment, node, iface, sim, dst_ports=[], qdisc_types=['mqprio','taprio','be','cbs','etf'], warmup=0, info=None):
+    def __init__(self, folder, experiment, node, iface, sim, ndn=False, dst_ports=[], qdisc_types=['mqprio','taprio','be','cbs','etf'], warmup=0, info=None):
         """
             Store information about what and how to parse or plot
 
@@ -25,6 +25,7 @@ class ProcessingDescriptor:
         self.node = node
         self.iface = iface
         self.sim = sim
+        self.ndn = ndn
         self.dst_ports = dst_ports
         self.qdisc_types = qdisc_types
         self.warmup = warmup
@@ -46,18 +47,51 @@ class ProcessingDescriptor:
         return self.folder + '/*' + self.experiment + '/' + self.node + '*/'
 
     def png_string(self):
-        return '_e-' + self.experiment + '_d-' + self.node + '_i-' + self.iface + '_p-' + str(self.dst_ports) + '.png'
+        return '_e-' + self.experiment + '_d-' + self.node + '_i-' + self.iface + '_p-' + self.get_port(self.dst_ports) + '.png'
 
+    def print_log(self, message):
+        log_file = self.log_file()
+        with open(log_file, "a") as myFile:
+            print(message, file=myFile)
+    
+    def get_stream(self, val):
+        return str(val)
+    
+    # get port as a string
+    def get_port(self, val):
+        if self.ndn == False:
+            return str(val)
+        else:
+            # need to replace '/' with '_' from ndn names so that the csv names will be valid file names
+            vals = str(val).split('/')
+            # remove ndn sequence from the name
+            if vals[-1].startswith('seq=') or vals[-1].startswith('58='):
+                vals = vals[:-1]
+            if vals[0] == '':
+                return '_'.join(vals[1:])
+            else:
+                return '_'.join(vals)
+
+    # helper function to find all the files matching the given name (name can contain wildcards so multiple files can match)
     def find_file_name(self, name, single=True):
         pre_path = self.pre_path() + name
+        #print(pre_path)
         file_name = glob.glob(pre_path)
-        if single:
+        if file_name == []:
+            return ''
+        elif single:
             return file_name[0]
         else:
             return file_name
 
+    # get the service name used on the port, for all ndn services the name is simply 'ndn'
     def service_name(self, port):
-        return self.info[port]['name']
+        if self.ndn:
+            return 'ndn'
+        elif self.info != None:
+            return self.info[port]['name']
+        else:
+            return 'send_udp'
 
 def add_arguments(parser):
     parser.add_argument('-f', '--folder', required=True, help='Folder with scenario results')

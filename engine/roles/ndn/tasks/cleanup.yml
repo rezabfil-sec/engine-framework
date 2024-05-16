@@ -1,0 +1,19 @@
+---
+# Cleanup NDN
+
+- name: stop NFD
+  shell: nfd-stop
+  ignore_errors: true
+
+- name: collect NFD log file
+  fetch:
+    src: '{{ data_path }}/nfd.log'
+    dest: '{{ node_folder }}/'
+    flat: yes
+  ignore_errors: true
+
+- name: delete NFD log file
+  file:
+    path: '{{ data_path }}/nfd.log'
+    state: absent
+  ignore_errors: true

@@ -49,11 +49,19 @@
       - gnuplot
       - libtool
       - autoconf
+      - libsodium-dev
+      - libb2-dev
+      - tshark
     state: present
 # install python packages not included in the node base image
 - name: install python packages
   pip:
-    name: psutil
+    name: 
+      - psutil
+      - pandas==1.3.5
+      - pypacker
+      - matplotlib
+      - python-ndn
 # distribute service and experiment script
 - name: copy service and experiment script to nodes
   template:

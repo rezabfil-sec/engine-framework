@@ -1,0 +1,4 @@
+ndn_repositories: [ppa:named-data/ppa]
+ndn_apt: [psmisc, ndn-tools, libpsync, libchronosync, ndncert, nlsr]
+# ndn dependencies that will be compiled manually
+ndn_compile: [ndn-cxx, nfd, ndn-traffic-generator]

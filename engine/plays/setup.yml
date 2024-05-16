@@ -57,6 +57,12 @@
         apply:
           tags: [ setup, basic ]
       tags: [ setup, basic ]
+    # ndn configuration
+    - name: ndn setup
+      include_role:
+        name: roles/setup
+        tasks_from: setup_ndn.yml
+      when: ndn is defined and ndn
     # prepare traffic priority
     - name: priority setup
       include_role:

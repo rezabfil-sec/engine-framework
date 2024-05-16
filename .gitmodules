@@ -1,0 +1,9 @@
+[submodule "engine/roles/ndn/files/ndn-cxx"]
+	path = engine/roles/ndn/files/ndn-cxx
+	url = https://github.com/m-bosk/ndn-cxx.git
+[submodule "engine/roles/ndn/files/NFD"]
+	path = engine/roles/ndn/files/NFD
+	url = https://github.com/m-bosk/NFD.git
+[submodule "engine/roles/ndn/files/ndn-traffic-generator"]
+	path = engine/roles/ndn/files/ndn-traffic-generator
+	url = git@github.com:m-bosk/ndn-traffic-generator.git

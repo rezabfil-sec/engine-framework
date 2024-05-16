@@ -1,0 +1,23 @@
+---
+
+- name: install software-properties-common to add repos
+  apt:
+    name: software-properties-common
+  tags: [ setup, ndn, apt ]
+
+- name: add ndn repositories
+  shell: "sudo add-apt-repository -y {{ item }}"
+  loop: "{{ ndn_repositories | list }} "
+  tags: [ setup, ndn, apt ]
+
+- name: compile ndn dependencies
+  include_role:
+    name: roles/ndn
+    tasks_from: "{{ item }}.yml"
+  loop: "{{ ndn_compile | list }}"
+  tags: [ setup, ndn, apt ]
+
+- name: install ndn dependencies with apt 
+  apt: 
+    pkg: "{{ ndn_apt | list }}"
+  tags: [ setup, ndn, apt ]

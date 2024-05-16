@@ -1,0 +1,41 @@
+---
+
+- name: set id for ndn-traffic service
+  set_fact: 
+    id: 'flow_{{ service.role }}_{{ service.content | replace("/", "_")}}'
+
+- block:
+  - name: send config to server 
+    copy: 
+      content: |
+        Name=/{{ service.content }}
+        ContentBytes={{ service.bytes | default(1000) }}
+        ContentDelay=0
+        FreshnessPeriod=1
+      dest: '/root/{{ id }}.conf'
+  - name: start server 
+    shell: |
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      ndn-traffic-server /root/{{ id }}.conf > /root/{{ id }}.log
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0 
+  when: service.role == 'source'
+
+- block:
+  - name: send config to client 
+    copy: 
+      content: |
+        TrafficPercentage=100
+        Name=/{{ service.content }}
+        NameAppendSequenceNumber=1
+        MustBeFresh=1
+      dest: '/root/{{ id }}.conf'
+  - name: start client 
+    shell: |
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      ndn-traffic-client /root/{{ id }}.conf -i 1 > /root/{{ id }}.log
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0 
+  when: service.role == 'client'

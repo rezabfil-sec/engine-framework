@@ -3,7 +3,7 @@
 
 - name: collect tcpdump pcap file(s)
   fetch:
-    src: '{{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
+    src: '{{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
     dest: '{{ node_folder }}/'
     flat: yes
     fail_on_missing: no
@@ -13,7 +13,7 @@
 
 - name: delete node tcpdump pcap file
   file:
-    path: '{{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
+    path: '{{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
     state: absent
   loop: "{{ node_ifaces | dict2items }}"
   loop_control:

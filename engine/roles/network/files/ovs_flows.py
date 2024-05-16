@@ -15,6 +15,7 @@ def parse_cli(args):
                         help='Interface vlan id')
     parser.add_argument('-f', '--flowfile',
                         help='Json file with all flows')
+    parser.add_argument('--arp_entries', action='store_true', help='Set up ARP entries')
 
     return parser.parse_args(args)
 
@@ -26,10 +27,13 @@ def get_mac(flow, dir_in):
         return "82:a3:c2:4a:a9:%s" % mac_suffix
 
 def get_ip(flow, dir_in):
+    return get_ip_no_cidr(flow, dir_in) + "/24"
+
+def get_ip_no_cidr(flow, dir_in):
     if dir_in:
-        return "10.0.%s.1/24" % flow
+        return "10.0.%s.1" % flow
     else:
-        return "10.0.%s.2/24" % flow
+        return "10.0.%s.2" % flow
 
 def create_virtual(iface_in, iface_out, flow, vid):
     """ Create a receiving virtual interface for the endpoints of a flow
@@ -86,6 +90,10 @@ def forward_flow(in_port, out_port, flow):
         out_port, get_mac(flow, False), get_mac(flow, True), in_port)
     subprocess.run(cmd.split(" "), stdout=subprocess.PIPE, check=True)
 
+def arp_entry(flow, dir_in):
+    # cmd = "arp -s %s %s" % (get_ip_no_cidr(flow, dir_in), get_mac(flow, dir_in)) # use -i option? # arp command (part of net-tools) not installed for our setup, thus use ip neigh
+    cmd = "ip neigh add %s lladdr %s nud permanent dev flow%s" % (get_ip_no_cidr(flow, dir_in), get_mac(flow, dir_in), flow)
+    subprocess.run(cmd.split(" "), stdout=subprocess.PIPE, check=True)
 
 # ---------------- START MAIN ---------------------
 
@@ -93,12 +101,17 @@ parser_args = parse_cli(sys.argv[1:])
 name = parser_args.node
 vid = parser_args.vlanid
 flowfile = parser_args.flowfile
+arp_entries = parser_args.arp_entries
 
 with open(flowfile, 'r') as stream:
     flows = json.load(stream)
 
 flow_ifaces = []
 use_ifaces = set()
+
+# store tuples for iface peers; example: :node-1:2,3:node-2: yields [(2, 3, node-2)]
+# read as: from current node on iface 2, we want to receive from node-2 via his iface 3
+peer_ifaces = set()
 
 for flow in list(flows.keys()) :
 
@@ -110,7 +123,7 @@ for flow in list(flows.keys()) :
 
     # Flow Format: { 1: ':<node1>:<iface-out>-<iface-in>:<node2>:', 2: '..' }
     nodes = flows[flow].split(",")
-    for node in nodes:
+    for (i, node) in enumerate(nodes):
         iface_in, node_name, iface_out = node.split(":")
         if name == node_name:
 
@@ -123,16 +136,34 @@ for flow in list(flows.keys()) :
                 forward_flow(iface_in, iface_out, flow)
                 use_ifaces.add(iface_in)
                 use_ifaces.add(iface_out)
+
+                peer_in, peer_name, peer_out = nodes[i-1].split(':')
+                peer_ifaces.add((iface_in, peer_out, peer_name))
+
+                peer_in, peer_name, peer_out = nodes[i+1].split(':')
+                peer_ifaces.add((iface_out, peer_in, peer_name))
                 continue
             # 2. Case - Start Flow
             elif not iface_in and iface_out:
                 forward_flow(str(100+int(flow)), iface_out, flow)
                 use_ifaces.add(iface_out)
+
+                peer_in, peer_name, peer_out = nodes[i+1].split(':')
+                peer_ifaces.add((iface_out, peer_in, peer_name))
+
+                if arp_entries:
+                    arp_entry(flow, False)
                 continue
             # 3. Case - End Flow
             elif not iface_out and iface_in:
                 forward_flow(iface_in, str(100+int(flow)), flow)
                 use_ifaces.add(iface_in)
+
+                peer_in, peer_name, peer_out = nodes[i-1].split(':')
+                peer_ifaces.add((iface_in, peer_out, peer_name))
+
+                if arp_entries:
+                    arp_entry(flow, True)
                 continue
             else:
                 print("Invalid interface ports [in: %s, out: %s]" % (
@@ -142,3 +173,4 @@ for flow in list(flows.keys()) :
 # return flow interfaces
 print(list(use_ifaces))
 print(flow_ifaces)
+print(list(peer_ifaces))

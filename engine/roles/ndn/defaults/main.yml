@@ -1,0 +1,3 @@
+ndn_cxx_dependencies: [build-essential, pkg-config, python3-minimal, libboost-all-dev, libssl-dev, libsqlite3-dev]
+nfd_dependencies: [libpcap-dev, libsystemd-dev]
+ndn_traffic_generator_dependencies: []

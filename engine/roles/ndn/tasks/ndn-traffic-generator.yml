@@ -1,0 +1,32 @@
+---
+
+- name: install ndn-traffic-generator dependencies 
+  apt: 
+    pkg: "{{ ndn_traffic_generator_dependencies | list }}"
+
+- name: send ndn-traffic-generator folder to node
+  synchronize:
+    src: ../files/ndn-traffic-generator
+    dest: "{{ data_path }}"
+    mode: push
+    delete: true
+
+- name: change ndn-traffic-generator folder permissions
+  file:
+    path: '{{ data_path }}/ndn-traffic-generator'
+    mode: "0755"
+    recurse: yes
+
+- name: build ndn-traffic-generator (takes some time)
+  shell: 
+    chdir: "{{ data_path }}/ndn-traffic-generator"
+    cmd: |
+      ./waf configure
+      ./waf
+      ./waf install
+  tags: [ ndn, compile, generator ]
+
+- name: delete ndn-traffic-generator folder
+  file:
+    state: absent
+    path: '{{ data_path }}/ndn-traffic-generator'

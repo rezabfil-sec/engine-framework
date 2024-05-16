@@ -82,10 +82,11 @@
       run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
       taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
       tcpdump -n -i {{ iface }} -j adapter_unsynced -tt --time-stamp-precision=nano
-      -w {{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
+      -w {{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
       {{ "-s " + (service.size|string) if service.size is defined else ""}}
       {{ "-c " + (service.count|string) if service.count is defined else ""}}
       {{ "-W 1 -G " + (service.time|string) if service.time is defined else ""}}
+      {{ "-Q " + (service.direction|default("inout")) }}
       {{ service.filter if service.filter is defined else ""}}
   loop: "{{ tcpdump_iface }}"
   loop_control:
@@ -96,10 +97,11 @@
     run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
     taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
     tcpdump -n -i {{ iface }} -j adapter_unsynced -tt --time-stamp-precision=nano
-    -w {{ data_path }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
+    -w {{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
     {{ "-s " + (service.size|string) if service.size is defined else ""}}
     {{ "-c " + (service.count|string) if service.count is defined else ""}}
     {{ "-W 1 -G " + (service.time|string) if service.time is defined else ""}}
+    {{ "-Q " + (service.direction|default("inout")) }}
     {{ service.filter if service.filter is defined else ""}}
   async: 2592000  # run in background - for 1 month or until finished/killed
   poll: 0

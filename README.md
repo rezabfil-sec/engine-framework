@@ -17,14 +17,16 @@ This is a supplementary repository of the following list of publications:
 * Marcin Bosk*, Filip Rezabek*, Kilian Holzinger, Angela Gonzalez Mariño, Abdoul Aziz Kane, Francesc Fons, Jörg Ott, Georg Carle: Methodology and Infrastructure for TSN-Based Reproducible Network Experiments. IEEE Access 10: 109203-109239 (2022), [PDF: Methodology and Infrastructure - IEEE Access 2022](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9910175)
 * Filip Rezabek*, Marcin Bosk*, Thomas Paul, Kilian Holzinger, Sebastian Gallenmüller, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: EnGINE: Flexible Research Infrastructure for Reliable and Scalable Time Sensitive Networks. J. Netw. Syst. Manag. 30(4): 74 (2022), [PDF: EnGINE - JNSM 2022](https://link.springer.com/content/pdf/10.1007/s10922-022-09686-0.pdf)
 * Filip Rezabek, Marcin Bosk, Thomas Paul, Kilian Holzinger, Sebastian Gallenmüller, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: EnGINE: Developing a Flexible Research Infrastructure for Reliable and Scalable Intra-Vehicular TSN Networks. CNSM 2021: 530-536, [PDF: EnGINE - CNSM/HipNET 2021](http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/rezabek_hipnet2021.pdf)
-* Marcin Bosk, Filip Rezabek, Kilian Holzinger, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: Demo: Environment for Generic In-vehicular Network Experiments - EnGINE. VNC 2021: 117-118, [PDF: Demo - VNC 2021](http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/bosk_vnc2021.pdf)
+* Marcin Bosk*, Filip Rezabek*, Kilian Holzinger, Angela Gonzalez Mariño, Abdoul Kane, Francesc Fons, Haigang Zhang, Georg Carle, Jörg Ott: Demo: Environment for Generic In-vehicular Network Experiments - EnGINE. VNC 2021: 117-118, [PDF: Demo - VNC 2021](http://www.net.in.tum.de/fileadmin/bibtex/publications/papers/bosk_vnc2021.pdf)
 
 ```*``` Authors with * contributed to the publications equally
+To cite the repository directly, use this reference:
+
 
 ## Relevant publications using & Extending EnGINE
 Extension of **EnGINE** supporting NDN is fully available since [this commit](https://github.com/rezabfil-sec/engine-framework/commit/21110b0c30a10ae6a49103e81e877d5b4beee43c) and is described in publication **Towards Domain-Specific Time-Sensitive Information-Centric Networking Architecture**. If you want to cite this publication, use this BibTeX format:
 ```
-@INPROCEEDINGS{bosk2024tsnicn,
+@inproceedings{bosk2024tsnicn,
   author={Marcin Bosk and J{\"o}rg Ott},
   title={Towards {Domain-Specific} {Time-Sensitive} {Information-Centric} Networking Architecture},
   booktitle={2024 IFIP Networking Conference (IFIP Networking)  (IFIP Networking 2024)},
@@ -73,7 +75,7 @@ Extension of EnGINE is present in **Multilayer Environment and Toolchain for Hol
 
 **EnGINE** was used in **TSN Experiments Using COTS Hardware and Open-Source Solutions: Lessons Learned**:
 ```
-@INPROCEEDINGS{10150312,
+@inproceedings{10150312,
   author={Rezabek, Filip and Bosk, Marcin and Carle, Georg and Ott, Jörg},
   booktitle={2023 IEEE International Conference on Pervasive Computing and Communications Workshops and other Affiliated Events (PerCom Workshops)}, 
   title={TSN Experiments Using COTS Hardware and Open-Source Solutions: Lessons Learned}, 
@@ -105,7 +107,7 @@ If you want to cite the **Simulation and Practice: A Hybrid Experimentation Plat
 
 **EnGINE** was used in **PTP Security Measures and their Impact on Synchronization Accuracy**:
 ```
-@INPROCEEDINGS{9964658,
+@inproceedings{9964658,
   author={Rezabek, Filip and Helm, Max and Leonhardt, Tizian and Carle, Georg},
   booktitle={2022 18th International Conference on Network and Service Management (CNSM)}, 
   title={PTP Security Measures and their Impact on Synchronization Accuracy}, 
@@ -196,6 +198,6 @@ The source code of EnGINE is published under the MIT license. Its main contribut
 * Filip Rezabek
 
 In case another license applies, it is mentioned in the header of the given file, e.g.,`send_udp_tai.c`.
-Similarly, in case another license applies, it is mentioned in the header of the given file, e.g., `Iperf3LikePacketSource.ned`. 
+Similarly, if another license applies, it is mentioned in the header of the given file, e.g., `Iperf3LikePacketSource.ned`. 
 Externally libraries that are used as a part of the experiment execution have their corresponding licensing, e.g., [linuxptp](http://linuxptp.sourceforge.net/), [iperf3](https://github.com/esnet/iperf).
 OMNeT++ is distributed under the Academic Public License. For commercial purposes, navigate to the [https://omnest.com/](https://omnest.com/).

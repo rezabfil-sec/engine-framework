@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you deploy this framework, please cite it as below. In addition, use the EnGINE JNSM journal"
+authors:
+- family-names: "Rezabek"
+  given-names: "Filip"
+  orcid: "https://orcid.org/0000-0002-9090-5633"
+- family-names: "Bosk"
+  given-names: "Marcin"
+  orcid: "https://orcid.org/0000-0001-6754-9098"
+- family-names: "Paul"
+  given-names: "Thomas"
+title: "EnGINE Framework"
+version: 1.5.1-beta
+doi: 10.5281/zenodo.13350682
+date-released: 2022-12-01
+url: "https://github.com/rezabfil-sec/engine-framework"

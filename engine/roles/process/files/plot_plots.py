@@ -42,8 +42,11 @@ def prepare(topic, processing_descriptor):
 
 def follow_up(plot_name, processing_descriptor, topic_short, fl, start_time, fig):
     ''' do common tasks at the end of all plotting functions '''
-    paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
-
+    if len(processing_descriptor.experiments) > 1:
+        paths = ['/plots/' + "combined" + '/' + topic_short + '/' ]
+    else:
+        paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
+    # paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
     for path in paths:
         pre_out_path = processing_descriptor.folder + path
         if not os.path.exists(pre_out_path):
@@ -56,7 +59,11 @@ def follow_up(plot_name, processing_descriptor, topic_short, fl, start_time, fig
 
 def plots_exist(plot_name, processing_descriptor, topic_short):
     ''' check if plots already exists, to not compute them again '''
-    paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
+    if len(processing_descriptor.experiments) > 1:
+        paths = ['/plots/' + "combined" + '/' + topic_short + '/' ]
+    else:
+        paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
+    # paths = ['/plots/' + processing_descriptor.experiment + '/' + topic_short + '/' + processing_descriptor.node + '/']
 
     for path in paths:
         plot_path = processing_descriptor.folder + path + plot_name

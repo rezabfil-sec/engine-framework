@@ -1,0 +1,94 @@
+- name: Instantiate VPC network for each individual subnets for '{{ network_nodes.key}}'
+  gcp_compute_network:
+    auth_kind: serviceaccount
+    service_account_file : '{{ gcp_config.authentication.service_account_file }}'
+    name: '{{ network_nodes.key | string | lower | replace("_", "-") }}'
+    project: '{{ gcp_config.project }}'
+    auto_create_subnetworks: false
+  register: network_instance
+
+# create default firewall rule, allow ssh
+- name: create default firewall rule to allow ssh for '{{ network_nodes.key}}'
+  gcp_compute_firewall:
+    auth_kind: serviceaccount
+    service_account_file: '{{ gcp_config.authentication.service_account_file }}'
+    name: '{{ network_nodes.key | string | lower | replace("_", "-") }}-network-allow-ssh'
+    project: '{{ gcp_config.project }}'
+    network: '{{ network_instance }}'
+    allowed:
+      - ip_protocol: tcp
+        ports:
+          - "22"
+    source_ranges:
+      - "0.0.0.0/0"
+    direction: INGRESS
+
+# create default firewall rule, allow icmp
+- name: create default firewall rule to allow icmp for '{{ network_nodes.key}}'
+  gcp_compute_firewall:
+    auth_kind: serviceaccount
+    service_account_file: '{{ gcp_config.authentication.service_account_file }}'
+    name: '{{ network_nodes.key | string | lower | replace("_", "-") }}-network-allow-icmp'
+    project: '{{ gcp_config.project }}'
+    network: '{{ network_instance }}'
+    allowed:
+      - ip_protocol: icmp
+    source_ranges:
+      - '0.0.0.0/0'
+    direction: INGRESS
+
+# create default firewall rule, allow internal traffic
+- name: create default firewall rule to allow internal traffic for '{{ network_nodes.key}}'
+  gcp_compute_firewall:
+    auth_kind: serviceaccount
+    service_account_file: '{{ gcp_config.authentication.service_account_file }}'
+    name: '{{ network_nodes.key | string | lower | replace("_", "-") }}-network-allow-internal'
+    project: '{{ gcp_config.project }}'
+    network: '{{ network_instance }}'
+    allowed:
+      - ip_protocol: all
+    source_ranges:
+      - '0.0.0.0/0'
+    direction: INGRESS
+
+- name: Instantiate subnetworks per node based on their region for '{{ network_nodes.key}}'  
+  gcp_compute_subnetwork:
+    auth_kind: serviceaccount
+    service_account_file: "{{ gcp_config.authentication.service_account_file }}"
+    name: 'default-subnetwork-{{ network_nodes.key | string | lower | replace("_", "-") }}'
+    project: "{{ gcp_config.project  }}"
+    region: "{{ hostvars[current_node].region }}"
+    network: {selfLink: "{{ network_instance.selfLink }}"}
+    ip_cidr_range: '10.0.{{ counter | string}}.{{ (ansible_loop.index0 | int * 16) | string }}/28'
+  loop: '{{ nodes }}'
+  loop_control:
+    loop_var: current_node
+    extended: true
+  when: "current_node in network_nodes.value" 
+  register: subnetwork_instances
+
+- name: initialize empty dict for subnetworks
+  set_fact:
+    subnetworks: {}
+- name: create dictionary for subnetworks
+  set_fact:
+      subnetworks: '{{ subnetworks | combine({node_subnetwork.0: {"self_link": node_subnetwork.1.selfLink, "cidr": node_subnetwork.1.ipCidrRange }}) }}'
+  with_together: 
+    - '{{ nodes }}'
+    - '{{ subnetwork_instances.results }}'
+  loop_control:
+    loop_var: node_subnetwork
+    extended: true
+  when : "node_subnetwork.0 in network_nodes.value"
+
+- name: create dictionary for network_interfaces
+  set_fact:
+    network_interfaces: '{{ (network_interfaces | default({})) | combine({network_nodes.key: {"network": network_instance.selfLink, "subnetworks": subnetworks}}) }}'
+
+- name: increment counter
+  set_fact:
+    counter: "{{ counter | int + 1 }}"
+
+- name: pause for 5 seconds to avoid rate limit
+  pause:
+    seconds: 5

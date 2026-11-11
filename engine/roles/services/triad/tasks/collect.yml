@@ -1,0 +1,11 @@
+---
+# triad collect
+
+- name: collect triad data
+  fetch: src={{ artifact.src }} dest={{ artifact.dest }} flat=yes 
+  with_items:
+    - { src: '{{ triad_dir }}/triad.csv', dest: '{{ node_folder }}/triad-{{ inventory_hostname }}.csv' }
+    - { src: '{{ triad_dir }}/triad.pdf', dest: '{{ node_folder }}/triad-{{ inventory_hostname }}.pdf' }
+  loop_control:
+    loop_var: artifact
+  ignore_errors: yes # :( 

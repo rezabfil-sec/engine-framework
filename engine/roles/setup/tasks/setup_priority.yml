@@ -8,5 +8,23 @@
     mode: '0755'
 
 - name: execute cgroup priority script
-  command: 'bash {{ data_path }}/cgroup_priorities.sh'
+  command: 'bash {{ data_path }}/cgroup_priorities.sh {{ network_config }}'
 
+- debug:
+    msg: "Non isolated cores are: {{ num_isolated_cores }}-{{ hostvars[inventory_hostname]['number_vCPUs'] | int - 1 }}"
+
+# - pause:
+
+# LEGACY
+# above approach is much faster
+# - name: create priority cgroups
+#   command: 'cgcreate -g net_prio:{{ item }}'
+#   loop: '{{ net_prio_list }}'
+#
+# - name: assign cgroup priority to raw interfaces
+#   shell: 'echo "{{ item[0] }} {{ item[1] }}" > /sys/fs/cgroup/net_prio/{{ item[1] }}/net_prio.ifpriomap'
+#   loop: '{{ node_ifaces | dict2items | map(attribute="value.name") | product(net_prio_list) | list }}'
+#
+# - name: assign cgroup priority to vlan interfaces
+#   shell: 'echo "v{{ item[0] }} {{ item[1] }}" > /sys/fs/cgroup/net_prio/{{ item[1] }}/net_prio.ifpriomap'
+#   loop: '{{ node_ifaces | dict2items | map(attribute="value.name") | product(net_prio_list) | list }}'

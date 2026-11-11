@@ -1,0 +1,12 @@
+---
+# Stop application
+- name: Stop signing service
+  command: pkill threshold
+  ignore_errors: true
+  when: service.role == 'participant'
+
+- name: Stop bench service
+  command: pkill bench
+  ignore_errors: true
+  when: service.role == 'signclient'
+

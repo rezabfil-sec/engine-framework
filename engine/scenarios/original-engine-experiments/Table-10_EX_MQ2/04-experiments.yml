@@ -1,0 +1,21 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+# Table-10_EX_MQ2 - Pure MQPRIO with BE and 4 iperf flows on different queues non-bitrate-limited
+  # 1 hop
+  - { network: 'net-2', stack: 'stack-11',  action: 'action-1', time: 45, name: '4-queue_4-be_4-streams_1-hop_all-mqprio-nolimitiperf-45s' }
+  # 2 hop
+  - { network: 'net-2', stack: 'stack-12',  action: 'action-1', time: 45, name: '4-queue_4-be_4-streams_2-hop_all-mqprio-nolimitiperf-45s' }
+  # 3 hop
+  - { network: 'net-3', stack: 'stack-13',  action: 'action-1', time: 45, name: '4-queue_4-be_4-streams_3-hop_all-mqprio-nolimitiperf-45s' }
+  # 4 hop
+  - { network: 'net-4', stack: 'stack-14',  action: 'action-1', time: 45, name: '4-queue_4-be_4-streams_4-hop_all-mqprio-nolimitiperf-45s' }
+  # 5 hop
+  - { network: 'net-5', stack: 'stack-15',  action: 'action-1', time: 45, name: '4-queue_4-be_4-streams_5-hop_all-mqprio-nolimitiperf-45s' }
+  # 6 hop
+  - { network: 'net-6', stack: 'stack-16',  action: 'action-1', time: 45, name: '4-queue_4-be_4-streams_6-hop_all-mqprio-nolimitiperf-45s' }
+  # 7 hop
+  - { network: 'net-7', stack: 'stack-17',  action: 'action-1', time: 45, name: '4-queue_4-be_4-streams_7-hop_all-mqprio-nolimitiperf-45s' }
+

@@ -1,0 +1,10 @@
+---
+# matrix bench collect
+
+- name: collect matrix benchmark data
+  fetch: src={{ artifact.src }} dest={{ artifact.dest }} flat=yes 
+  with_items:
+    - { src: '{{ matrix_dir }}/matrix_mul.csv', dest: '{{ node_folder }}/matrix-mul-{{ inventory_hostname }}.csv' }
+  loop_control:
+    loop_var: artifact
+  ignore_errors: yes # :(

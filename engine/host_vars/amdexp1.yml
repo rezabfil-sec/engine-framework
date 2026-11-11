@@ -1,0 +1,68 @@
+---
+# variables for node todd
+
+# network card
+num_interfaces: 7
+node_ifaces:
+  # 1:
+  #   name: 'eno1'
+  #   mac: 'ac:1f:6b:ad:01:f8'
+  #   phc: '/dev/ptp5'
+  #   offload: no
+  1:
+    name: 'enp33s0f0'
+    mac: '68:05:ca:39:5f:b0'
+    phc: '/dev/ptp1'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  2:
+    name: 'enp33s0f1'
+    mac: '68:05:ca:39:5f:b1'
+    phc: '/dev/ptp2'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  3:
+    name: 'enp100s0f0'
+    mac: '68:05:ca:3a:a3:5c'
+    phc: '/dev/ptp3'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  4:
+    name: 'enp100s0f1'
+    mac: '68:05:ca:3a:a3:5d'
+    phc: '/dev/ptp4'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  5:
+    name: 'enp99s0f0'
+    mac: 'a0:36:9f:27:f7:78'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ixgbe'
+  6:
+    name: 'enp99s0f1'
+    mac: 'a0:36:9f:27:f7:7a'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ixgbe'
+  7:
+    name: 'eno2'
+    mac: 'ac:1f:6b:ad:01:f9'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: 'igb'
+
+# Total number of CPUs
+# Hyper threading is on, so 64 vCPUs 
+number_vCPUs: 64
+# Unit in GB
+total_RAM: 128
+
+management_iface: eno1

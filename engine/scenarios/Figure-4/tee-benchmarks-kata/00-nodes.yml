@@ -1,0 +1,58 @@
+---
+# 0. Nodes
+# Define and map nodes required for the scenario
+#
+# Scenario can be moved around in the infrastructure or
+# updated after a re-wiring of the network more easily.
+#
+
+# ---------------------------------------------
+# 0. Option
+# Specify the settings for CPU Isolation
+
+# Specify if you want to use the low-latency kernel
+# Set to "no" or leave out if you don't want to use the low-latency kernel
+use_low_latency_kernel: "no"
+
+# Set the number of isolated cores. Cores starting with core 0 will be isolated. 
+# Set to 0 or leave out if you want no cores to be isolated!
+num_isolated_cores: 0
+
+network_config: 'Physical'
+
+# ---------------------------------------------
+# 1. Option
+# Load the nodes for a pre-defined topology and its node mapping
+# Empty string to use own definition
+
+# A topology from the scenarios/topologies folder
+topology: ""
+
+# ---------------------------------------------
+# 2. Option
+# Define your own required hosts and their mapping
+# if the topology variable is defined it takes precedence
+
+# A list with the required nodes with real hostname
+nodes:
+  - octorand
+  - opulous
+
+containers:
+  octorand:
+    - { name: octorand-kata1, ssh_port: 10022 }
+  opulous:
+    - { name: opulous-kata1, ssh_port: 10022 }
+
+pos_node_image: "-s ubuntu-focal-snp-iommu-avic@2023-07-14T08:19:26+00:00"
+container_runtime: 'containerd'
+containerd_runtime: 'io.containerd.run.kata.v2'
+kata_config: 'kata-configuration-default'
+
+# The mapping of the above nodes to node-X names
+# the node-X names are used in the rest of the scenario configuration
+node_mapping:
+  node-1: octorand-kata1
+  node-2: opulous-kata1
+  node-3: octorand
+  node-4: opulous

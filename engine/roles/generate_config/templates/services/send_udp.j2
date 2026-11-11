@@ -7,7 +7,7 @@
 {% set num_packets = service.number_packets | default(service_defaults['send_udp']['num_packets']) -%}
 {% set interval = service.interval | default(service_defaults['send_udp']['packet_interval']) -%}
 {% set delay = service.delay | default(service_defaults['send_udp']['delay']) -%}
-{% include 'services/tsn_app.j2' -%}
+{% include 'services/qdisc_app.j2' -%}
 {% if device_numApps.update({services_key: device_numApps[services_key] + 1}) %}{% endif -%}
 {% elif service.role == 'forward' -%}
 # {{node_mapping[services_key]}}, service {{device_numServices[services_key]}} (send_udp, role 'forward') not implemented

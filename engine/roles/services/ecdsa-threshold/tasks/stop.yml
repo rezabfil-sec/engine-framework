@@ -1,0 +1,6 @@
+---
+# Stop application
+
+- name: Stop signing service
+  command: pkill -f rust-impl
+  ignore_errors: true

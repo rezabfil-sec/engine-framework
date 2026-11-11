@@ -1,0 +1,33 @@
+---
+# Bridge setup on physical host for containerd flows
+
+- name: store flows in a file
+  copy:
+    content: "{{ flows | tojson }}"
+    dest: "{{ remote_flow_file }}"
+
+- name: store ifaces in a file
+  copy:
+    content: "{{ node_ifaces | tojson }}"
+    dest: "{{ remote_ifaces_file }}"
+
+- name: store node_mapping in a file
+  copy:
+    content: "{{ node_mapping | tojson }}"
+    dest: "{{ remote_node_mapping_file }}"
+
+- name: store containers in a file
+  copy:
+    content: "{{ hostvars['localhost']['containers'] | tojson }}"
+    dest: "{{ remote_containers_file }}"
+
+- debug: var=node
+- debug: var=remote_flow_file
+- debug: var=remote_ifaces_file
+- debug: var=remote_node_mapping_file
+- debug: var=remote_containers_file
+
+- name: create bridge flows
+  script: > 
+    files/bridge_flows.py --flowfile {{ remote_flow_file }} --node {{ node }} --ifaces {{ remote_ifaces_file }} 
+    --nodemap {{ remote_node_mapping_file }} --containers {{ remote_containers_file }} --bridge {{ containerd_bridge }}

@@ -52,7 +52,7 @@ fi
 log "Start service -> s:$1 d:$3 cmd:${@:4}"
 
 # Omit the first script parameter, execute the rest as a command
-${@:4}
+"${@:4}"
 
 # store return code in a variable
 RC=$?

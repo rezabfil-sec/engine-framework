@@ -1,6 +1,17 @@
 ---
 # Experiment service post-processing
 
+
+- name: extract iostats
+  script: > 
+    files/extract_io_stats.py 
+    --input {{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap
+    --output {{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}-iostats.csv
+  loop: "{{ tcpdump_ifaces }}"
+  loop_control:
+    loop_var: iface
+  when: service.iostats | default(iostats) | bool
+
 # Only process iperf server log files = more information
 # - block:
 #   - name: set tcpdump pcap file

@@ -48,6 +48,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <sys/timerfd.h>
+
 #define ONE_SEC 1000000000ULL
 #define DEFAULT_PERIOD 1000000
 #define DEFAULT_DELAY 500000
@@ -90,7 +92,7 @@ enum txtime_flags {
 };
 */
 
-static int running = 1, use_so_txtime = 1, send_tsn = 1;
+static int running = 1, use_so_txtime = 1, send_tsn = 1, min_mode = 0;
 static int period_nsec = DEFAULT_PERIOD;
 static int waketx_delay = DEFAULT_DELAY;
 static int so_priority = DEFAULT_PRIORITY;
@@ -105,6 +107,8 @@ __u64 *tx_timestamps;
 __u64 *sched_timestamps;
 __u64 *actual_timestamps;
 int num_packets;
+__u64 *timestamps_tx_sched;
+
 static void normalize(struct timespec *ts)
 {
 	while (ts->tv_nsec > 999999999)
@@ -177,13 +181,26 @@ static int open_socket(const char *name, short port, clockid_t clkid)
 		goto no_option;
 	}
 
-	sk_txtime.clockid = clkid;
-	sk_txtime.flags = (use_deadline_mode | receive_errors);
-	if (use_so_txtime && setsockopt(fd, SOL_SOCKET, SO_TXTIME, &sk_txtime, sizeof(sk_txtime)))
+	if(!min_mode)
 	{
-		pr_err("setsockopt SO_TXTIME failed: %m");
-		goto no_option;
+		sk_txtime.clockid = clkid;
+		sk_txtime.flags = (use_deadline_mode | receive_errors);
+		if (use_so_txtime && setsockopt(fd, SOL_SOCKET, SO_TXTIME, &sk_txtime, sizeof(sk_txtime)))
+		{
+			pr_err("setsockopt SO_TXTIME failed: %m");
+			goto no_option;
+		}
 	}
+	//else // min_mode
+	//{
+	//	// see https://www.kernel.org/doc/Documentation/networking/timestamping.txt
+	//	int option_value =  SOF_TIMESTAMPING_TX_SCHED | SOF_TIMESTAMPING_SOFTWARE; //TODO use | SOF_TIMESTAMPING_OPT_ID | SOF_TIMESTAMPING_OPT_TSONLY; ? // the latter two are not really required, but encouraged in 1.3.3; SOF_TIMESTAMPING_OPT_ID would allow to cope with reordered packets, but I wouldn't expect reordering in this case
+	//	if (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMPING, &option_value, sizeof(option_value))) // TODO use SO_TIMESTAMPING_NEW?!
+	//	{
+	//		pr_err("setsockopt SO_TIMESTAMPING failed: %m");
+	//		goto no_option;
+	//	}
+	//}
 
 	return fd;
 no_option:
@@ -251,7 +268,8 @@ static int udp_send(int fd, void *buf, int len, __u64 txtime)
 	return cnt;
 }
 
-static unsigned char tx_buffer[256];
+static unsigned char tx_buffer[1472]; // 1500(mtu) - 20(ip) - 8(udp)
+static unsigned int tx_len = 256;
 char *file_name = NULL;
 static unsigned int num_missed_deadline = 0;
 static unsigned int num_invalid_params = 0;
@@ -259,10 +277,10 @@ static __u64 missed_deadline_tx_timestamp[1000];
 static __u64 invalid_params_tx_timestamp[1000];
 static unsigned int num_timestamps = 0;
 
-static int process_socket_error_queue(int fd)
+static int process_socket_error_queue(int fd, int num)
 {
 	uint8_t msg_control[CMSG_SPACE(sizeof(struct sock_extended_err))];
-	unsigned char err_buffer[sizeof(tx_buffer)];
+	unsigned char err_buffer[sizeof(unsigned char)*tx_len];
 	struct sock_extended_err *serr;
 	struct cmsghdr *cmsg;
 	__u64 tstamp = 0;
@@ -286,26 +304,52 @@ static int process_socket_error_queue(int fd)
 	while (cmsg != NULL)
 	{
 		serr = (void *)CMSG_DATA(cmsg);
-		if (serr->ee_origin == SO_EE_ORIGIN_TXTIME)
-		{
-			tstamp = ((__u64)serr->ee_data << 32) + serr->ee_info;
-
-			switch (serr->ee_code)
+	//	if(!min_mode)
+	//	{
+			if (serr->ee_origin == SO_EE_ORIGIN_TXTIME)
 			{
-			case SO_EE_CODE_TXTIME_INVALID_PARAM:
-				// fprintf(stderr, "packet with tstamp %llu dropped due to invalid params\n", tstamp);
-				fprintf(stderr, "*");
-				invalid_params_tx_timestamp[num_invalid_params++] = tstamp;
-				return 0;
-			case SO_EE_CODE_TXTIME_MISSED:
-				//fprintf(stderr, "packet with tstamp %llu dropped due to missed deadline\n", tstamp);
-				fprintf(stderr, "*");
-				missed_deadline_tx_timestamp[num_missed_deadline++] = tstamp;
-				return 0;
-			default:
-				return -1;
+				tstamp = ((__u64)serr->ee_data << 32) + serr->ee_info;
+
+				switch (serr->ee_code)
+				{
+				case SO_EE_CODE_TXTIME_INVALID_PARAM:
+					// fprintf(stderr, "packet with tstamp %llu dropped due to invalid params\n", tstamp);
+					fprintf(stderr, "*");
+					invalid_params_tx_timestamp[num_invalid_params++] = tstamp;
+					return 0;
+				case SO_EE_CODE_TXTIME_MISSED:
+					//fprintf(stderr, "packet with tstamp %llu dropped due to missed deadline\n", tstamp);
+					fprintf(stderr, "*");
+					missed_deadline_tx_timestamp[num_missed_deadline++] = tstamp;
+					return 0;
+				default:
+					return -1;
+				}
 			}
-		}
+	//	}
+	//	else // min_mode
+	//	{
+	//		if (cmsg->cmsg_level == SOL_SOCKET) // the relevant cmsg_level seems to be 1 aka SOL_SOCKET
+    //		{
+    //			if (cmsg->cmsg_type == SO_TIMESTAMPING) // the relevant cmsg_type seems to be 37 aka SO_TIMESTAMPING // 65? for SO_TIMESTAMPING_NEW?
+	//			{
+	//				struct scm_timestamping *scm_ts = (struct scm_timestamping *)serr; // TODODO: scm_timestamping64?
+
+	//				struct timespec ts = scm_ts->ts[0]; // overall there are three timestamps, but the other two stayed the same for test runs, thus ignore // TODO: use __kernel_timespec, after changing to SO_TIMESTAMPING_NEW?
+	//				timestamps_tx_sched[num] = ts.tv_sec * ONE_SEC + ts.tv_nsec;
+
+	//				// FIXME: could use serr->ee_data to check for sequential, unique packet ID (which should be the same as the sequence number in our case), after enbaling respective option value
+	//			}
+	//			else
+	//			{
+	//				fprintf(stdout, "\nReceived cmsg of wrong type %d\n", cmsg->cmsg_type);
+	//			}
+	//		}
+	//		else
+	//		{
+    //			fprintf(stdout, "\nReceived cmsg of wrong level \n");
+    //		}
+	//	}
 
 		cmsg = CMSG_NXTHDR(&msg, cmsg);
 	}
@@ -315,7 +359,7 @@ static int process_socket_error_queue(int fd)
 
 void sigint_handler(int s)
 {
-	struct timespec ts, actual_ts;
+	struct timespec ts, actual_ts; // FIXME: actual_ts not used?
 	int cnt, err, i, j = 0, k, index;
 	__u64 txtime, base_ts, invalid_param_ts, missed_deadline_ts;
 	FILE *fd;
@@ -323,6 +367,16 @@ void sigint_handler(int s)
 	fd = fopen(file_name, "w");
 
 	fprintf(stderr, "\nCaught signal %d - Writing packet log...", s);
+
+	if(min_mode)
+	{
+		for(int i = 0; i < num_packets; i++)
+		{
+			fprintf(fd, "%d,%llu\n", i, timestamps_tx_sched[i]);
+		}
+		free(timestamps_tx_sched);
+		return;
+	}
 
 	fprintf(fd, "Missed Deadline\n");
 	for (i = 0; i < num_missed_deadline; i++)
@@ -404,7 +458,7 @@ static int run_nanosleep(clockid_t clkid, int fd)
 		.fd = fd,
 	};
 
-	memset(tx_buffer, MARKER, sizeof(tx_buffer));
+	memset(tx_buffer, MARKER, sizeof(unsigned char)*tx_len);
 
 	/* If no base-time was specified, start one to two seconds in the
 	 * future.
@@ -452,7 +506,7 @@ static int run_nanosleep(clockid_t clkid, int fd)
 			// Additional 8B closer to send
 			memcpy(tx_buffer + 12, &actual_time, sizeof(__u64));
 			
-			cnt = udp_send(fd, tx_buffer, sizeof(tx_buffer), txtime);
+			cnt = udp_send(fd, tx_buffer, sizeof(unsigned char)*tx_len, txtime);
 			if (cnt != sizeof(tx_buffer))
 			{
 				pr_err("udp_send failed");
@@ -473,7 +527,7 @@ static int run_nanosleep(clockid_t clkid, int fd)
 			err = poll(&p_fd, 1, 0);
 			if (err == 1 && p_fd.revents & POLLERR)
 			{
-				if (process_socket_error_queue(fd))
+				if (process_socket_error_queue(fd, 0))
 					return -ECANCELED;
 			}
 			// Adding sleep, otherwise sends too fast to process on the other side
@@ -496,6 +550,142 @@ static int run_nanosleep(clockid_t clkid, int fd)
 			return err;
 		}
 	}
+
+	return 0;
+}
+
+void nanonap(clockid_t clkid, struct timespec *ts)
+{
+	struct timespec sleep_ts, actual_ts;
+	//sleep_ts.tv_sec = ts.tv_sec - 1;
+	//sleep_ts.tv_nsec += ts.tv_nsec + ONE_SEC - 50000; // TODO: find good wakeup delay
+	//clock_nanosleep(clkid, TIMER_ABSTIME, &sleep_ts, NULL); // FIXME: currently ignore errors
+	do
+	{
+		clock_gettime(clkid, &actual_ts);
+	}
+	while(actual_ts.tv_sec == ts->tv_sec ? actual_ts.tv_nsec < ts->tv_nsec : actual_ts.tv_sec < ts->tv_sec);
+}
+
+// based on run_nanosleep, then unnecessary stuff excluded; includes relevant stuff from udp_send, for efficiency reasons
+static int run_min_mode(clockid_t clkid, int fd)
+{
+	struct timespec ts;
+	int err, num;
+
+	struct pollfd p_fd = {
+		.fd = fd,
+	};
+
+	//timestamps_tx_sched = malloc(sizeof *timestamps_tx_sched * num_packets);
+
+	memset(tx_buffer, MARKER, sizeof(unsigned char)*tx_len);
+
+	num = 0;
+
+	// 4B sequence number
+	memcpy(tx_buffer, &num, sizeof(int));
+
+	// udp_send, part 1
+	struct sockaddr_in sin;
+	struct msghdr msg;
+	struct iovec iov;
+	ssize_t cnt;
+
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(server_rcv_port);
+	if (inet_aton(dest_addr, &sin.sin_addr) == 0)
+	{
+		fprintf(stderr, "inet_aton() failed\n");
+		exit(-1);
+	}
+
+	iov.iov_base = tx_buffer;
+	iov.iov_len = sizeof(unsigned char)*tx_len;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_name = &sin;
+	msg.msg_namelen = sizeof(sin);
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	// udp_send, part 1 - end
+
+	if (base_time == 0)
+	{
+		clock_gettime(clkid, &ts);
+		ts.tv_sec += 1;
+		ts.tv_nsec = ONE_SEC + period_nsec; // there could be additional delay for the first packet sent according to schedule (as the processing delay for the initial packet seems to be larger); thus add this as a remedy; TODO; maybe use this as an opportunity to synch the start of applications
+	}
+	else
+	{
+		ts.tv_sec = base_time / ONE_SEC;
+		ts.tv_nsec = (base_time % ONE_SEC); // we don't need a waketx_delay here
+	}
+	normalize(&ts);
+
+	// https://man7.org/linux/man-pages/man2/timerfd_create.2.html
+	//int tfd = timerfd_create(CLOCK_REALTIME, 0);
+	//if(tfd < 0) {
+	//	fprintf(stderr, "timerfd_create failed\n");
+	//	exit(-1);
+	//}
+	//struct itimerspec its =  // FIXME: normalize?
+	//{
+	//	{ 0, period_nsec },
+	//	{ 0, period_nsec }
+	//};
+	//timerfd_settime(tfd, 0, &its, NULL); // FIXME: handle errors
+
+	cnt = sendmsg(fd, &msg, 0); // initial message seems to have additional, non-negligible delay; thus send early, as otherwise this may result in kind of a burst at the beginning
+
+	while (running)
+	{
+		//process_socket_error_queue(fd, num); // log timestamps
+
+		num++;
+		if (num >= num_packets - 1)
+		{
+			running = 0;
+		}
+		// 4B sequence number
+		memcpy(tx_buffer, &num, sizeof(int)); // FIXME: directly use iov.iov_base?
+		// udp_send, part 2b
+		iov.iov_base = tx_buffer;
+		// udp_send, part 2b - end
+
+
+		// variant b
+		//uint64_t exp;
+		//read(tfd, &exp, sizeof(uint64_t)); // FIXME: handle errors
+		// end variant b
+		// variant a.1
+		nanonap(clkid, &ts);
+		// end variant a.1
+		// execute sendmsg immediately after nanonap, to minimize additional software delay
+		cnt = sendmsg(fd, &msg, 0);
+		// udp_send, part 2a
+		//if (cnt != sizeof(tx_buffer))
+		//{
+		//	pr_err("sendmsg failed: %m");
+		//}
+		// udp_send, part 2a - end
+
+		// variant a.2
+		ts.tv_nsec += period_nsec;
+		normalize(&ts);
+		// end variant a.2
+
+		// shouldn't be required for min_mode, as this doesn't make use of the SO_TXTIME option
+		/* Check if errors are pending on the error queue. */
+		//err = poll(&p_fd, 1, 0);
+		//if (err == 1 && p_fd.revents & POLLERR)
+		//{
+		//	if (process_socket_error_queue(fd, 0))
+		//		return -ECANCELED;
+		//}
+	}
+	//process_socket_error_queue(fd, num); // inside the loop, this method is called before sendmsg, to cope with the first sendmsg before the loop; call again, to cope with last message, too
 
 	return 0;
 }
@@ -571,6 +761,8 @@ static void usage(char *progname)
 			" -U [port]     use udp port client side 'port'\n"
 			" -f [name]     provide file name\n"
 			" -S [IP]       provide destination IP address\n"
+			" -l [tx_len]   payload length\n"
+			" -q            use pacing mode without advanced options\n"
 			"\n",
 			progname, DEFAULT_DELAY, DEFAULT_PERIOD, DEFAULT_PRIORITY);
 }
@@ -581,12 +773,16 @@ int main(int argc, char *argv[])
 	clockid_t clkid = CLOCK_TAI;
 	char *iface = NULL, *progname;
 	int num_packets_in = 60000;
+	int len;
+	// Catch for pkill/kill
+	signal(SIGTERM, sigint_handler);
+	// Catch for Ctrl+C
 	signal(SIGINT, sigint_handler);
 
 	/* Process the command line arguments. */
 	progname = strrchr(argv[0], '/');
 	progname = progname ? 1 + progname : argv[0];
-	while (EOF != (c = getopt(argc, argv, "c:d:hi:n:p:P:st:DEb:u:rU:f:S:")))
+	while (EOF != (c = getopt(argc, argv, "c:d:hi:n:p:P:st:DEb:u:rU:f:S:l:q")))
 	{
 		switch (c)
 		{
@@ -641,6 +837,12 @@ int main(int argc, char *argv[])
 		case 'S':
 			dest_addr = optarg;
 			break;
+		case 'l':
+			len = atoi(optarg);
+			break;
+		case 'q':
+			min_mode = 1;
+			break;
 		case '?':
 			usage(progname);
 			return -1;
@@ -663,26 +865,32 @@ int main(int argc, char *argv[])
 		usage(progname);
 		return -1;
 	}
-
 	if (period_nsec < 1000)
 	{
 		pr_err("Bad period.");
 		usage(progname);
 		return -1;
 	}
-
 	if (!iface)
 	{
 		pr_err("Need a network interface.");
 		usage(progname);
 		return -1;
 	}
-
+	if((len < 20) || (len > 1472))
+	{
+		pr_err("Payload length not in supported range.");
+		usage(progname);
+		return -1;
+	}
+	else
+	{
+		tx_len = (unsigned int) len;
+	}
 	if (set_realtime(pthread_self(), priority, cpu))
 	{
 		return -1;
 	}
-
 	fd = udp_open(iface, clkid);
 	if (fd < 0)
 	{
@@ -693,9 +901,18 @@ int main(int argc, char *argv[])
 		printf("Sending response TSN\n");
 	}
 
-	err = run_nanosleep(clkid, fd);
-
+	if (min_mode)
+	{
+		err = run_min_mode(clkid, fd);
+	}
+	else
+	{
+		err = run_nanosleep(clkid, fd);
+	}
 	close(fd);
-	sigint_handler(err);
+	if(!min_mode)
+	{
+		sigint_handler(err);
+	}
 	return err;
 }

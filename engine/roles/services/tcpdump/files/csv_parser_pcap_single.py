@@ -2,6 +2,8 @@
 
 # Parse pcap files to csv files
 
+import enum
+from fileinput import filename
 import os
 import pandas
 import sys
@@ -19,6 +21,14 @@ import process_send_udp
 sys.path.append("../../services/iperf/files")
 sys.path.append("../../../services/iperf/files")
 import process_iperf
+sys.path.append("../../services/algorand/files")
+sys.path.append("../../../services/algorand/files")
+import process_algorand
+
+sys.path.append("../../services/ethereum/files")
+sys.path.append("../../../services/ethereum/files")
+import process_ethereum
+
 
 def printLog(fl, message):
     ''' helper function for loggin '''
@@ -33,14 +43,13 @@ def printProgress(fl, progressProc):
     for _ in range(100-progressProc):
         progString += ' '
     progString += ']   ' + str(progressProc) + '% Complete'
-    # printing the percentage to log file is commented out as it clutters the log file a lot
     # with open(fl, "a") as myFile:
     #     print(progString, end='\r', file=myFile)
     # return progString
 
 def progress(index, fl, progressProc, modOp):
     ''' Log progress string and increment for every modOpth packet '''
-    if modOp != 0 and ((index + 1) % modOp == 0): 
+    if modOp != 0 and ((index + 1) % modOp == 0):
         progressProc += 1
         printProgress(fl, progressProc)
     return progressProc
@@ -52,15 +61,15 @@ def printComplete(string, sTime, fl):
 
 def loadPcap(processing_descriptor, dumpName, limPktNum=-1):
     ''' This function loads the PCAP file for the corresponding node and interface '''
-    fileName = processing_descriptor.find_file_name('tcpdump_' + dumpName + '_' + processing_descriptor.iface + '.pcap')
-    pcap = ppcap.Reader(filename=fileName) # Loads pcap with pypacker
+    fileName = processing_descriptor.find_file_name('tcpdump_' + dumpName + '_*' + '.pcap')
+    pcap = ppcap.Reader(filename=fileName) # Loads pcap
     return pcap, fileName
 
 def init_general(processing_descriptor):
     ''' Initialize general analysis '''
     fl = processing_descriptor.log_file() # log file
-    preOutPath = processing_descriptor.node_path() # post-processing result directory
-    # Create the results directory for experiment and node if non existent
+    preOutPath = processing_descriptor.node_path() # export directory
+    # Create the exports directory for experiment and node if non existent
     if not os.path.exists(preOutPath):
         os.makedirs(preOutPath, exist_ok=True)
     return fl, preOutPath
@@ -68,7 +77,7 @@ def init_general(processing_descriptor):
 def init_single(fl, processing_descriptor, dumpName, limPktNum=-1):
     ''' Initialize analysis of a single pcap file '''
     with open(fl, "a") as myFile:
-        print('Parsing PCAP for', processing_descriptor.experiment, processing_descriptor.node, 'interface', processing_descriptor.iface, 'dump', dumpName, end='...\n', file=myFile)
+        print('Parsing PCAP for', processing_descriptor.experiment, processing_descriptor.node, 'dump', dumpName, end='...\n', file=myFile)
         print('Loading PCAP...', file=myFile)
     progressProc = 0
     startTime = time.time()
@@ -90,7 +99,7 @@ def init_single(fl, processing_descriptor, dumpName, limPktNum=-1):
 
     return progressProc, startTime, p, modOp
 
-def to_dict(pkt, packetLengthCorrection, dst_port, pd, p, ts, buf):
+def to_dict(pkt, packetLengthCorrection, dst_port, pd, p, ts, buf, fl):
     ''' Store packet contents in a dict '''
 
     # this part is to get the packet size, I couldn't find a way to do this in pypacker easily
@@ -100,13 +109,39 @@ def to_dict(pkt, packetLengthCorrection, dst_port, pd, p, ts, buf):
     dx = p._callback_unpack_meta(buf2)
 
     d = {}
-    d['timestamp_ns'] = ts
+    tsmp = str(ts)
+    # d['timestamp_seconds'] = int(tsmp[:-9])
+    # d['timestamp_nanoseconds'] = int(tsmp[-9:])
+    d['timestamp_ns'] = int(tsmp[:-9]) * 10 ** 9 + int(tsmp[-9:])
     d['packet_size_bytes'] = dx[3] - packetLengthCorrection
-    # collect the service specific fields and add it to the dictionary variable
-    if pd.service_name(dst_port) == 'iperf':
+    if pd.profile == 'iperf3':
         process_iperf.to_dict(d, pkt)
-    if pd.service_name(dst_port) == 'send_udp':
+    if pd.profile == 'send_udp':
         process_send_udp.to_dict(d, pkt)
+    if pd.profile == 'algorand':
+        # Important to used masked in the name of the tcpdump
+        with open(fl, "a") as myFile:
+            print('In algo msg', pd.dst_ports[0],  file=myFile)
+        # FIXME for other msg types
+        format = pd.format
+        # extend here by additional msg types
+        for msg_type in pd.msg_types:
+            # This will correlate AV messages only! For other messages, implement new 'to_dict_*' methods.
+            process_algorand.to_dict_AV(d, pkt, format, msg_type)
+            # This will output a dictionary with entries containing the timestamps of each end of the round. It can be later used to plot the delay between consecutive rounds. We create this data based on the sender packets.
+            if pd.role == "source" and msg_type == "av":
+                process_algorand.to_dict_AV_rounds(d, pkt, format)
+            if d['algorand_payload'] == 0:
+                # return empty {} so later on does not get added to a DB
+                return {}
+                # return d
+    if pd.profile == 'ethereum':
+        format = pd.format
+
+        with open(fl, "a") as myFile:
+            print('In ethreuem msg', pd.dst_ports[0],  file=myFile)
+            process_ethereum.to_dict_transactions_timestamps(d, pkt, format)
+
     return d
 
 def parse_single_pcap(processing_descriptor, limPktNum=-1):
@@ -118,33 +153,90 @@ def parse_single_pcap(processing_descriptor, limPktNum=-1):
         print("Please call parseFlowPcapIperfFlowsNodeIFace with a PD having exactly one port.")
     parse_single_pcap(processing_descriptor, dst_port, fl, preOutPath, limPktNum)
 
-def parse_single_pcap(processing_descriptor, dst_port, fl, preOutPath, limPktNum=-1):
-    ''' parses a single pcap using pypacker '''
-    csvPath = preOutPath + 'csv-' + processing_descriptor.service_name(dst_port) + '-single_' + str(dst_port) + '_' + processing_descriptor.iface + '.csv'
-    if os.path.isfile(csvPath):
+
+def parse_single_ethereum_pcap(processing_descriptor, preOutPath, dst_port, fl, p):
+    csvTransactionsPath = preOutPath + 'csv-' + processing_descriptor.service_name(dst_port) + '-transactions-times_' + str(dst_port) +  '.csv'
+    if os.path.isfile(csvTransactionsPath) :
         return
+    process_ethereum.d_sent_eth_transactions = {}
+    process_ethereum.d_pended_eth_transactions = {}
+    rows = iterate_over_all_packets(p, dst_port, processing_descriptor, fl)
 
-    # load the pcap file
-    progressProc, startTime, p, modOp = init_single(fl, processing_descriptor, str(dst_port), limPktNum)
+    if process_ethereum.d_sent_eth_transactions or process_ethereum.d_pended_eth_transactions:
+        df_txs = pandas.DataFrame.from_dict(process_ethereum.get_dist_transactions_pandas())
+        df_txs.to_csv(csvTransactionsPath)
 
+    return rows
+    
+
+def parse_single_algorand_pcap(processing_descriptor,preOutPath, dst_port, fl, p ):
+
+        # such paths could be defined in process.py or the process of a corresponding service directly
+    csvRoundsPath = preOutPath + 'csv-' + processing_descriptor.service_name(dst_port) + '-algo-rounds_' + str(dst_port) + '.csv'
+
+    if os.path.isfile(csvRoundsPath):
+        return
+    process_algorand.d_AV_rounds = {}
+   
+    with open(fl, "a") as myFile:
+        print('before algo process before',  file=myFile)
+    rows = iterate_over_all_packets(p, dst_port, processing_descriptor, fl)
+
+    if process_algorand.d_AV_rounds:
+        with open(fl, "a") as myFile:
+            print('In algo process after',  file=myFile)
+        df_rounds = pandas.DataFrame.from_dict(process_algorand.get_dist_AV_rounds_pandas())
+        print(df_rounds)
+        df_rounds.to_csv(csvRoundsPath)
+
+    return rows
+
+
+def iterate_over_all_packets(p, dst_port, processing_descriptor, fl):
     rows = []
 
-    # Iterate over all packets that are of interest to us
     for index, (ts, buf) in enumerate(p):
         pkt = ethernet.Ethernet(buf)
-        rows.append(to_dict(pkt, 4 if processing_descriptor.sim else 0, dst_port, processing_descriptor, p, ts, buf)) # We put the dict to our results list
-        # progressProc = progress(index, fl, progressProc, modOp)
+        row = to_dict(pkt, 4 if processing_descriptor.sim else 0, dst_port, processing_descriptor, p, ts, buf, fl)
+        if bool(row):
+            # not empty sequence number
+            # relevant for e.g., large blockchain data
+            # possible change to keep noise for some data calculation
+            rows.append(row) # We put the dict to our results list
+    return rows
 
+
+def parse_single_pcap(processing_descriptor, dst_port, fl, preOutPath, limPktNum=-1):
+    ''' parses a single pcap using pypacker '''
+    print(processing_descriptor.service_name(dst_port)+'1')
+    print(str(dst_port))
+    csvPath = preOutPath + 'csv-' + processing_descriptor.service_name(dst_port) + '-single_' + str(dst_port) + '.csv'
+    
+    if os.path.isfile(csvPath):
+        return
+    if str(dst_port).isdigit():
+        name = 'p' + str(dst_port)
+    else:
+        name = str(dst_port)
+    progressProc, startTime, p, modOp = init_single(fl, processing_descriptor, name, limPktNum)
+    if processing_descriptor.profile == 'algorand':
+      rows= parse_single_algorand_pcap(processing_descriptor, preOutPath, dst_port, fl, p)
+    elif processing_descriptor.profile == 'ethereum':
+        rows = parse_single_ethereum_pcap(processing_descriptor, preOutPath, dst_port, fl, p)
+    else :
+        rows = iterate_over_all_packets(p, dst_port, processing_descriptor, fl)
     printProgress(fl, 100)
-    # don't create csv if the packet number in the pcap is too low to prevent crashes later when plotting
     if len(rows) < 2:
         with open(fl, "a") as myFile:
             print(csvPath, ' only has less than 2 packets, ignoring', file=myFile)
         return
     # Based on our results list we create a dataframe and export to csv
-    # the csv name is: csv-<service name>-single_<port name>_<iface name>.csv
+    # with open(csvPath, 'w', newline='') as csvfile:
+    #     writer = csv.DictWriter(csvfile, fieldnames=rows[0].keys(), dialect='excel')
+    #     writer.writeheader()
+    #     writer.writerows(rows)
     df = pandas.DataFrame(rows)
-    df.to_csv(csvPath)
+    df.to_csv(csvPath) #processing_descriptor.iface+'PcapFlowIperf'+str(dst_port)+'.csv') 
     printComplete('Single Flow PCAP Analysis complete!', startTime, fl)
 
 def parse_separate_pcaps(processing_descriptor, limPktNum=-1):
@@ -155,20 +247,50 @@ def parse_separate_pcaps(processing_descriptor, limPktNum=-1):
     fl, preOutPath = init_general(processing_descriptor)
     startTimeGlob = time.time()
     with open(fl, "a") as myFile:
-        print('Parsing PCAPs for', processing_descriptor.experiment, processing_descriptor.node, 'interface', processing_descriptor.iface, end='...\n', file=myFile)
+        print('Parsing PCAPs for', processing_descriptor.experiment, processing_descriptor.node, processing_descriptor.dst_ports, processing_descriptor.msg_types, processing_descriptor.profile, end='...\n', file=myFile)
 
-    # for each port in dst_ports, find the corresponding pcap and process it
-    # the name of the corresponding pcap should be: tcpdump_<port name>_<iface name>.pcap
     for dst_port in processing_descriptor.dst_ports:
-        dumpName = str(dst_port)
-        fileName = processing_descriptor.find_file_name('tcpdump_' + dumpName + '_' + processing_descriptor.iface + '.pcap')
+        # Update here for tcpdump if not defined
+        if str(dst_port).isdigit():
+            dumpName = 'p' + str(dst_port)
+        else:
+            dumpName = str(dst_port)
+        # Update here - no need for the iface name, but look for .pcap
+        fileName = processing_descriptor.find_file_name('tcpdump_' + dumpName + '_*' + '.pcap')
         if fileName == '':
             with open(fl, "a") as myFile:
-                print('tcpdump_' + dumpName + '_' + processing_descriptor.iface + '.pcap does not exist', end='...\n', file=myFile)
-            continue    
+                print('tcpdump_' + dumpName + '_' + '.pcap does not exist', end='...\n', file=myFile)
+            continue
         parse_single_pcap(processing_descriptor, dst_port, fl, preOutPath, limPktNum)
-
     printComplete('Analysis of all ' + str(len(processing_descriptor.dst_ports)) + ' PCAPs complete!', startTimeGlob, fl)
+
+# def parsePcapIperfFlowsNodeIFace(processing_descriptor, limPktNum=-1):
+#    '''
+#        Parses pcap to csvs
+#        
+#        Assumes single pcap containing packets of all processing_descriptor. Uses given ports to filter packets and write separate csv for each stream.
+#    '''
+#    fl, preOutPath = init_general(processing_descriptor)
+#    progressProc, startTime, p, modOp = init_single(fl, processing_descriptor, 'probe', limPktNum)
+#
+#    # Prepare result collection
+#    rows = {}
+#    for dst_port in processing_descriptor.dst_ports:
+#        rows[dst_port] = []
+#
+#    # Iterate over all packets that are of interest to us - the iperf ones.
+#    for index, pkt in enumerate(p):
+#        if UDP in pkt:
+#            if str(pkt[UDP].dport) in processing_descriptor.dst_ports:
+#                rows[str(pkt[UDP].dport)].append(to_dict(pkt, 4 if processing_descriptor.sim else 0)) # We put the dict to our results list
+#                progressProc = progress(index, fl, progressProc, modOp)
+#    
+#    printProgress(fl, 100)
+#    # Based on our results list we create a dataframe and export to csv
+#    for row in rows:
+#        df = pandas.DataFrame(rows[row]) 
+#        df.to_csv(preOutPath + 'csv-' + pd.service_name(dst_port) + '-single_' + str(dst_port) + '_' + processing_descriptor.iface + '.csv') #processing_descriptor.iface+'PcapFlowIperf'+str(row)+'.csv')
+#    printComplete('Analysis complete!', startTime, fl)
 
 def main():
     pd = processing_descriptor.create_processing_descriptor_cli('csv_parser_pcap_single', 'Parse pcap to csv')

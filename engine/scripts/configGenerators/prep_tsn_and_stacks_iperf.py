@@ -84,15 +84,7 @@ desStreams = {1 : {'frameSize' : 1250,          # frame size in Bytes
               2 : {'frameSize' : 1250,          # frame size in Bytes
                      'period' : 100,            # period in microseconds
                      'priority' : 2,            # The priority for the given traffic pattern
-                     'numberOfStreams' : 1},    # Number of streams for the given traffic pattern
-              3 : {'frameSize' : 1250,          # frame size in Bytes
-                     'period' : 100,            # period in microseconds
-                     'priority' : 1,            # The priority for the given traffic pattern
                      'numberOfStreams' : 1}}    # Number of streams for the given traffic pattern
-            #   4 : {'frameSize' : 1250,          # frame size in Bytes
-            #          'period' : 200,            # period in microseconds
-            #          'priority' : 0,            # The priority for the given traffic pattern
-            #          'numberOfStreams' : 1}}    # Number of streams for the given traffic pattern
 genInfoDict = {'maxFrameSize' : 1542,           # best effort frame size in bytes
                'portTransmitRate' : 1000000}    # link capacity in kbps
 

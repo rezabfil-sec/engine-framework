@@ -1,0 +1,56 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+# In this file all the previous configurations come together
+# Every entry is one experiment that is run with the configuration defined in
+# the configurations referenced in the network, stack and action variable.
+# After all experiments are executed the scenario is finished.
+#
+# An experiment can be run in two different modes:
+# 1. Time mode: A timer is started and the experiment runs for N seconds
+# 2. Signal mode: Wait for services to successfully finish (e.g. send a fixed number
+#   of packets, send all data from a dataset, etc.), when they are then they will
+#   send a success signal. When all registered signals are received the experiment
+#   is stopped.
+# In both modes the experiment is immediately stopped after receiving an
+# error signal.
+#
+# The default mode is timer, with a default time in roles/experiment/defaults
+# When using the signal mode a maximum timeout can be specified when the experiment
+# should be aborted regardless of the signals, if not specified the default timeout
+# value is chosen from roles/experiment/defaults
+
+# You can comment out experiments that you don't want to run
+
+experiments:
+## latency
+  - { network: 'net-2', stack: 'stack-2', action: 'action-1', time: 10, name: '0_iperf_100mbit_100B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-3', action: 'action-1', time: 10, name: '0_iperf_100mbit_200B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-4', action: 'action-1', time: 10, name: '0_iperf_100mbit_300B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-5', action: 'action-1', time: 10, name: '0_iperf_100mbit_400B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-6', action: 'action-1', time: 10, name: '0_iperf_100mbit_500B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-7', action: 'action-1', time: 10, name: '0_iperf_100mbit_600B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-8', action: 'action-1', time: 10, name: '0_iperf_100mbit_700B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-9', action: 'action-1', time: 10, name: '0_iperf_100mbit_800B_kata', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-10', action: 'action-1', time: 10, name: '0_iperf_100mbit_900B_kata' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-11', action: 'action-1', time: 10, name: '0_iperf_100mbit_1000B_kata' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-12', action: 'action-1', time: 10, name: '0_iperf_100mbit_1100B_kata' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-13', action: 'action-1', time: 10, name: '0_iperf_100mbit_1200B_kata' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-14', action: 'action-1', time: 10, name: '0_iperf_100mbit_1300B_kata' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-15', action: 'action-1', time: 10, name: '0_iperf_100mbit_1400B_kata' , exp_group: [1] }
+## throughput unlimited
+  - { network: 'net-2', stack: 'stack-16', action: 'action-1', time: 10, name: '0_iperf_100mbit_100B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-17', action: 'action-1', time: 10, name: '0_iperf_100mbit_200B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-18', action: 'action-1', time: 10, name: '0_iperf_100mbit_300B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-19', action: 'action-1', time: 10, name: '0_iperf_100mbit_400B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-20', action: 'action-1', time: 10, name: '0_iperf_100mbit_500B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-21', action: 'action-1', time: 10, name: '0_iperf_100mbit_600B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-22', action: 'action-1', time: 10, name: '0_iperf_100mbit_700B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-23', action: 'action-1', time: 10, name: '0_iperf_100mbit_800B_kata_thr', exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-24', action: 'action-1', time: 10, name: '0_iperf_100mbit_900B_kata_thr' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-25', action: 'action-1', time: 10, name: '0_iperf_100mbit_1000B_kata_thr' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-26', action: 'action-1', time: 10, name: '0_iperf_100mbit_1100B_kata_thr' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-27', action: 'action-1', time: 10, name: '0_iperf_100mbit_1200B_kata_thr' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-28', action: 'action-1', time: 10, name: '0_iperf_100mbit_1300B_kata_thr' , exp_group: [1] }
+  - { network: 'net-2', stack: 'stack-29', action: 'action-1', time: 10, name: '0_iperf_100mbit_1400B_kata_thr' , exp_group: [1] }

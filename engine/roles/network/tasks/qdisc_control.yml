@@ -1,0 +1,128 @@
+---
+# Manage TSN configurations
+# set up qdiscs for every interface
+# Ctrl-Variable:
+# { "qdisc": "qdisc-1", "ifaces": "1,2"}
+# ifaces can be empty = apply qdisc config to all interfaces
+
+
+- debug: var=qdisc_config
+
+- name: load qdisc definition
+  set_fact:
+    qdisc: '{{ qdiscconfigs[qdisc_config.qdisc] }}'
+
+- name: load priority queue
+  set_fact:
+    queue_default: '{{ (prioq.key | int) - 1}}'
+  when: '"*" in prioq.value.prio'
+  loop: '{{ qdisc.queues | dict2items }}'
+  loop_control:
+    loop_var: 'prioq'
+
+- block:
+  - name: copy qdisc config to nodes
+    template:
+      src: qdisc_config.j2
+      dest: '{{ data_path }}/qdisc-{{ iface.value.name }}.config'
+    when: qdisc_config.ifaces | length == 0 or (iface.key | string) in qdisc_config.ifaces.split(",")
+    loop: '{{ node_ifaces | dict2items }}'
+    loop_control:
+      loop_var: 'iface'
+  
+  - name: traffic control clear existing configuration
+    command: 'tc qdisc del dev {{ iface.value.name }} root'
+    when: qdisc_config.ifaces | length == 0 or (iface.key | string) in qdisc_config.ifaces.split(",")
+    loop: '{{ node_ifaces | dict2items }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: traffic control apply new configuration
+    command: 'tc -batch qdisc-{{ iface.value.name }}.config'
+    args:
+      chdir: '{{ data_path }}'
+    when: qdisc_config.ifaces | length == 0 or (iface.key | string) in qdisc_config.ifaces.split(",")
+    loop: '{{ node_ifaces | dict2items }}'
+    loop_control:
+      loop_var: 'iface'
+  when: network_config=="OvS" or network_config=="Physical"
+# - name: node - extract virtual interfaces
+#   set_fact: "virtual_ifaces={{ [] }}"
+
+
+- name: send hierarchy data to node
+  copy:
+    src: '../../../scenarios/{{ scene }}/{{ iface.1.value.hierarchy }}'
+    dest: '{{ data_path }}/{{ iface.1.value.hierarchy }}'
+  when: 
+    - qdisc_config.ifaces | length == 0 or (iface.0.key | string) in qdisc_config.ifaces.split(",")
+    - iface.1.value.mode in hierarchical_qdiscs
+  loop: '{{ (node_ifaces | dict2items) | product( qdisc.queues | dict2items ) | list }}'
+  loop_control:
+    loop_var: 'iface'
+
+- name: run hierarchical configuration script on node
+  command: 'python3 {{ script_path }}/scripts/hierarchical_qdisc_setup.py -a {{ iface.1.value.mode }} -f {{data_path}}/{{ iface.1.value.hierarchy }} -q {{ iface.1.key }} -i {{ iface.0.value.name }}'
+  when: 
+    - qdisc_config.ifaces | length == 0 or (iface.0.key | string) in qdisc_config.ifaces.split(",")
+    - iface.1.value.mode in hierarchical_qdiscs
+  loop: '{{ (node_ifaces | dict2items) | product( qdisc.queues | dict2items ) | list }}'
+  loop_control:
+    loop_var: 'iface'
+
+- block:
+  - name: store qdisc config in a file
+    copy:
+      content: "{{ qdisc_config | tojson }}"
+      dest: "{{ remote_qdisc_file }}"
+    
+  - name: store ifaces in a file
+    copy:
+      content: "{{ node_ifaces | tojson }}"
+      dest: "{{ remote_ifaces_file }}"
+  
+  - debug: var=num_virtual_ifaces
+  - name: extract virtual and physical ifaces
+    script: files/qdisc_ifaces.py --qdiscfile {{ remote_qdisc_file }} --node {{ node }} --ifaces {{ remote_ifaces_file }} --count {{ num_virtual_ifaces if num_virtual_ifaces is defined and num_virtual_ifaces > 0 else 4 }}
+    register: ifaces_raw
+
+  - name: set used raw interfaces
+    set_fact:
+      used_physical_ifaces: '{{ ifaces_raw.stdout_lines[-1] }}'
+  
+  - name: set used virtual interfaces
+    set_fact:
+      used_virtual_ifaces: '{{ ifaces_raw.stdout_lines[-2] }}'
+  
+
+  - debug: var=used_virtual_ifaces
+  - debug: var=used_physical_ifaces
+  - debug: msg="{{ used_virtual_ifaces + used_physical_ifaces }}"
+  
+  - name: copy qdisc config to nodes
+    template:
+      src: qdisc_config.j2
+      dest: '{{ data_path }}/qdisc-{{ iface }}.config'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+  
+  - name: traffic control clear existing configuration
+    command: 'tc qdisc del dev {{ iface }} root'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: traffic control apply new configuration
+    command: 'tc -batch qdisc-{{ iface }}.config'
+    args:
+      chdir: '{{ data_path }}'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+  when: network_config=="SRIOV"

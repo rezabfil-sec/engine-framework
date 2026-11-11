@@ -1,0 +1,37 @@
+---
+# Collect results ECDSA
+- block:
+  - name: Create local directory
+    file:
+      path: "{{ node_folder }}/res_n{{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }}_t{{ service.threshold if service.threshold is defined else experiment_threshold }}_client_l{{ default_msg_len }}"
+      mode: '0775'
+      state: directory
+    delegate_to: localhost
+    connection: local
+  
+  - name: List files in remote directory
+    shell: "ls /root/res/"  # Specify the path of the remote directory
+    register: remote_files
+
+  - name: Collect ECDSA
+    fetch:
+      src: "/root/res/{{ file_name }}"
+      dest: "{{ node_folder }}/res_n{{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }}_t{{ service.threshold if service.threshold is defined else experiment_threshold }}_client_l{{ default_msg_len }}/"
+      flat: yes
+    loop: "{{ remote_files.stdout_lines }}"
+    loop_control:
+      loop_var: file_name
+
+  - name: remove ECDSA
+    file:
+      path: "/root/res"
+      state: absent
+
+  - name: remove ECDSA
+    file:
+      path: "{{ experiment_folder }}/rust-impl"
+      state: absent
+    delegate_to: localhost
+    connection: local
+    when: (experiment_run_index|int) == (experiment.loopOverNetwork | length - 1 )
+  when: service.role is defined and service.role == 'client'

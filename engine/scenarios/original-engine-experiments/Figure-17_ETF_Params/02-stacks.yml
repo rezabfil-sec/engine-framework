@@ -1,0 +1,15 @@
+---
+# 2. Application and protocol stack
+
+stacks:
+  # Stacks for ETF Experiments
+  stack-3:
+    name: 'ETF  strict - ZGWs'
+    services:
+      node-1:
+        - { name: send_udp, role: source, number_packets: 300000, priority: 3, flow: 2, tsn: yes, level: 1, port: 6601, signal: yes}
+        - { name: tcpdump, flow: [2], flows: yes, count: 300000, filter: udp port 6601 and outbound, file: etf_6601, level: 0, signal: no}
+      node-2:
+        - { name: tcpdump, flow: [2], flows: yes, count: 300000, filter: udp port 6601 and inbound, file: etf_6601, level: 0, signal: no}
+
+    protocols: {}

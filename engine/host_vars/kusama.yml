@@ -1,0 +1,19 @@
+---
+# variables for virtual node polkadot on GCP
+num_interfaces: 0
+node_ifaces: {}
+
+# TEE information
+tee_supported: yes
+tee_type: "SEV" #AMD SEV
+
+management_iface: ''
+
+# ====================================================
+# GCP macine type
+machine_type : n2d-standard-4 # for testing purposes
+# GCP region
+region: europe-west4
+# GCP zone
+zone: europe-west4-a
+# ====================================================

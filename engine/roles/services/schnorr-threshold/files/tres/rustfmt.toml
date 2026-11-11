@@ -1,0 +1,15 @@
+# Formatter settings
+# Docs at https://rust-lang.github.io/rustfmt/
+max_width = 200
+comment_width = 120
+chain_width = 120
+attr_fn_like_width = 120
+fn_call_width = 120
+tab_spaces = 2
+fn_args_layout = "Compressed"
+edition = "2021"
+where_single_line = true
+fn_single_line = true
+
+use_field_init_shorthand = true
+use_small_heuristics = "Max"

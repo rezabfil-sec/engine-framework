@@ -27,7 +27,7 @@ priority: '0'
 # number of packets to receive
 num_packets: '60000'
 # interval between sent packets
-packet_interval: '100000'
+packet_interval: '1000000'
 # operating system realtime priority the progam is started with
 realtime_priority: '90'
 # listen on this port for traffic

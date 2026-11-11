@@ -1,0 +1,18 @@
+---
+# variables for virtual node polkadot on GCP
+num_interfaces: 0
+node_ifaces: {}
+
+# TEE information
+tee_supported: no
+
+management_iface: ''
+
+# ====================================================
+# GCP macine type
+machine_type : n2d-standard-4 # for testing purposes
+# GCP region
+region: europe-west10
+# GCP zone
+zone: europe-west10-a
+# ====================================================

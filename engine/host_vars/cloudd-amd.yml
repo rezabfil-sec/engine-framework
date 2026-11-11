@@ -1,0 +1,18 @@
+---
+# variables for virtual node clouda on GCP
+
+# Base AMD setup
+# ====================================================
+num_interfaces: 0
+node_ifaces: {}
+management_iface: ''
+
+# TEE information
+tee_supported: no
+# GCP macine type
+machine_type : n2d-standard-32
+# GCP region
+region: europe-west4
+# GCP zone
+zone: europe-west4-a
+# ====================================================

@@ -1,0 +1,151 @@
+---
+# 2. Application and protocol stack
+
+stacks:
+  # Stacks for ETF Experiments
+  stack-21:
+    name: 'Iperf measurements three streams'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 1, port: 6601, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 1, port: 6603, prio: 2, time: 30, udp: yes, limit: 94400000 , size: 1180, level: 1, signal: yes, use_core: 2, wait: 15}
+        - { name: iperf, role: client, flow: 1, port: 6605, prio: 1, time: 20, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 25}
+    
+        - { name: tcpdump, flow: [1],  filter: udp port 6601 and outbound, file: taprio_strict_out_6601, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [1],  filter: udp port 6603 and outbound, file: taprio_deadline_out_6603, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [1],  filter: udp port 6605 and outbound, file: taprio_be_out_6605, level: 0, size: 64, signal: no}
+        
+      node-8:
+        - { name: tcpdump, flow: [1],  filter: udp port 6601 and inbound, file: taprio_strict_6601, level: 0, size: 64, signal: no}
+        - { name: tcpdump, flow: [1], size: 64,  filter: udp port 6603 and inbound, file: taprio_deadline_6603, level: 0, signal: no}
+        - { name: tcpdump, flow: [1], size: 64,  filter: udp port 6605 and inbound, file: taprio_be_6605, level: 0, signal: no}
+        - { name: iperf, role: server, flow: 1, port: 6601, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 1, port: 6603, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 1, port: 6605, level: 0, signal: yes }
+    protocols: {}
+
+  stack-22:
+    name: 'Iperf measurements three streams'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 2, port: 6601, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 2, port: 6603, prio: 2, time: 30, udp: yes, limit: 94400000 , size: 1180, level: 1, signal: yes, use_core: 2, wait: 15}
+        - { name: iperf, role: client, flow: 2, port: 6605, prio: 1, time: 20, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 25}
+    
+        - { name: tcpdump, flow: [2],  filter: udp port 6601 and outbound, file: taprio_strict_out_6601, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [2],  filter: udp port 6603 and outbound, file: taprio_deadline_out_6603, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [2],  filter: udp port 6605 and outbound, file: taprio_be_out_6605, level: 0, size: 64, signal: no}
+        
+      node-7:
+        - { name: tcpdump, flow: [2],  filter: udp port 6601 and inbound, file: taprio_strict_6601, level: 0, size: 64, signal: no}
+        - { name: tcpdump, flow: [2], size: 64,  filter: udp port 6603 and inbound, file: taprio_deadline_6603, level: 0, signal: no}
+        - { name: tcpdump, flow: [2], size: 64,  filter: udp port 6605 and inbound, file: taprio_be_6605, level: 0, signal: no}
+        - { name: iperf, role: server, flow: 2, port: 6601, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 2, port: 6603, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 2, port: 6605, level: 0, signal: yes }
+    protocols: {}
+
+  stack-23:
+    name: 'Iperf measurements three streams'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 3, port: 6601, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 3, port: 6603, prio: 2, time: 30, udp: yes, limit: 94400000 , size: 1180, level: 1, signal: yes, use_core: 2, wait: 15}
+        - { name: iperf, role: client, flow: 3, port: 6605, prio: 1, time: 20, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 25}
+    
+        - { name: tcpdump, flow: [3],  filter: udp port 6601 and outbound, file: taprio_strict_out_6601, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [3],  filter: udp port 6603 and outbound, file: taprio_deadline_out_6603, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [3],  filter: udp port 6605 and outbound, file: taprio_be_out_6605, level: 0, size: 64, signal: no}
+        
+      node-6:
+        - { name: tcpdump, flow: [3],  filter: udp port 6601 and inbound, file: taprio_strict_6601, level: 0, size: 64, signal: no}
+        - { name: tcpdump, flow: [3], size: 64,  filter: udp port 6603 and inbound, file: taprio_deadline_6603, level: 0, signal: no}
+        - { name: tcpdump, flow: [3], size: 64,  filter: udp port 6605 and inbound, file: taprio_be_6605, level: 0, signal: no}
+        - { name: iperf, role: server, flow: 3, port: 6601, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 3, port: 6603, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 3, port: 6605, level: 0, signal: yes }
+    protocols: {}
+
+  stack-24:
+    name: 'Iperf measurements three streams'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 4, port: 6601, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 4, port: 6603, prio: 2, time: 30, udp: yes, limit: 94400000 , size: 1180, level: 1, signal: yes, use_core: 2, wait: 15}
+        - { name: iperf, role: client, flow: 4, port: 6605, prio: 1, time: 20, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 25}
+    
+        - { name: tcpdump, flow: [4],  filter: udp port 6601 and outbound, file: taprio_strict_out_6601, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [4],  filter: udp port 6603 and outbound, file: taprio_deadline_out_6603, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [4],  filter: udp port 6605 and outbound, file: taprio_be_out_6605, level: 0, size: 64, signal: no}
+        
+      node-5:
+        - { name: tcpdump, flow: [4],  filter: udp port 6601 and inbound, file: taprio_strict_6601, level: 0, size: 64, signal: no}
+        - { name: tcpdump, flow: [4], size: 64,  filter: udp port 6603 and inbound, file: taprio_deadline_6603, level: 0, signal: no}
+        - { name: tcpdump, flow: [4], size: 64,  filter: udp port 6605 and inbound, file: taprio_be_6605, level: 0, signal: no}
+        - { name: iperf, role: server, flow: 4, port: 6601, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 4, port: 6603, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 4, port: 6605, level: 0, signal: yes }
+    protocols: {}
+
+  stack-25:
+    name: 'Iperf measurements three streams'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 5, port: 6601, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 5, port: 6603, prio: 2, time: 30, udp: yes, limit: 94400000 , size: 1180, level: 1, signal: yes, use_core: 2, wait: 15}
+        - { name: iperf, role: client, flow: 5, port: 6605, prio: 1, time: 20, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 25}
+    
+        - { name: tcpdump, flow: [5],  filter: udp port 6601 and outbound, file: taprio_strict_out_6601, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [5],  filter: udp port 6603 and outbound, file: taprio_deadline_out_6603, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [5],  filter: udp port 6605 and outbound, file: taprio_be_out_6605, level: 0, size: 64, signal: no}
+        
+      node-4:
+        - { name: tcpdump, flow: [5],  filter: udp port 6601 and inbound, file: taprio_strict_6601, level: 0, size: 64, signal: no}
+        - { name: tcpdump, flow: [5], size: 64,  filter: udp port 6603 and inbound, file: taprio_deadline_6603, level: 0, signal: no}
+        - { name: tcpdump, flow: [5], size: 64,  filter: udp port 6605 and inbound, file: taprio_be_6605, level: 0, signal: no}
+        - { name: iperf, role: server, flow: 5, port: 6601, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 5, port: 6603, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 5, port: 6605, level: 0, signal: yes }
+    protocols: {}
+
+  stack-26:
+    name: 'Iperf measurements three streams'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 6, port: 6601, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 6, port: 6603, prio: 2, time: 30, udp: yes, limit: 94400000 , size: 1180, level: 1, signal: yes, use_core: 2, wait: 15}
+        - { name: iperf, role: client, flow: 6, port: 6605, prio: 1, time: 20, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 25}
+    
+        - { name: tcpdump, flow: [6],  filter: udp port 6601 and outbound, file: taprio_strict_out_6601, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [6],  filter: udp port 6603 and outbound, file: taprio_deadline_out_6603, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [6],  filter: udp port 6605 and outbound, file: taprio_be_out_6605, level: 0, size: 64, signal: no}
+        
+      node-3:
+        - { name: tcpdump, flow: [6],  filter: udp port 6601 and inbound, file: taprio_strict_6601, level: 0, size: 64, signal: no}
+        - { name: tcpdump, flow: [6], size: 64,  filter: udp port 6603 and inbound, file: taprio_deadline_6603, level: 0, signal: no}
+        - { name: tcpdump, flow: [6], size: 64,  filter: udp port 6605 and inbound, file: taprio_be_6605, level: 0, signal: no}
+        - { name: iperf, role: server, flow: 6, port: 6601, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 6, port: 6603, level: 0, signal: yes }
+        - { name: iperf, role: server, flow: 6, port: 6605, level: 0, signal: yes }
+    protocols: {}
+
+  stack-27:
+    name: 'Iperf measurements three streams'
+    services:
+      node-1:
+        - { name: iperf, role: client, flow: 7, port: 6601, prio: 3, time: 30, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2 }
+        - { name: iperf, role: client, flow: 7, port: 6603, prio: 2, time: 30, udp: yes, limit: 94400000 , size: 1180, level: 1, signal: yes, use_core: 2, wait: 15}
+        - { name: iperf, role: client, flow: 7, port: 6605, prio: 1, time: 20, udp: yes, limit: 94400000, size: 1180, level: 1, signal: yes, use_core: 2, wait: 25}
+    
+        - { name: tcpdump, flow: [7],  filter: udp port 6601 and outbound, file: taprio_strict_out_6601, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [7],  filter: udp port 6603 and outbound, file: taprio_deadline_out_6603, size: 64, level: 0, signal: no}
+        - { name: tcpdump, flow: [7],  filter: udp port 6605 and outbound, file: taprio_be_out_6605, level: 0, size: 64, signal: no}
+        
+      node-2:
+        - { name: tcpdump, flow: [7],  filter: udp port 6601 and inbound, file: taprio_strict_6601, level: 0, size: 64, signal: no}
+        - { name: tcpdump, flow: [7], size: 64,  filter: udp port 6603 and inbound, file: taprio_deadline_6603, level: 0, signal: no}
+        - { name: tcpdump, flow: [7], size: 64,  filter: udp port 6605 and inbound, file: taprio_be_6605, level: 0, signal: no}
+        - { name: iperf, role: server, flow: 7, port: 6601, level: 0, signal: no }
+        - { name: iperf, role: server, flow: 7, port: 6603, level: 0, signal: no }
+        - { name: iperf, role: server, flow: 7, port: 6605, level: 0, signal: no }
+    protocols: {}

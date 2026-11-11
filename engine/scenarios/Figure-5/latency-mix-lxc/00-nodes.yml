@@ -1,0 +1,97 @@
+---
+# 0. Nodes
+# Define and map nodes required for the scenario
+#
+# Scenario can be moved around in the infrastructure or
+# updated after a re-wiring of the network more easily.
+#
+
+# ---------------------------------------------
+# 0. Option
+# Specify the settings for CPU Isolation
+
+# Specify if you want to use the low-latency kernel
+# Set to "no" or leave out if you don't want to use the low-latency kernel
+use_low_latency_kernel: "yes"
+
+# Set the number of isolated cores. Cores starting with core 0 will be isolated. 
+# Set to 0 or leave out if you want no cores to be isolated!
+num_isolated_cores: 0
+
+# Disable hyperthreading on nodes
+disable_cpu_ht: "no"
+
+# Disable CPU turbo
+disable_cpu_turbo: "yes"
+
+# Set CPU to performance mode
+set_cpu_perf: "no"
+
+# Specify number of SR-IOV ifaces
+num_virtual_ifaces: 2
+
+processing_node: algofi
+
+parse_pcap_on_nodes: false
+
+# this option creates tcpdump services for iperf server/clients and send_udp source/sinks.
+# for send_udp, you need to add a extra redundant send_udp service to the node at the end of the flow  with role: sink and flow and port defined
+# example: - { name: send_udp, role: sink, flow: 1, port: 1005 }
+# tcpdump file name should be "p{port}"
+# you can add a variable "tcpdump: off" to a iperf/sendudp service to disable auto tcpdump collection for that specific service
+# default: false
+# FIXME - requires a change in the process pipeline
+auto_tcpdump_collection: false
+
+# does not start probe tcpdumps
+# TODO does not work on LXC containers yet
+probe_tcpdumps: false
+
+# ptp_clockmode: 'linuxptp'
+ptp_clockmode: 'linuxptp'
+
+# Requires network_config: PHY
+# Requires network_config: physical
+network_config: 'SRIOV'
+
+# Debug flag true or false to pause during experiment execution
+debug_mode: false
+
+container_runtime: 'lxc'
+
+
+pos_node_image_low_latency: '"-s ubuntu-jammy-lowlatency@2023-12-10T20:05:00+00:00"'
+# ---------------------------------------------
+# 1. Option
+# Load the nodes for a pre-defined topology and its node mapping
+# Empty string to use own definition
+
+# A topology from the scenarios/topologies folder
+topology: ""
+# //
+
+
+# ---------------------------------------------
+# 2. Option
+# Define your own required hosts and their mapping
+# if the topology variable is defined it takes precedence
+
+# //
+# These nodes are from the Intel cluster of yieldly,
+# tinyman, idex, and meld that have the same HW specs 
+nodes:
+  - algofi
+  - zone
+
+# The mapping of the above nodes to node-X names
+# the node-X names are used in the rest of the scenario configuration
+# node_mapping: []
+# //
+containers:
+  zone:
+    - { name: client, ifaces: ["2.0"], ssh_port: 10022, lxc_config: ["lxc.cgroup2.cpuset.cpus = 1-2"] }
+
+node_mapping:
+  node-1: algofi
+  node-2: client
+  node-3: zone

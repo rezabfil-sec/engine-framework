@@ -1,0 +1,28 @@
+---
+# variables for node todd
+
+# network card
+num_interfaces: 3
+node_ifaces:
+  # 1:
+  #   name: 'eno0'
+  #   mac: 'ac:1f:6b:4d:a3:82'
+  #   phc: '/dev/ptp1'
+  #   offload: no
+  1:
+    name: 'enp98s0f1'
+    mac: 'ac:1f:6b:4d:a3:83'
+    phc: '/dev/ptp2'
+    offload: no
+  2:
+    name: 'enp24s0f0'
+    mac: '00:1b:21:be:39:30'
+    phc: '/dev/ptp3'
+    offload: no
+  3:
+    name: 'enp24s0f1'
+    mac: '00:1b:21:be:39:32'
+    phc: '/dev/ptp4'
+    offload: no
+
+management_iface: eno0

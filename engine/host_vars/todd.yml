@@ -5,29 +5,41 @@
 num_interfaces: 11
 node_ifaces:
   1:
-    name: 'enp8s0'
-    mac: '6c:b3:11:52:54:90'
-    phc: '/dev/ptp0'
-  2:
     name: 'enp9s0'
-    mac: '6c:b3:11:52:54:91'
-    phc: '/dev/ptp1'
-  3:
+    mac: '88:c9:b3:b6:06:55'
+    phc: '/dev/ptp0'
+    bandwidth: 2.5
+    sriov: no
+  2:
     name: 'enp10s0'
-    mac: '6c:b3:11:52:54:92'
-    phc: '/dev/ptp2'
-  4:
+    mac: '88:c9:b3:b6:06:56'
+    phc: '/dev/ptp1'
+    bandwidth: 2.5
+    sriov: no
+  3:
     name: 'enp11s0'
-    mac: '6c:b3:11:52:54:93'
+    mac: '88:c9:b3:b6:06:57'
+    phc: '/dev/ptp2'
+    bandwidth: 2.5
+    sriov: no
+  4:
+    name: 'enp12s0'
+    mac: '88:c9:b3:b6:06:58'
     phc: '/dev/ptp3'
+    bandwidth: 2.5
+    sriov: no
   5:
     name: 'eno1'
     mac: '3c:ec:ef:6a:6d:58'
     phc: '/dev/ptp4'
+    bandwidth: 1
+    sriov: no
   6:
     name: 'eno2'
     mac: '3c:ec:ef:6a:6d:59'
     phc: '/dev/ptp5'
+    bandwidth: 1
+    sriov: no
 # Iface eno3 omitted - used for a IPMI connection, so cant be used individually
   # 7:
   #   name: 'eno3'
@@ -38,23 +50,41 @@ node_ifaces:
     mac: '3c:ec:ef:6a:6d:5b'
     phc: '/dev/ptp7'
     offload: no
+    bandwidth: 1
+    sriov: no
   8:
     name: 'eno5'
     mac: '3c:ec:ef:6a:6d:5c'
     phc: '/dev/ptp8'
     offload: no
+    bandwidth: 1
+    sriov: no
   9:
     name: 'eno6'
     mac: '3c:ec:ef:6a:6d:5d'
     phc: '/dev/ptp9'
     offload: no
+    bandwidth: 1
+    sriov: no
   10:
     name: 'eno7'
     mac: '3c:ec:ef:6a:75:5a'
     offload: no
     bandwidth: 10
+    sriov: yes
+    sriov_driver: ixgbe
   11:
     name: 'eno8'
     mac: '3c:ec:ef:6a:75:5d'
     offload: no
     bandwidth: 10
+    sriov: yes
+    sriov_driver: ixgbe
+
+# Total number of CPUs
+# Hyper threading is on, so 8 vCPUs 
+number_vCPUs: 8
+# Unit in GB
+total_RAM: 128
+
+management_iface: eno3

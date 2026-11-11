@@ -1,0 +1,12 @@
+---
+# HLS qdisc setup if applicable
+
+# if hls exists in a network config, apply patch to iproute2 and install hls module
+- name: Install HLS if applicable
+  block:
+  - name: include variables of network to determine whether HLS needed
+    include_vars: ../scenarios/{{ scene }}/01-network.yml
+
+  - name: install hls and modify iproute
+    command: '{{ script_path }}/scripts/iproute2_for_hls/iproute2_install.sh'
+    when: '"hls" in {{ qdiscconfigs | dict2items | map(attribute="value.queues") | flatten | map("dict2items") | flatten | map(attribute="value.mode") | flatten }}'

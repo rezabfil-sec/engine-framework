@@ -1,0 +1,11 @@
+- name: unpack macsec peer item
+  set_fact:
+    cur_iface: '{{ item.0 }}'
+    peer_iface: '{{ item.1 }}'
+    peer_name: '{{ item.2 }}'
+    peer_mac: "{{ hostvars[node_mapping[item.2]]['node_ifaces'][item.1 | int]['mac'] }}"
+
+- name: add macsec rx channel
+  shell: |
+    ip macsec add macsec{{ cur_iface | int }} rx port 1 address {{ peer_mac }}
+    ip macsec add macsec{{ cur_iface | int }} rx port 1 address {{ peer_mac }} sa 0 pn 1 on key 00 dffafc8d7b9a43d5b9a3dfbbf6a30c16

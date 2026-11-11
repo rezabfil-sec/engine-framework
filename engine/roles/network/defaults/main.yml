@@ -14,6 +14,11 @@ priority_list: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
 
 # name of the flowfile on the node
 remote_flow_file: '/root/flows.json'
+remote_ifaces_file: '/root/ifaces.json'
+remote_qdisc_file: '/root/qdisc.json'
+remote_iconfig_file: '/root/iconfigs.json'
+remote_node_mapping_file: '/root/node_mapping.json'
+remote_containers_file: '/root/containers.json'
 
 # name of the priority to flow mapping file on the node
 remote_flow_prio_file: '/root/flow.prio.json'
@@ -22,3 +27,6 @@ remote_flow_prio_file: '/root/flow.prio.json'
 remote_forwarders_file: '/root/forwarders.json'
 
 remote_icn_flows_file: '/root/flows.icn.json'
+
+#hierarchical qdiscs
+hierarchical_qdiscs: ['hls', 'htb']

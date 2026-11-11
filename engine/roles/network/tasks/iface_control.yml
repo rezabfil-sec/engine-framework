@@ -1,0 +1,227 @@
+---
+# Manage ifaces configurations for every interface
+# { "iconfig": "iconfig-1", "ifaces": "1,2"}
+# ifaces can be empty = apply iface config to all interfaces
+
+- debug: var=iface_config
+
+- name: load iface definition
+  set_fact:
+    iconfig: '{{ ifaceconfigs[iface_config.iconfig] }}'
+
+- debug: var=iconfig
+- debug: var=iconfig.gso
+
+- block:
+# default config to be applied
+  - name: Turn on GSO
+    command: 'ethtool -K {{ item.value.name }} gso on'
+    loop: '{{ node_ifaces | dict2items }}'
+
+  - name: Turn on GRO
+    command: 'ethtool -K {{ item.value.name }} gro on'
+    loop: '{{ node_ifaces | dict2items }}'
+
+  - name: Turn on TSO
+    command: 'ethtool -K {{ item.value.name }} tso on'
+    loop: '{{ node_ifaces | dict2items }}'
+
+  - name: Set MTU size to 1500
+    command: 'ip link set {{ item.value.name }} mtu 1500'
+    loop: '{{ node_ifaces | dict2items }}'
+
+  - name: Set interface speed back to default
+    command: "ethtool -s {{ item.value.name }} autoneg on"
+    loop: "{{ node_ifaces | dict2items }}"
+
+  - name: Set interface queue length back to default
+    command: "ip link set {{ item.value.name }} txqueuelen 1000"
+    loop: "{{ node_ifaces | dict2items }}"
+
+# Actually config
+  - name: Turn off GSO
+    command: 'ethtool -K {{ iface.value.name }} gso off'
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.gro is false
+    loop: '{{ node_ifaces | dict2items }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Turn off GRO
+    command: 'ethtool -K {{ iface.value.name }} gro off'
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.gro is false
+    loop: '{{ node_ifaces | dict2items }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Turn off TSO
+    command: 'ethtool -K {{ iface.value.name }} tso off'
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.tso is false
+    loop: '{{ node_ifaces | dict2items }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Set MTU size
+    command: 'ip link set {{ iface.value.name }} mtu {{ iconfig.mtu }}'
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.mtu is defined
+    loop: '{{ node_ifaces | dict2items }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Set txqueuelen
+    command: "ip link set {{ iface.value.name }} txqueuelen {{ iconfig.txqueuelen }}"
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.txqueuelen is defined
+    loop: "{{ node_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+    ignore_errors: true
+
+  - name: Set hardware queue length
+    command: "ethtool -G {{ iface.value.name }} rx {{ iconfig.rxqlen }} tx {{ iconfig.txqlen }}"
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.rxqlen is defined and iconfig.txqlen is defined
+    loop: "{{ node_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+    ignore_errors: true
+
+  - name: Set interface speed
+    command: "ethtool -s {{ iface.value.name }} speed {{ iconfig.speed }} duplex {{ iconfig.duplex }} autoneg {{ iconfig.autoneg }}"
+    when: (iface.key | string) in iface_config.ifaces.split(",") and iconfig.speed is defined and iconfig.duplex is defined and iconfig.autoneg is defined
+    loop: "{{ node_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+    ignore_errors: true
+    register: ethtool
+  
+  when: network_config=="OvS" or network_config=="Physical"
+
+- block:
+  # default config to be applied
+  - name: store iface config in a file
+    copy:
+      content: "{{ iface_config | tojson }}"
+      dest: "{{ remote_iconfig_file }}"
+
+  - name: store ifaces in a file
+    copy:
+      content: "{{ node_ifaces | tojson }}"
+      dest: "{{ remote_ifaces_file }}"
+    
+  - debug: var=num_virtual_ifaces
+  - name: extract virtual and physical ifaces for th ifaces
+    script: files/iface_configs.py --ifaceconfigfile {{ remote_iconfig_file }} --node {{ node }} --ifaces {{ remote_ifaces_file }} --count {{ num_virtual_ifaces if num_virtual_ifaces is defined and num_virtual_ifaces > 0 else {{ num_virtual_ifaces }} }}
+    register: ifaces_raw
+  
+  - name: set used raw interfaces
+    set_fact:
+      used_physical_ifaces: '{{ ifaces_raw.stdout_lines[-1] }}'
+  
+  - name: set used virtual interfaces
+    set_fact:
+      used_virtual_ifaces: '{{ ifaces_raw.stdout_lines[-2] }}'
+  - debug: var=used_virtual_ifaces
+  - debug: var=used_physical_ifaces
+  - debug: msg="{{ used_virtual_ifaces + used_physical_ifaces }}"
+
+  - name: Turn on GSO
+    command: 'ethtool -K {{ iface }} gso on'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Turn on GRO
+    command: 'ethtool -K {{ iface }} gro on'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Turn on TSO
+    command: 'ethtool -K {{ iface }} tso on'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Set MTU size to 1500
+    command: 'ip link set {{ iface }} mtu 1500'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Set interface speed back to default
+    command: "ethtool -s {{ item.value.name }} autoneg on"
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+
+  - name: Set interface queue length back to default
+    command: "ip link set {{ item.value.name }} txqueuelen 1000"
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+# Actually configure
+  - name: Turn off GSO
+    command: 'ethtool -K {{ iface }} gso off'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0 and iconfig.gso is false
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Turn off GRO
+    command: 'ethtool -K {{ iface }} gro off'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0 and iconfig.gro is false
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Turn off TSO
+    command: 'ethtool -K {{ iface }} tso off'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0 and iconfig.tso is false
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+  - name: Set MTU size
+    command: 'ip link set {{ iface }} mtu {{ iconfig.mtu }}'
+    when: used_virtual_ifaces | length > 0 or used_physical_ifaces | length > 0 and iconfig.mtu is defined
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: 'iface'
+    ignore_errors: true
+
+
+  - name: Set txqueuelen
+    command: "ip link set {{ iface.value.name }} txqueuelen {{ iconfig.txqueuelen }}"
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.txqueuelen is defined
+    loop: '{{ used_virtual_ifaces + used_physical_ifaces }}'
+    loop_control:
+      loop_var: iface
+    ignore_errors: true
+
+  - name: Set hardware queue length
+    command: "ethtool -G {{ iface.value.name }} rx {{ iconfig.rxqlen }} tx {{ iconfig.txqlen }}"
+    when: iface_config.ifaces | length == 0 or (iface.key | string) in iface_config.ifaces.split(",") and iconfig.rxqlen is defined and iconfig.txqlen is defined
+    loop: "{{ used_virtual_ifaces + used_physical_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+    ignore_errors: true
+
+  - name: Set interface speed
+    command: "ethtool -s {{ iface.value.name }} speed {{ iconfig.speed }} duplex {{ iconfig.duplex }} autoneg {{ iconfig.autoneg }}"
+    when: (iface.key | string) in iface_config.ifaces.split(",") and iconfig.speed is defined and iconfig.duplex is defined and iconfig.autoneg is defined
+    loop: "{{ used_virtual_ifaces + used_physical_ifaces | dict2items }}"
+    loop_control:
+      loop_var: iface
+    ignore_errors: true
+    register: ethtool
+
+  when: network_config=="SRIOV"

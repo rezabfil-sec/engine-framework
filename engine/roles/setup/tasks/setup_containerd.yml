@@ -1,0 +1,239 @@
+---
+
+- name: create directories for further setup
+  file:
+    path: '{{ dir }}'
+    state: directory
+  loop_control:
+    loop_var: dir
+  with_items:
+    - '/etc/kata-containers'
+    - '/root/ovmf'
+    - '/root/qemu'
+    - '/opt/cni/bin'
+    - '/opt/cni/net.d'
+    - '/usr/local/lib/systemd/system'
+
+# latest Go needed for CNI plugins, older Ubuntus don't have the needed version
+- name: install Go v1.23.1
+  shell: |
+    curl -L https://go.dev/dl/go1.23.1.linux-amd64.tar.gz | tar -C /usr/local -xzf -
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
+
+- name: source Go temporarily
+  shell: |
+    export PATH=$PATH:/usr/local/go/bin
+
+
+- name: fetch containerd v1.7.2
+  get_url:
+    url: https://github.com/containerd/containerd/releases/download/v1.7.2/containerd-1.7.2-linux-amd64.tar.gz
+    dest: /tmp/containerd.tar.gz
+
+- name: install containerd
+  unarchive:
+    src: /tmp/containerd.tar.gz
+    dest: /usr/local
+    remote_src: true
+
+- name: grab service definition
+  get_url:
+    url: https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+    dest: /usr/local/lib/systemd/system/containerd.service
+
+- name: daemon reload
+  systemd:
+    daemon_reload: yes
+
+- name: enable containerd
+  systemd:
+    name: containerd
+    enabled: yes
+    state: started
+
+- name: install apt dependencies
+  apt: 
+    name:
+      - runc
+        # the following two are needed to run QEMU
+      - libpixman-1-dev
+      - libfdt-dev
+    state: present
+
+# runs with testing disabled (-t), force (-f), and no containerd (-o)
+# check if Kata is already installed via `command -v containerd-shim-kata-v2`
+- name: install Kata via kata-manager
+  shell: |
+    command -v containerd-shim-kata-v2 ||
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/kata-containers/kata-containers/main/utils/kata-manager.sh) -t -f -o {{ kata_version }}"
+  when: containerd_runtime == 'io.containerd.run.kata.v2' or gcp is not defined
+
+- name: move Kata binaries to /root and unarchive
+  unarchive:
+    src: '{{ kata_archive.file }}'
+    dest: '{{ kata_archive.dir }}'
+  loop_control:
+    loop_var: kata_archive
+  with_items:
+    - { file: "{{ data_folder }}/software/{{ kata_default_guest }}.tar.gz", dir: '/root' }
+    - { file: "{{ data_folder }}/software/{{ kata_snp_guest }}.tar.gz", dir: '/root' }
+    - { file: "{{ data_folder }}/software/{{ ovmf_snp_version }}.tar.gz", dir: '/root/ovmf' }
+    - { file: "{{ data_folder }}/software/{{ qemu_snp_version }}.tar.gz", dir: '/root/qemu' }
+  when: containerd_runtime == 'io.containerd.run.kata.v2' or gcp is not defined
+
+- name: copy Kata config template
+  template:
+    src: '{{ kata_config }}.j2'
+    dest: '/etc/kata-containers/configuration.toml'
+    mode: '0644'
+  when: containerd_runtime == 'io.containerd.run.kata.v2' or gcp is not defined
+
+- name: check if CNI plugins are already installed
+  stat:
+    path: /opt/cni/bin/bridge
+  register: cni_plugin_bridge
+
+- block:
+  - name: remove CNI plugins repo if it exists
+    file:
+      path: /tmp/plugins
+      state: absent
+
+  - name: clone CNI plugins
+    git:
+      repo: https://github.com/containernetworking/plugins.git
+      dest: /tmp/plugins
+      version: v1.5.1
+
+  - name: build CNI plugins
+    command: ./build_linux.sh
+    args:
+      chdir: /tmp/plugins
+    environment:
+      PATH: /usr/local/go/bin:/bin/:/usr/bin:/usr/sbin
+
+  - name: copy CNI plugins to /opt/cni/bin
+    copy:
+      src: /tmp/plugins/bin
+      dest: /opt/cni/
+      remote_src: true
+
+  - name: make CNI plugins executable
+    shell: chmod +x /opt/cni/bin/*
+  when: cni_plugin_bridge.stat.exists == False
+  
+- block:
+  - name: create directory at /lib/firmware/amd
+    file:
+      path: /lib/firmware/amd
+      state: directory
+  - name: insert SEV-SNP firmware
+    copy:
+      src: "{{ data_folder }}/software/{{ snp_firmware }}"
+      dest: /lib/firmware/amd
+  # order matters..
+  - name: remove module kvm_amd
+    modprobe:
+      name: kvm_amd
+      state: absent
+  - name: remove module ccp
+    modprobe:
+      name: ccp
+      state: absent
+  - name: load module ccp
+    modprobe:
+      name: ccp
+  - name: load module kvm_amd
+    modprobe:
+      name: kvm_amd
+  when: snp_fw_update is defined and snp_fw_update 
+
+- name: fetch nerdctl v1.4.0
+  get_url:
+    url: https://github.com/containerd/nerdctl/releases/download/v1.4.0/nerdctl-1.4.0-linux-amd64.tar.gz
+    dest: /tmp/nerdctl.tar.gz
+
+- name: install nerdctl
+  unarchive:
+    src: /tmp/nerdctl.tar.gz
+    dest: /usr/local/bin
+    remote_src: true
+
+- name: copy CNI configuration template
+  template:
+    src: cni-default.j2
+    dest: "{{ containerd_cni_path }}/cni-default.conflist"
+  when: cur_node.value == inventory_hostname # figure out node mapping to assign unique subnet
+  loop: "{{ node_mapping | dict2items }}"
+  loop_control:
+    loop_var: cur_node
+
+- name: remove nerdctl-bridge.conflist to avoid conflicts
+  file:
+    path: "{{ containerd_cni_path }}/nerdctl-bridge.conflist"
+    state: absent
+
+- name: query image status from containerd
+  shell: "{{ containerd_cli }} images | grep -q {{ containerd_image }}"
+  register: build_containerd_image # returns 0 if image exists
+  ignore_errors: true
+
+- name: query image status from management host
+  shell: "stat {{ data_folder }}/software/{{ containerd_image }}.tar"
+  register: prebuilt_exists # returns 0 if image exists
+  ignore_errors: true
+  delegate_to: localhost
+
+- block:
+    - name: copy image file
+      copy:
+        src: "{{ data_folder }}/software/{{ containerd_image }}.tar"
+        dest: "/tmp/{{ containerd_image }}.tar"
+
+    - name: load image
+      command: "{{ containerd_cli }} load -i /tmp/{{ containerd_image }}.tar"
+
+    - name: remove image file
+      file:
+        path: "/tmp/{{ containerd_image }}.tar"
+        state: absent
+  when: prebuilt_exists.rc == 0 and build_containerd_image.rc != 0
+
+- block:
+    - name: fetch buildkit v0.12.0
+      get_url:
+        url: https://github.com/moby/buildkit/releases/download/v0.12.0/buildkit-v0.12.0.linux-amd64.tar.gz
+        dest: /tmp/buildkit.tar.gz
+
+    - name: install buildkit
+      unarchive:
+        src: /tmp/buildkit.tar.gz
+        dest: /usr/local
+        remote_src: true
+
+    - name: copy image file
+      copy:
+        src: "{{ containerd_image }}.Dockerfile"
+        dest: "/tmp/{{ containerd_image }}.Dockerfile"
+
+    - name: copy authorized keys
+      copy:
+        src: "/root/.ssh/authorized_keys"
+        dest: "/tmp/authorized_keys"
+        remote_src: true
+
+    - name: start buildkitd in background
+      shell: nohup buildkitd </dev/null >/dev/null 2>&1 & sleep 1
+
+    - name: wait a bit to control quota limit on GCP
+      pause:
+        seconds: 5
+      when: gcp is defined
+
+    - name: build image
+      command: "{{ containerd_cli }} build -f /tmp/{{ containerd_image }}.Dockerfile -t {{ containerd_image }} /tmp"
+
+    - name: stop buildkitd
+      shell: pkill buildkitd
+
+  when: build_containerd_image.rc != 0 and prebuilt_exists.rc != 0

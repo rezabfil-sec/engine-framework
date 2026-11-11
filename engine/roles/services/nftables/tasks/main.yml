@@ -1,0 +1,86 @@
+---
+# Nftables service
+
+- include_tasks: setup.yml
+  when: (experiment_run_index|int) == 0
+
+- name: Create mangle table
+  command: nft add table mangle
+
+- name: Adding base post-routing rule
+  command: nft -- add chain mangle postrouting {type route hook output priority -150\; }
+
+
+#nft add rule mangle postrouting ip daddr 192.168.1.2 meta priority set 2
+
+# IP mode to extract the ip based on flow
+- block: 
+  - name: initialize ip address per flow
+    set_fact:
+      dest_addrs: "{{ [] }}"
+
+  - name: get IPs
+    set_fact:
+      dest_addrs: "{{ dest_addrs + [ item.1.ip_dst ] }}"
+    when: (item.0 | int ) == (item.1.flow | int)
+    loop: "{{ service.destinations | default([]) | product(flow_ifaces) | list  }}"
+
+  - name: start nftables
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} 0 {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      nft add rule mangle postrouting ip daddr {{ dest_addr }} meta priority set {{ service.priority | default(0) }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    loop: "{{ dest_addrs }}"
+    loop_control:
+      loop_var: dest_addr
+  when: service.destinations is defined and service.destinations | length > 0
+
+# Format for dport priority
+#nft add rule mangle postrouting udp dport 6001 meta priority set 1
+- block: 
+  - name: start nftables udp port
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} 0 {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      nft add rule mangle postrouting udp dport {{ port }} meta priority set {{ service.priority | default(0) }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    loop: "{{ service.ports }}"
+    loop_control:
+      loop_var: port
+  
+  - name: start nftables tcp port
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} 0 {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      nft add rule mangle postrouting tcp dport {{ port }} meta priority set {{ service.priority | default(0) }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    loop: "{{ service.ports }}"
+    loop_control:
+      loop_var: port
+  when: service.protocol is not defined and (service.ports is defined and service.ports | length > 0) 
+
+
+- block: 
+  - name: start nftables udp port
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} 0 {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      nft add rule mangle postrouting udp dport {{ port }} meta priority set {{ service.priority | default(0) }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    loop: "{{ service.ports }}"
+    loop_control:
+      loop_var: port
+  when: (service.ports is defined and service.ports | length > 0) and (service.protocol is defined and service.protocol == "udp")
+
+- block: 
+  - name: start nftables tcp port
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} 0 {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      nft add rule mangle postrouting tcp dport {{ port }} meta priority set {{ service.priority | default(0) }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    loop: "{{ service.ports }}"
+    loop_control:
+      loop_var: port
+  when: (service.ports is defined and service.ports | length > 0) and (service.protocol is defined and service.protocol == "tcp")

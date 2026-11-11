@@ -1,0 +1,11 @@
+---
+# tls traffic bench defaults
+
+# =========== Common ===========
+tls_bench_dir: '{{ data_path }}/tls-bench'
+packet_size: 1500
+port: 12341
+
+# =========== Client Mode ===========
+data_size_mb: 2000
+network_speed_mbps: 10000 

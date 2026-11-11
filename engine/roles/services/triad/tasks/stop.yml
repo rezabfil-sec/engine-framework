@@ -1,0 +1,6 @@
+---
+# triad stop
+
+- name: kill triad
+  command: pkill -f triad
+  ignore_errors: yes

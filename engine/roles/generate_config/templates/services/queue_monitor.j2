@@ -1,0 +1,12 @@
+{% include "services/iface_flow_flows.j2" %}
+{% for interface in interfaces -%}
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".switch.eth[" + interface + "].macLayer" -%}
+{% set indexes = [] -%}
+{% for queue_key, queue_value in ((qdiscconfigs[((network[exp.network]['node_to_interface_to_qdisc_mapping'][services_key]|default({}))[interface]|default((network[exp.network]['node_to_interface_to_qdisc_mapping'][services_key]|default({}))[0]|default('')))]|default({}))['queues']|default({})).items() -%}
+{% if queue_value['mode'] in service['queue_types'] -%}
+{% if indexes.append(queue_key-1) %}{% endif -%}
+{% endif -%}
+{% endfor -%}
+{% include "services/statistics.j2" %}
+{% endfor -%}
+{% if device_numServices.update({services_key: device_numServices[services_key] + 1}) %}{% endif -%}

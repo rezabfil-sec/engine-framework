@@ -1,0 +1,57 @@
+---
+# variables for node todd
+
+# network card
+num_interfaces: 5
+node_ifaces:
+  # 1:
+  #   name: 'eno1'
+  #   mac: 'ac:1f:6b:ad:01:8e'
+  #   phc: '/dev/ptp5'
+  #   offload: no
+  1:
+    name: 'enp100s0f0'
+    mac: 'a0:36:9f:f8:1c:98'
+    phc: '/dev/ptp3'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ixgbe'
+  2:
+    name: 'enp100s0f1'
+    mac: 'a0:36:9f:f8:1c:99'
+    phc: '/dev/ptp4'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ixgbe'
+  3:
+    name: 'enp99s0f0'
+    mac: 'a0:36:9f:27:f7:d0'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ixgbe'
+  4:
+    name: 'enp99s0f1'
+    mac: 'a0:36:9f:27:f7:d2'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ixgbe'
+  5:
+    name: 'eno2'
+    mac: 'ac:1f:6b:ad:01:8f'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: 'igb'
+
+# TEEs information
+tee_supported: no
+
+# Total number of CPUs
+# Hyper threading is on, so 64 vCPUs 
+number_vCPUs: 64
+# Unit in GB
+total_RAM: 128
+
+management_iface: eno1

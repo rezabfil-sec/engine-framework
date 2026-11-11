@@ -1,0 +1,14 @@
+---
+# Collect results Schnorr
+- block:
+  - name: Collect experiment results
+    fetch:
+      src: "/root/bls/{{ service.file }}.csv"
+      dest: "{{ node_folder }}/n{{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }}_t{{ service.threshold if service.threshold is defined else experiment_threshold }}_client_sign_l{{ service.msg_len }}"
+      flat: yes
+
+  - name: remove results file
+    file:
+      path: "/root/bls/{{ service.file }}.csv"
+      state: absent
+  when: service.role == 'signclient'

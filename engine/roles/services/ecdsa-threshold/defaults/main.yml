@@ -1,0 +1,11 @@
+---
+# ECDSA service default values
+ecdsa_tmp_dir: "{{ experiment_tmp_dir }}/ecdsa_tmp"
+default_iterations: 100
+# GG20 or GG18
+default_scheme: "GG20"
+# Broadcast type. Accepted values: "BestEffort", "Echo", "Optimized"
+default_comm_type: "Echo"
+default_msg_len: 256
+default_num_nonces: 100
+default_base_port: 2000

@@ -1,0 +1,82 @@
+---
+# variables for node todd
+
+# network card
+num_interfaces: 9
+node_ifaces:
+  ## Intel I225
+  1:
+    name: 'enp113s0'
+    mac: '88:c9:b3:b6:06:e9'
+    phc: '/dev/ptp2'
+    bandwidth: 2.5
+    sriov: no
+  2:
+    name: 'enp114s0'
+    mac: '88:c9:b3:b6:06:ea'
+    phc: '/dev/ptp4'
+    bandwidth: 2.5
+    sriov: no
+  3:
+    name: 'enp115s0'
+    mac: '88:c9:b3:b6:06:eb'
+    phc: '/dev/ptp5'
+    bandwidth: 2.5
+    sriov: no
+  4:
+    name: 'enp116s0'
+    mac: '88:c9:b3:b6:06:ec'
+    phc: '/dev/ptp6'
+    bandwidth: 2.5
+    sriov: no
+# Cisco Nexus GM
+  5:
+    name: 'ens4'
+    mac: '64:3f:5f:02:09:14'
+    phc: '/dev/ptp0'
+    clock: '643f5f.fffe.020914-0'
+    bandwidth: 10
+    sriov: no
+  6:
+    name: 'ens4d1'
+    mac: '64:3f:5f:02:09:15'
+    phc: '/dev/ptp1'
+    clock: '643f5f.fffe.020914-1'
+    bandwidth: 10
+    sriov: no
+  ## Built-in Intel I350
+  # Iface eno3 omitted - used for a IPMI connection, so cant be used individually
+  # 7:
+  #   name: 'eno1'
+  #   mac: '3c:ec:ef:dd:97:20'
+  #   phc: '/dev/ptp0'
+  7:
+    name: 'eno2'
+    mac: '3c:ec:ef:dd:97:21'
+    phc: '/dev/ptp3'
+    offload: no
+    bandwidth: 1
+    sriov: no
+  ## Intel E810
+  8:
+    name: 'ens7f0'
+    mac: '50:7c:6f:62:31:de'
+    phc: '/dev/ptp1'
+    offload: no
+    bandwidth: 25
+    sriov: no
+  9:
+    name: 'ens7f1'
+    mac: '50:7c:6f:62:31:df'
+    phc: '/dev/ptp1'
+    offload: no
+    bandwidth: 25
+    sriov: no
+
+# Total number of CPUs
+# Hyper threading is on, so 8 vCPUs 
+number_vCPUs: 24
+# Unit in GB
+total_RAM: 128
+
+management_iface: eno1

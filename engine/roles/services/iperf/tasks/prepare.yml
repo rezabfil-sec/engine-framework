@@ -1,0 +1,16 @@
+---
+# Prepare a (modified) version of iperf3 (see script for details)
+- name: copy iperf tar
+  copy:
+    dest: '{{ iperf_location }}'
+    src: '{{ iperf_tar_path }}/iperf-3.{{iperf_version}}.tar.gz'
+    mode: 'u=rwx,g=rwx,o=rx'
+    force: no
+- name: delete existing iperf directory
+  file:
+    path: '{{ iperf_location }}/iperf-3.{{iperf_version}}'
+    state: absent
+- name: run installation script
+  script: 'files/install_iperf3.sh -l {{iperf_location}} -m {{iperf_multisend}} -v {{iperf_version}}'
+#  args:
+#    chdir: '{{iperf_location}}'

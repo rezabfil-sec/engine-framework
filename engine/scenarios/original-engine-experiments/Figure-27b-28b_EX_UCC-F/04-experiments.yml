@@ -1,0 +1,11 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+# CBS results - Figures 27 and 28
+## Figure-27b-28b_EX_UCC-F
+### Individual - no cross traffic
+  - { network: 'net-1', stack: 'stack-2',  action: 'action-1', time: 30, name: 'journal-use-case-version1_justFlow1SRA_30s' }
+  - { network: 'net-1', stack: 'stack-3',  action: 'action-1', time: 30, name: 'journal-use-case-version1_justFlow2SRA_30s' }
+  - { network: 'net-1', stack: 'stack-4',  action: 'action-1', time: 30, name: 'journal-use-case-version1_justFlow3SRB_30s' }

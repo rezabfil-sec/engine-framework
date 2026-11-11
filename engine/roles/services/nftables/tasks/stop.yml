@@ -1,0 +1,6 @@
+---
+# Remove all nftables
+
+- name: erase all nftables rules
+  command: nft flush ruleset
+  ignore_errors: yes

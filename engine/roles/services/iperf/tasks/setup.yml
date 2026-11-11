@@ -1,0 +1,14 @@
+---
+- name: install iperf3 packages
+  apt:
+    name:
+     - iperf3
+     - rsync
+     - expect
+     - curl
+     - fio
+     - iftop
+     - htop
+     - ethtool
+     - bc
+    state: present

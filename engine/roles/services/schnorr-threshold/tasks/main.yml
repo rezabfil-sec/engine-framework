@@ -1,0 +1,211 @@
+---
+# Schnorr service main
+- block:
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+
+  - name: copy config to a node file
+    copy:
+      src: 'files/create-cfg.py'
+      dest: '/root/'
+      mode: '0755'
+
+  - name: initialize participation_ips
+    set_fact:
+      participation_ips: "{{ [] }}"
+
+  - name: extract first IP of a source from flow for participation nodes
+    set_fact:
+      participation_ips: "{{ participation_ips + [ item.1.ip_src ] }}"
+    when: (item.0 | int ) == (item.1.flow | int) and service.source_node is defined
+    loop: "{{ service.source_node | default([]) | product(flow_ifaces) | list }}"
+
+  - debug: var=participation_ips
+  
+  - name: extract IPs from flow for participation nodes
+    set_fact:
+      participation_ips: "{{ participation_ips + [ item.1.ip_dst ] }}"
+    when: (item.0 | int ) == (item.1.flow | int) and service.flows is defined
+    loop: "{{ service.flows | default([]) | product(flow_ifaces) | list }}"
+  
+  - debug: var=participation_ips
+
+  - name: store participants ips in a file
+    copy:
+      content: "{{ participation_ips | tojson }}"
+      dest: '/root/participation_ips.json'
+  
+  - name: create dummy configs on a node
+    command: 'python3 /root/create-cfg.py -n {{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }} {{ "-S " if service.single_thread is defined else ""}} -ip /root/participation_ips.json'
+
+  # - name: create dummy configs on a node
+  #   command: 'python3 /root/create-cfg.py -n {{ service.number_nodes }} -ip {{ flow_ifaces }}'
+
+  - name: create dummy key pairs on a node
+    command: /root/tres -c '/root/peer{{ id_value }}.cfg' ckg
+    loop: "{{ range(1, (service.number_nodes if service.number_nodes is defined else experiment_number_nodes | int) + 1 ) | list }}"
+    loop_control:
+      loop_var: id_value
+
+  - name: Creates directory
+    file:
+      path: '{{ experiment_folder }}/keys'
+      state: directory
+    delegate_to: localhost
+    connection: local
+
+  - name: copy private keys to localhost
+    fetch:
+      src: '/root/peer{{ id_name }}.seckey'
+      dest: '{{ experiment_folder }}/keys/'
+      flat: true
+    loop: "{{ range(1, (service.number_nodes if service.number_nodes is defined else experiment_number_nodes | int) + 1 ) | list }}"
+    loop_control:
+      loop_var: id_name
+
+  - name: copy public keys to localhost
+    fetch:
+      src: '/root/peer{{ id_name }}.pubkey'
+      dest: '{{ experiment_folder }}/keys/'
+      flat: true
+    loop: "{{ range(1, (service.number_nodes if service.number_nodes is defined else experiment_number_nodes | int) + 1 ) | list }}"
+    loop_control:
+      loop_var: id_name
+
+  - name: copy configs to localhost
+    fetch:
+      src: '/root/peer{{ id_name }}.cfg'
+      dest: '{{ experiment_folder }}/configs/'
+      flat: true
+    loop: "{{ range(1, (service.number_nodes if service.number_nodes is defined else experiment_number_nodes | int) + 1 ) | list }}"
+    loop_control:
+      loop_var: id_name
+
+  - name: copy client config to localhost
+    fetch:
+      src: '/root/client.cfg'
+      dest: '{{ experiment_folder }}/configs/'
+      flat: true
+
+  when: service.role is defined and service.role == 'setup'
+
+
+# Assume here schnorr is built for participant
+- block:
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+  # Consider for binaries and given version e.g., 22.04 ubuntu
+  - name: check if file tres is present on a node
+    stat:
+      path: '{{ data_path }}/tres'
+    register: tres_ready
+
+  # Copy binary to the node if not present
+  - name: copy tres to a node file
+    copy:
+      src: '{{ experiment_folder }}/tres'
+      dest: '/root/'
+      mode: '0755'
+    when: not tres_ready.stat.exists
+  # We need all the pubkeys
+  - name: copy public keys to a node
+    copy:
+      src: '{{ experiment_folder }}/keys/peer{{ id_name }}.pubkey'
+      dest: '/root/'
+    loop: "{{ range(1, (service.number_nodes if service.number_nodes is defined else experiment_number_nodes | int) + 1 ) | list }}"
+    loop_control:
+      loop_var: id_name
+  # corresponding peer sk key
+  - name: copy private keys to a node
+    copy:
+      src: '{{ experiment_folder }}/keys/peer{{ service.id }}.seckey'
+      dest: '/root/'
+  # corresponding peer config
+  - name: copy config key to a node
+    copy:
+      src: '{{ experiment_folder }}/configs/peer{{ service.id }}.cfg'
+      dest: '/root/'
+
+  - name: Start Schnorr frost tres service
+    command: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} /root/tres -c /root/peer{{ service.id }}.cfg
+    # {{ cgexec -g cpuset:isol_tasks if gcp is not defined else ""}} taskset + ((2**service.use_core) | string) if service.use_core is defined else "" }} 
+      
+    #  > /root/n{{ service.number_nodes }}_peer{{ service.id }}.out 2>&1
+    async: 259200 # 1 month
+    when: is_container is not defined or is_container is defined and not is_container
+    poll: 0
+
+  - name: Start Schnorr frost tres service
+    command: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} /root/tres -c /root/peer{{ service.id }}.cfg
+    #  > /root/n{{ service.number_nodes }}_peer{{ service.id }}.out 2>&1
+    async: 259200 # 1 month
+    poll: 0
+    when: is_container is defined and is_container
+
+  when: service.role is defined and service.role == 'participant'
+
+
+# Assume here benchmark is built
+- block:
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+  # Consider for binaries and given version e.g., 22.04 ubuntu
+  - name: check if file tres is present on a node
+    stat:
+      path: '/root/bench'
+    register: bench_ready
+
+  # Copy binary to the node if not present
+  - name: copy bench to a node file
+    copy:
+      src: '{{ experiment_folder }}/bench'
+      dest: '/root/'
+      mode: '0755'
+    when: not bench_ready.stat.exists
+
+  # corresponding peer config
+  - name: copy client config to a node
+    copy:
+      src: '{{ experiment_folder }}/configs/client.cfg'
+      dest: '/root/'
+
+  - name: Start Schnorr frost bench service
+    command: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} /root/bench -c /root/client.cfg {{ service.threshold if service.threshold is defined else experiment_threshold }} {{ service.file }}.csv {{ service.iterations if service.iterations is defined else default_iterations }} {{ service.test_mode }} {{ service.msg_len if service.test_mode == "sign" else "" }} {{ service.num_nonces if service.test_mode == "preprocess" else "" }}
+    #  > /root/n{{ service.number_nodes }}_t{{ service.threshold }}_peer{{ service.iterations }}.out 2>&1
+    async: 259200 # 1 month
+    poll: 0
+
+  when: service.role is defined and service.role == 'client'
+
+# Assume here benchmark is built
+- block:
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+
+  - name: install criterion
+    command: "/root/.cargo/bin/cargo install cargo-criterion"
+
+  - name: check if dir is present on node
+    stat:
+      path: '{{ data_path }}/schnorr-threshold/frost-borg/'
+    register: repo_ready
+
+  # Copy the borg 22.04 ubuntu
+  - name: copy frost to the source
+    copy:
+      src: files/frost-borg
+      dest: '{{ data_path }}/schnorr-threshold'
+    when: not repo_ready.stat.exists
+
+  - name: Start frost dalek bench
+    command: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ "cgexec -g cpuset:isol_tasks" if gcp is not defined else ""}} " taskset " + ((2**service.use_core) | string) if service.use_core is defined else "" }} /root/.cargo/bin/cargo criterion --bench dalek_benchmarks --message-format=json -- --measurement-time {{ service.duration }} --sample-size {{ service.sample_size }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    args:
+      chdir: '{{ data_path }}/schnorr-threshold/frost-borg'
+
+  when: service.role is defined and service.role == 'dalek_bench'

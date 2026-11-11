@@ -1,0 +1,26 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+# Table-13_EX_UCT,EX_UCT-F
+## Combined - cross traffic
+  - { network: 'net-2', stack: 'stack-1',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinedeadline_30s'  }
+  - { network: 'net-3', stack: 'stack-1',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictdeadline_30s'  }
+  - { network: 'net-4', stack: 'stack-1',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictstrict_30s'  }
+  - { network: 'net-5', stack: 'stack-1',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinestrict_30s'  }
+## Individual - no cross traffic
+  - { network: 'net-2', stack: 'stack-2',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinedeadline_justFlow1SRA_30s'  }
+  - { network: 'net-3', stack: 'stack-2',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictdeadline_justFlow1SRA_30s'  }
+  - { network: 'net-4', stack: 'stack-2',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictstrict_justFlow1SRA_30s'  }
+  - { network: 'net-5', stack: 'stack-2',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinestrict_justFlow1SRA_30s'  }
+
+  - { network: 'net-2', stack: 'stack-3',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinedeadline_justFlow2SRA_30s'  }
+  - { network: 'net-3', stack: 'stack-3',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictdeadline_justFlow2SRA_30s'  }
+  - { network: 'net-4', stack: 'stack-3',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictstrict_justFlow2SRA_30s'  }
+  - { network: 'net-5', stack: 'stack-3',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinestrict_justFlow2SRA_30s'  }
+
+  - { network: 'net-2', stack: 'stack-4',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinedeadline_justFlow3SRB_30s'  }
+  - { network: 'net-3', stack: 'stack-4',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictdeadline_justFlow3SRB_30s'  }
+  - { network: 'net-4', stack: 'stack-4',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_strictstrict_justFlow3SRB_30s'  }
+  - { network: 'net-5', stack: 'stack-4',  action: 'action-1', time: 30, name: 'journal-use-case-version2_taprio_deadlinestrict_justFlow3SRB_30s'  }

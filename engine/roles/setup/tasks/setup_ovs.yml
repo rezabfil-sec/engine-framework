@@ -1,5 +1,5 @@
 ---
-# Initial OVS node configuration
+# Initial OvS node configuration
 
 # make sure openvswitch is installed
 - name: check ovs is available
@@ -33,3 +33,8 @@
 - name: bring interfaces up
   shell: 'ip link set {{ item.value.name }} up && ip link set v{{ item.value.name }} up'
   loop: '{{ node_ifaces | dict2items }}'
+
+# Could be used to set real-time priority, but that's too early here...
+# - name: set real-time priority for used interfaces
+#   shell: 'top -b -n 1 | pgrep {{ item.value.name }} | while read -r p; do chrt -p 99 $p; done'
+#   loop: '{{ node_ifaces | dict2items }}'

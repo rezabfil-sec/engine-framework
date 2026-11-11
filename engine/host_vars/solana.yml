@@ -1,0 +1,37 @@
+---
+# variables for node todd
+
+# network card
+num_interfaces: 3
+node_ifaces:
+  # 1:
+  #   name: 'eno1'
+  #   mac: '0c:c4:7a:34:1c:e2'
+  #   phc: '/dev/ptp1'
+  #   offload: no
+  1:
+    name: 'eno2'
+    mac: '0c:c4:7a:34:1c:e3'
+    phc: '/dev/ptp2'
+    offload: no
+  2:
+    name: 'enp2s0f0'
+    mac: 'b4:96:91:43:44:b8'
+    phc: '/dev/ptp3'
+    offload: no
+  3:
+    name: 'enp2s0f1'
+    mac: 'b4:96:91:43:44:b9'
+    phc: '/dev/ptp4'
+    offload: no
+
+# TEEs information
+tee_supported: no
+
+# Total number of CPUs
+# Hyper threading is on, so 12 vCPUs 
+number_vCPUs: 12
+# Unit in GB
+total_RAM: 64
+
+management_iface: eno1

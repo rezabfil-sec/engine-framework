@@ -1,0 +1,12 @@
+---
+# fio defaults
+
+fio_output_dir: fio
+fio_location: /tmp/fio
+fio_direct: 0
+fio_size: 10G
+fio_engine: libaio
+fio_io_depth: 1
+fio_block_size: 1M
+fio_end_fsync: 1
+drop_caches: yes

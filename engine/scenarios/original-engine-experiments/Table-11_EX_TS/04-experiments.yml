@@ -1,0 +1,15 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+## Table-11_EX_TS
+- {  network: 'net-121', stack: 'stack-102',  action: 'action-1', time: 250, name: '1to7_hops-taprio_offload_200txtime_175delta_singlestrict_prio3'}
+- {  network: 'net-122', stack: 'stack-102',  action: 'action-1', time: 250, name: '1to7_hops-taprio_offload_200txtime_175delta_singledeadline_prio3'}
+- {  network: 'net-121', stack: 'stack-103',  action: 'action-1', time: 250, name: '1to7_hops-taprio_offload_200txtime_175delta_singlestrict_prio2'}
+- {  network: 'net-122', stack: 'stack-103',  action: 'action-1', time: 250, name: '1to7_hops-taprio_offload_200txtime_175delta_singledeadline_prio2'}
+
+- {  network: 'net-91', stack: 'stack-102',  action: 'action-1', time: 250, name: '1to7_hops-taprio_offload_450txtime_175delta_prio3_singledeadline'}
+- {  network: 'net-78', stack: 'stack-101',  action: 'action-1', time: 70, name: '1to7_hops-taprio_offload_450txtime_175delta_prio3_singlestrict'}
+- {  network: 'net-91', stack: 'stack-103',  action: 'action-1', time: 250, name: '1to7_hops-taprio_offload_450txtime_175delta_prio2_singledeadline'}
+- {  network: 'net-92', stack: 'stack-103',  action: 'action-1', time: 250, name: '1to7_hops-taprio_offload_450txtime_175delta_prio2_singlestrict'}

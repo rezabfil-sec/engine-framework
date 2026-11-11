@@ -1,0 +1,59 @@
+[package]
+name = "tres"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# disable suggestions due to https://github.com/clap-rs/clap/issues/878
+structopt = {version = "0.3", default-features = false, features = ["color"] } # CLI argument parsing
+configparser = "2.0.0" # INI config file parsing
+tokio = { version = "1", features = ["full"] } # async runtime
+tokio-stream = "0.1"
+hyper = { version = "0.14", features = ["full"] } # HTTP Client/Server
+#futures-util = "0.3" # needed to limit length of parsed HTTP requests
+futures = "0.3" # for join_all
+
+bytes = "1" # Byte Buf(fer)
+
+snow = "0.7.2" # NOISE protocol framework
+async-trait = "0.1.48"
+byteorder = "1.4" # low-level parsing of packets
+hex = "0.4.3" # pretty-print arrays in hex
+
+nom = "6" # parsing
+# (de)serialization (used for internal communication)
+serde = { version = "1.0", features = ["derive"] }
+bincode = "1.3"
+serde_qs = "0.8" # HTTP interface: querry strings
+serde_json = "1" # HTTP interface: JSON response
+
+tracing = "0.1" # debug log
+tracing-subscriber = "0.2.17"
+
+frost-dalek = "0.2.3"
+curve25519-dalek = { version = "3", features = ["serde"] } # EC point definitions  , default-features = false
+zeroize = { version = "1", default-features = false, features = ["zeroize_derive"] } # auto-delete secret values
+rand = { version = "0.7", features=["small_rng"] } # SmallRng needed for tests+benchmark (message generation)
+
+# Dependencies which should be dev-dependencies but aren't because of the integration tests/benchmarks
+# see https://github.com/rust-lang/cargo/issues/2911 (?)
+lazy_static = "1.4.0" # initialisation during unit tests
+
+[patch.crates-io]
+frost-dalek = { path = "../frost-borg"}
+
+[dev-dependencies]
+ed25519-dalek = { version = "1", default-features = false }
+
+criterion = {version= "0.3", features = ["async_tokio"]} # benchmarks for performance regression testing
+
+[[bench]]
+name = "peer"
+path = "src/benches/peer.rs"
+harness = false
+
+# SeedableRng for tests
+#rand_core = "0.6"
+#rand = "0.8"

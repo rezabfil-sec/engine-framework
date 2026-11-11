@@ -16,12 +16,14 @@ network_file = "01-network.yml"
 stacks_file = "02-stacks.yml"
 actions_file = "03-actions.yml"
 experiments_file = "04-experiments.yml"
+process_file = "05-process.yml"
 experiment_defaults = "roles/experiment/defaults/main.yml"
 network_defaults = "roles/network/defaults/main.yml"
 services_dir = "roles/services"
 service_defaults = "defaults/main.yml"
 simulation_defaults = "roles/generate_config/defaults/main.yml"
 path_to_engine = "../../.."
+
 
 def set_path_to_engine(path):
 	path_to_engine = path
@@ -54,6 +56,9 @@ def load_actions(scene):
 
 def load_experiments(scene):
 	return open_and_load_yml(scenarios_dir + "/" + scene + "/" + experiments_file)
+
+def load_process(scene):
+    return open_and_load_yml(scenarios_dir + "/" + scene + "/" + process_file)
 
 def load_experiment_defaults():
 	return open_and_load_yml(experiment_defaults)

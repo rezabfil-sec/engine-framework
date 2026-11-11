@@ -1,0 +1,109 @@
+---
+# variables for node octorand
+data_disk: "sda"
+# network card
+num_interfaces: 13
+node_ifaces:
+  1:
+    name: 'enp133s0f0'
+    mac: '50:7c:6f:3e:84:1a'
+    phc: '/dev/ptp1' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  2:
+    name: 'enp133s0f1'
+    mac: '50:7c:6f:3e:84:1b'
+    phc: '/dev/ptp2' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  3:
+    name: 'enp135s0f0'
+    mac: '50:7c:6f:3e:85:ca'
+    phc: '/dev/ptp3' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  4:
+    name: 'enp135s0f1'
+    mac: '50:7c:6f:3e:85:cb'
+    phc: '/dev/ptp4' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  5:
+    name: 'enp193s0f1'
+    mac: '3c:ec:ef:e0:58:1d'
+    phc: '/dev/ptp6' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'tg3'
+  6:
+    name: 'enp1s0f0'
+    mac: '3c:ec:ef:ab:d5:30'
+    phc: '/dev/ptp7' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  7:
+    name: 'enp1s0f1'
+    mac: '3c:ec:ef:ab:d5:31'
+    phc: '/dev/ptp8' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  8:
+    name: 'enp1s0f2'
+    mac: '3c:ec:ef:ab:d5:32'
+    phc: '/dev/ptp9'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  9:
+    name: 'enp1s0f3'
+    mac: '3c:ec:ef:ab:d5:33'
+    phc: '/dev/ptp10'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  10:
+    name: 'enp2s0f0np0'
+    mac: 'b8:3f:d2:87:65:a6'
+    phc: '/dev/ptp11' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'mlx5_core'
+  11:
+    name: 'enp2s0f1np1'
+    mac: 'b8:3f:d2:87:65:a7'
+    phc: '/dev/ptp12' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'mlx5_core'
+  12:
+    name: 'enp65s0f0'
+    mac: '6c:fe:54:4b:0d:20'
+    phc: '/dev/ptp13' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  13:
+    name: 'enp65s0f1'
+    mac: '6c:fe:54:4b:0d:21'
+    phc: '/dev/ptp14' # does not support phc
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+# TEE information
+# AMD
+tee_supported: yes
+tee_type: "SEV" # AMD SEV-SNP
+
+# Total number of CPUs
+# Hyper threading is on, so 64 vCPUs 
+number_vCPUs: 64
+# Unit in GB
+total_RAM: 768
+
+management_iface: 'enp193s0f0'

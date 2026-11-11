@@ -19,6 +19,11 @@
 - name: oneshot system clock update
   shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
 
+- name: extract duplicates (if present)
+  set_fact:
+    used_hw_ifaces: "{{ used_hw_ifaces | default([]) | unique }}"
+  when: network_config == "SRIOV"
+
 # -------------------- linuxptp SYNC --------------------
 - block:
   - name: set linuxptp config files
@@ -44,7 +49,94 @@
       phc2sys -a -r --step_threshold=1 --transportSpecific=1 -x -E pi
     async: 2592000  # run in background - for 1 month or until finished/killed
     poll: 0
-  when: service.mode == 'linuxptp' or service.mode == 'lidar_all' and use_ifaces is defined and use_ifaces | length > 0
+  when: service.mode == 'linuxptp' or service.mode == 'lidar_all' and (network_config == 'Physical' or network_config == 'OvS') and use_ifaces is defined and use_ifaces | length > 0
+- debug: var=use_ifaces
+
+# -------------------- linuxptp SWITCH --------------------
+- block:
+  - name: set linuxptp config files
+    template:
+      src: 'gPTPSwitch.cfg'
+      dest: '{{ data_path }}/gPTPSwitch.cfg'
+      mode: '0644'
+# TODO update socket priority option
+  - name: start linuxptp for active interfaces
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      ptp4l -f {{ data_path }}/gPTPSwitch.cfg --step_threshold=1 -H
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+
+  - name: set TAI-UTC offset
+    shell: 'pmc -u -b 0 -t 1 -i {{ item.value.name }} "SET GRANDMASTER_SETTINGS_NP clockClass 248 clockAccuracy 0xfe offsetScaledLogVariance 0xffff currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 timeSource 0xa0"'
+    loop: '{{ node_ifaces | dict2items }}'
+# TODO socket priority option
+  - name: sync primary clock -> hw clocks
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -a -r --step_threshold=1 --transportSpecific=1 -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  when: service.mode == 'switch_mode' and use_ifaces is defined and use_ifaces | length > 0 and network_config == 'Physical'
+
+- block:
+  - name: set linuxptp config files
+    template:
+      src: 'gPTPSRIOV.cfg'
+      dest: '{{ data_path }}/gPTPSRIOV.cfg'
+      mode: '0644'
+# TODO update socket priority option
+  - name: start linuxptp for active interfaces
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      ptp4l -f {{ data_path }}/gPTPSRIOV.cfg --step_threshold=1 -H
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+
+  - name: set TAI-UTC offset
+    shell: 'pmc -u -b 0 -t 1 -i {{ item }} "SET GRANDMASTER_SETTINGS_NP clockClass 248 clockAccuracy 0xfe offsetScaledLogVariance 0xffff currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 timeSource 0xa0"'
+    loop: '{{ used_hw_ifaces }}'
+# TODO socket priority option
+  - name: sync primary clock -> hw clocks
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -a -r --step_threshold=0.00002 --transportSpecific=1 -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  - name: sync primary clock -> wall
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -s '{{ used_hw_ifaces[0] }}' -c CLOCK_REALTIME --step_threshold=0.00002 --transportSpecific=1 -x -E pi -w
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  when: service.mode == 'switch_mode' and used_hw_ifaces is defined and used_hw_ifaces | length > 0 and network_config == 'SRIOV'
+
+- block:
+  - name: set linuxptp config files
+    template:
+      src: 'gPTPSRIOVHW.cfg'
+      dest: '{{ data_path }}/gPTPSRIOVHW.cfg'
+      mode: '0644'
+# TODO update socket priority option
+  - name: start linuxptp for active interfaces
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      ptp4l -f {{ data_path }}/gPTPSRIOVHW.cfg --step_threshold=1 -H
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+
+  - name: set TAI-UTC offset
+    shell: 'pmc -u -b 0 -t 1 -i {{ item }} "SET GRANDMASTER_SETTINGS_NP clockClass 248 clockAccuracy 0xfe offsetScaledLogVariance 0xffff currentUtcOffset 37 leap61 0 leap59 0 currentUtcOffsetValid 1 ptpTimescale 1 timeTraceable 1 frequencyTraceable 0 timeSource 0xa0"'
+    loop: '{{ used_hw_ifaces }}'
+# TODO socket priority option
+  - name: sync primary clock -> hw clocks
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -a -r --step_threshold=1 --transportSpecific=1 -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  when: service.mode == 'linuxptp' and used_hw_ifaces is defined and used_hw_ifaces | length > 0 and network_config == 'SRIOV'
+
 - debug: var=use_ifaces
 
 # -------------------- linuxptp SYNC LIDAR SOURCE--------------------
@@ -150,16 +242,13 @@
 - block:
   # - name: start services
   #   command: sleep 90
-  # TODO if more than 1 iface return well they are master, it should fail
+  ## TODO if more than 1 iface return well they are master, it should fail
+  ## TODO current NICs have 1 phc per NIC --> master will not work as expected
   - name: finding a master iface
-    when: inventory_hostname != smartnic_equipped 
     script: ptp_master.py -m -i {{ ptp_iface | flatten | join(",") }} -n {{ use_ifaces | flatten | join(",") }}
+    when: ptp_iface | length > 1
     register: gm_iface
-  - debug: var=gm_iface 
-  - name: Assigning a variable 
-    when: inventory_hostname == smartnic_equipped 
-    set_fact:
-      gm_iface: ['enp1s0']
+  
   - debug: var=gm_iface
   
   # Should run only successfuly on the GM node
@@ -169,16 +258,8 @@
       phc2sys -s {{ gm_iface.stdout_lines[-1] }} -c CLOCK_REALTIME --step_threshold=1 --transportSpecific=1 -w -x -E pi
     async: 2592000  # run in background - for 1 month or until finished/killed
     poll: 0
-    when: inventory_hostname != smartnic_equipped and gm_iface.stdout_lines[-1] | length > 1
-
-  - name: sync primary clock -> system clock
-    shell: >
-      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
-      phc2sys -s enp1s0 -c CLOCK_REALTIME --step_threshold=1 --transportSpecific=1 -w -x -E pi
-    async: 2592000  # run in background - for 1 month or until finished/killed
-    poll: 0
-    when: inventory_hostname == smartnic_equipped
-
+    when: gm_iface.stdout_lines[-1] | length > 1
+  
   - name: check_clocks interfaces
     shell: '{{ data_path }}/{{ ptp_cc.name }} -d {{ item.value.name }} -v'
     when: item.key in use_ifaces
@@ -186,7 +267,63 @@
     ignore_errors: yes
 
   # condition for all block tasks
-  when: service.mode == 'linuxptp' and use_ifaces is defined and use_ifaces | length > 0
+  when: service.mode == 'linuxptp' and (network_config == 'Physical' or network_config == 'OvS') and use_ifaces is defined and use_ifaces | length > 1
+
+#- block:
+  # - name: start services
+  #   command: sleep 90
+  # TODO if more than 1 iface return well they are master, it should fail
+  # TODO current NICs have 1 phc per NIC --> master will not work as expected
+# - name: finding a master iface
+#   script: ptp_master.py -m -i {{ used_hw_ifaces | flatten | join(",") }} -n {{ use_ifaces | flatten | join(",") }}
+#   register: gm_iface
+#  - debug: var=gm_iface
+  
+  # Should run only successfuly on the GM node
+#  - name: sync primary clock -> system clock
+#    shell: >
+#      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+#      phc2sys -s {{ gm_iface.stdout_lines[-1] }} -c CLOCK_REALTIME --step_threshold=1 --transportSpecific=1 -w -x -E pi
+#    async: 2592000  # run in background - for 1 month or until finished/killed
+#    poll: 0
+#    when: gm_iface.stdout_lines[-1] | length > 1
+  
+#  - name: check_clocks interfaces
+#    shell: '{{ data_path }}/{{ ptp_cc.name }} -d {{ item.value.name }} -v'
+#    when: item.key in use_ifaces
+#    loop: '{{ node_ifaces | dict2items }}'
+#    ignore_errors: yes
+
+  # condition for all block tasks
+ # when: service.mode == 'switch_mode' and used_hw_ifaces is defined and used_hw_ifaces | length > 2 and network_config == 'SRIOV'
+
+- block:
+  # - name: start services
+  #   command: sleep 90
+  # TODO if more than 1 iface return well they are master, it should fail
+  # TODO current NICs have 1 phc per NIC --> master will not work as expected
+  - name: finding a master iface
+    script: ptp_master.py -m -i {{ used_hw_ifaces | flatten | join(",") }} -n {{ use_ifaces | flatten | join(",") }}
+    register: gm_iface
+  - debug: var=gm_iface
+  
+  # Should run only successfuly on the GM node
+  - name: sync primary clock -> system clock
+    shell: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+      phc2sys -s {{ gm_iface.stdout_lines[-1] }} -c CLOCK_REALTIME --step_threshold=1 --transportSpecific=1 -w -x -E pi
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    when: gm_iface.stdout_lines[-1] | length > 1
+  
+  - name: check_clocks interfaces
+    shell: '{{ data_path }}/{{ ptp_cc.name }} -d {{ item.value.name }} -v'
+    when: item.key in use_ifaces
+    loop: '{{ node_ifaces | dict2items }}'
+    ignore_errors: yes
+
+  # condition for all block tasks
+  when: service.mode == 'linuxptp' and used_hw_ifaces is defined and used_hw_ifaces | length > 1 and network_config == 'SRIOV'
 
 # -------------------- excelfore SYNC --------------------
 - block:

@@ -1,0 +1,11 @@
+config/*.cfg
+config/*.pubkey
+config/*.seckey
+target
+Cargo.lock
+
+*.bak
+*.bak[0-9]
+
+# Eclipse project
+.project

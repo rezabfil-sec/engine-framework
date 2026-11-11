@@ -1,0 +1,19 @@
+---
+# variables for virtual node clouda on GCP
+
+# TDX SETUP
+# ====================================================
+num_interfaces: 0
+node_ifaces: {}
+management_iface: ''
+
+# TEE information
+tee_supported: yes
+tee_type: "TDX"
+# GCP macine type
+machine_type : c3-standard-22
+# GCP region
+region: us-central1
+# GCP zone
+zone: us-central1-a
+# ====================================================

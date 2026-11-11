@@ -1,0 +1,220 @@
+# - network: '{{network}}'
+#         subnetwork: '{{subnetwork}}'
+#         access_configs:
+#           - name: External NAT
+#             type: ONE_TO_ONE_NAT
+#             network_tier: PREMIUM
+
+- set_fact:
+    node_interfaces : []
+
+- name: check if '{{ name_mt.0 }}' is in network
+  debug:
+    msg: '{{ name_mt.0 }} is in network {{ nn.key }} with subnetwork selflink {{ network_interfaces[nn.key]["subnetworks"][name_mt.0]["self_link"] }}'
+  when: "name_mt.0 in nn.value"
+  with_dict: '{{ network_nodes }}'
+  loop_control:
+    loop_var: nn
+
+# create network interfaces for each node
+- name: populate node_interfaces
+  set_fact:
+    node_interfaces: "{{ node_interfaces + [{
+      'network': {'selfLink': network_interfaces_dict[nn.key].network},
+      'subnetwork': {'selfLink': network_interfaces[nn.key]['subnetworks'][name_mt.0]['self_link']},
+      'access_configs': [{
+        'name': 'External NAT',
+        'type': 'ONE_TO_ONE_NAT',
+        'network_tier': 'PREMIUM'
+      }]}] }}"
+  when: "name_mt.0 in nn.value"
+  with_dict: '{{ network_nodes }}'
+  loop_control:
+    loop_var: nn
+
+- name: "boot disk initialization for {{name_mt.0}}"
+  gcp_compute_disk:
+    auth_kind: serviceaccount
+    service_account_file: '{{gcp_config.authentication.service_account_file}}'
+    name: "disk-{{name_mt.0}}"
+    description: "disk for {{name_mt.0}} node"
+    project: '{{gcp_config.project}}'
+    size_gb: '{{gcp_config.disk.size}}'
+    source_image: '{{gcp_config.disk.image}}'
+    type: '{{gcp_config.disk.type}}'
+    zone: '{{ hostvars[name_mt.0].zone }}'
+  register: disk_instance
+  when: (not hostvars[name_mt.0].tee_supported) or (hostvars[name_mt.0].tee_supported and not ((hostvars[name_mt.0].tee_type == "SEV-SNP") or (hostvars[name_mt.0].tee_type == "TDX")))
+  
+
+- name: "create VM instance for {{name_mt.0}}"
+  google.cloud.gcp_compute_instance:
+    auth_kind: serviceaccount
+    service_account_file: '{{gcp_config.authentication.service_account_file}}'
+    name: '{{name_mt.0}}'
+    min_cpu_platform: '{{gcp_config.instance.min_cpu_platform if "n2d" in name_mt.1 else "Intel Sapphire Rapids"}}'
+    labels:
+      env: engine_nodes
+    can_ip_forward: true
+    confidential_instance_config: 
+      enable_confidential_compute: '{{true if (hostvars[name_mt.0].tee_supported) else false}}'
+    machine_type: '{{name_mt.1}}'
+    disks:
+      - auto_delete: true
+        boot: true
+        source: '{{disk_instance}}'
+    network_interfaces: '{{node_interfaces}}'
+    scheduling:
+      on_host_maintenance: TERMINATE
+    project: '{{gcp_config.project}}'
+    zone: '{{ hostvars[name_mt.0].zone }}'
+    service_accounts:
+      - email: "{{gcp_config.instance.service_account_email}}"
+        scopes: "{{gcp_config.instance.service_account_scopes}}"
+    state: present
+  register: vm_instance
+  when: (not hostvars[name_mt.0].tee_supported) or (hostvars[name_mt.0].tee_supported and not (hostvars[name_mt.0].tee_type == "SEV-SNP" or hostvars[name_mt.0].tee_type == "TDX"))
+
+- name: "create AMD SEV-SNP enabled VM instance for {{name_mt.0}}"
+  block:
+
+  - set_fact:
+      compute_instance_dict: 
+        name: '{{name_mt.0}}'
+        min_cpu_platform: '{{gcp_config.instance.min_cpu_platform}}'
+        labels:
+          env: engine_nodes
+        networkInterfaces: '{{node_interfaces}}'
+        project: '{{gcp_config.project}}'
+        zone: '{{ hostvars[name_mt.0].zone }}'
+        serviceAccounts:
+          - email: "{{gcp_config.instance.service_account_email}}"
+            scopes: "{{gcp_config.instance.service_account_scopes}}"
+
+  - script: ../files/process_compute_instance_gcp.py '{{compute_instance_dict | to_json}}'
+    register: processed_instance_dict_raw
+
+  - set_fact:
+      processed_instance_dict_raw: '{{processed_instance_dict_raw.stdout}}' 
+  
+  - include_tasks: ./helper/create_amd_sev_snp_vm.yml 
+    vars:
+      processed_instance_dict: "{{processed_instance_dict_raw}}"
+
+  - name: wait for 3 seconds 
+    pause:
+      seconds: 3
+
+  - name: gather facts for '{{name_mt.0}}'
+    gcp_compute_instance_info:
+      auth_kind: serviceaccount
+      service_account_file: '{{gcp_config.authentication.service_account_file}}'
+      project: '{{gcp_config.project}}'
+      zone: '{{ hostvars[name_mt.0].zone }}'
+      filters:
+        - name = {{name_mt.0}}
+    register: vm_instances
+
+  - set_fact:
+      vm_instance: '{{vm_instances.resources[0]}}'
+
+  when: hostvars[name_mt.0].tee_supported and hostvars[name_mt.0].tee_type == "SEV-SNP"
+
+- name: "create Intel TDX enabled VM instance for {{name_mt.0}}"
+  block:
+
+  - set_fact:
+      compute_instance_dict: 
+        name: '{{name_mt.0}}'
+        labels:
+          env: engine_nodes
+        networkInterfaces: '{{node_interfaces}}'
+        project: '{{gcp_config.project}}'
+        zone: '{{ hostvars[name_mt.0].zone }}'
+        serviceAccounts:
+          - email: "{{gcp_config.instance.service_account_email}}"
+            scopes: "{{gcp_config.instance.service_account_scopes}}"
+
+  - script: ../files/process_compute_instance_gcp.py '{{compute_instance_dict | to_json}}'
+    register: processed_instance_dict_raw
+
+  - set_fact:
+      processed_instance_dict_raw: '{{processed_instance_dict_raw.stdout}}' 
+  
+  - include_tasks: ./helper/create_intel_tdx_vm.yml 
+    vars:
+      processed_instance_dict: "{{processed_instance_dict_raw}}"
+
+  - name: wait for 3 seconds 
+    pause:
+      seconds: 3
+
+  - name: gather facts for '{{name_mt.0}}'
+    gcp_compute_instance_info:
+      auth_kind: serviceaccount
+      service_account_file: '{{gcp_config.authentication.service_account_file}}'
+      project: '{{gcp_config.project}}'
+      zone: '{{ hostvars[name_mt.0].zone }}'
+      filters:
+        - name = {{name_mt.0}}
+    register: vm_instances
+
+  - set_fact:
+      vm_instance: '{{vm_instances.resources[0]}}'
+
+  when: hostvars[name_mt.0].tee_supported and hostvars[name_mt.0].tee_type == "TDX"
+
+
+
+- name: wait for SSH to come up
+  wait_for:
+    host: '{{vm_instance.networkInterfaces.0.accessConfigs.0.natIP}}'
+    port: 22
+    delay: 10
+    sleep: 10
+    timeout: 100
+    state: started
+  ignore_errors: false
+
+- name: "add {{name_mt.0}} to inventory"
+  add_host:
+    name: '{{name_mt.0}}'
+    ansible_ssh_host: '{{vm_instance.networkInterfaces.0.accessConfigs.0.natIP}}'
+    ansible_ssh_port: 22
+    groups: gcp_instances_unroot
+
+- name: create list for gcp_instances_unroot hosts
+  set_fact:
+    gcp_instances_unroot_list : '{{gcp_instances_unroot_list | default([]) + [{"name": name_mt.0, "ssh_host": vm_instance.networkInterfaces.0.accessConfigs.0.natIP, "ssh_port": 22}] }}'
+
+- name: create dictionary for VMs and their selflinks
+  set_fact:
+    instance_selflink: "{{ (instance_selflink | default({})) | combine({name_mt.0: vm_instance.selfLink}) }}"
+
+- name: create dictionary for VMs and their external IPs for SSH connection
+  set_fact:
+    instance_ip: "{{ (instance_ip | default({})) | combine({name_mt.0: vm_instance.networkInterfaces.0.accessConfigs.0.natIP}) }}"
+
+- name: create a dictionary storing the nodes and their list of network interfaces for internal communication
+  block:
+    - name: obtain the network interfaces and its IP address from remote host
+      shell: "ip a s | grep \"ens\" | awk '{print $2}'"
+      delegate_to: '{{vm_instance.networkInterfaces.0.accessConfigs.0.natIP}}'
+      register: ens_output_raw
+
+    - set_fact:
+        ens_output: '{{ ens_output_raw.stdout }}'
+
+    - script: ../files/create_node_iface.py '{{ vm_instance.networkInterfaces | to_json }}' '{{ ens_output | string }}'
+      register: node_iface_raw
+
+    - set_fact:
+        node_iface: '{{node_iface_raw.stdout}}'
+    
+    - set_fact:
+        nodes_ifaces: "{{ (nodes_ifaces | default({})) | combine({name_mt.0: node_iface }) }}"
+
+
+- name: pause for 5 seconds to avoid rate limit
+  pause:
+    seconds: 5

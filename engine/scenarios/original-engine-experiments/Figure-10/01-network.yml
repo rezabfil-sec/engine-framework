@@ -1,0 +1,46 @@
+---
+# 1. Network properties
+#
+# network: map tsn configurations to nodes and define network paths (flows)
+# tsn-configs: full tsn configuration
+
+# ------------------------------ FLOWS + TSN-map -------------------------------
+network:
+  # ETF Experiments
+  net-5:
+    tsn:
+      tsn-4: ["node-9:2", "node-1:3"]
+    flows:
+      1: ":node-9:2,2:node-10:"
+      2: ":node-1:3,3:node-2:"
+      #PTP Flow for rod todd
+      3: ":node-9:3,3:node-10:"
+      4: ":node-2:1,3:node-3:1,4:node-1:"
+    check: true
+    num_net_cores: 3 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. Requires the low latency kernel!!
+
+# ------------------------------ TSN configs -----------------------------------
+# NOTES:
+# - number of queue items is fixed depending on the number of hardware queues (Intel i210 = 4)
+# - available priorities for the prio list go from 0 to 15
+# - all priorities need to be assigned to the queues, use '*' in one queue for remaining priorities
+# Use queue 0 in a taprio sched for a guard band
+# ETF offload can only be set for queue 1 or 2, limitation of the intel i210 network card
+# ETF queues together with taprio must be used with txtime enabled or only special (timestamped) traffic works
+#
+# IMPORTANT:
+# ! Queue priorities MUST not overlap
+# ! Map all 16 priorities to queues or use '*' in one of the queues
+# ! All taprio Schedule durations MUST sum up to a factor of 1ms
+#
+
+tsnconfigs: # TSN configurations for nodes/interfaces
+  # ETF EXPERIMENTS
+  tsn-4:
+    name: MQPRIO with ETF in Strict and Strict mode
+    taprio: {}
+    queues: # Configuration of individual HW queues, delta - fudge factor of ETF
+      1: { mode: etf, prio: [3], delta: 100000, offload: no } # Supports HW offloading
+      2: { mode: etf, prio: [2], delta: 100000, deadline: no } # Support HW offloading
+      3: { mode: be, prio: [1,'*'] }

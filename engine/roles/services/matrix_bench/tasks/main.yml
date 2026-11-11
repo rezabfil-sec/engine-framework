@@ -1,0 +1,36 @@
+---
+# matrix bench main
+
+- name: set matrix directory
+  set_fact:
+    matrix_dir: '{{ data_path }}/{{ mdir }}'
+
+- name: create matrix directory
+  file:
+    path: '{{ matrix_dir }}'
+    state: directory
+    mode: 0755
+
+- name: copy matrix files to node
+  copy:
+    src: '{{ matrix_file }}'
+    dest: '{{ matrix_dir }}'
+  with_items:
+    - Makefile
+    - matrix_mul.cpp
+  loop_control:
+    loop_var: matrix_file
+
+- name: compile matrix benchmark
+  shell: make
+  args:
+    chdir: '{{ matrix_dir }}'
+
+- name: run matrix benchmark
+  command: >
+    run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+    ./matrix_mul {{ service.matrix_dim | default(matrix_dim) }} {{ service.repetitions | default(repetitions) }}
+  args:
+    chdir: '{{ matrix_dir }}'
+  async: 2592000  # run in background - for 1 month or until finished/killed
+  poll: 0

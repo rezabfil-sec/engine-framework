@@ -1,0 +1,793 @@
+---
+# 1. Network
+# Define the network properties
+#
+# Concepts:
+# --------
+# Network: The "network" variable has different network instances (net-1, net-2, etc.)
+#   as subelements. Every instance is split into two main parts:
+#  1 Flows: The network topology is entirely defined through the flows.
+#      Only nodes and interfaces that occur in a flow are part of the topology!
+#      It is recommended to add node-to-node flows to build the basic topology and
+#      on top of that add "long-distance" or more complex flows that are later used
+#      by services/applications.
+#  2 qdisc: Map qdisc configurations to nodes and interfaces
+#
+# qdiscConfigs: The "qdiscconfigs" variable contains the full qdisc configurations
+#   that are referenced in the network instances.
+#
+
+# ------------------------------ FLOWS + qdisc-map -------------------------------
+network:
+  # One instance of a network that is referenced later in the experiment definition
+  # multiple instances can be used to compare different network properties
+  net-1:
+    qdisc: {}
+    iconfig: {}
+      # iconfig-1: ["node-1:1", "node-2:1"]
+    # Flows define the network topology.
+    # There should be always at least one flow, otherwise all nodes are separated
+    # from each other. In order to build a complete topology, all flows need
+    # to be defined touching the interfaces and nodes in the topology even if they
+    # are not going to be used.
+    # Check >scenarios/topologies/topo-full.png for for all nodes and connections between them.
+    # Three-node topology with node-1, node-2, node-3 in a triangle
+    flows:
+      1: 'subnet-10;:node-1:1,1:node-2:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: true
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-2:
+    qdisc: 
+      qdisc-1: [ "node-1:1", "node-2:1", "node-3:1" ]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-3:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1" ]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-41:'
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-4:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1" ]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-41:'
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+
+  net-5:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1" ]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-41:'
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-6:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1", "node-9:1" ]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-41:'
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-7:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1" ]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-8:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1",  "node-11:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-9:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-10:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-11:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+  net-12:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1", "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+  net-13:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1", "node-9:1", "node-10:1" ]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+  net-14:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-21:'
+      21: 'subnet-11;:node-1:1,1:node-22:'
+      22: 'subnet-11;:node-1:1,1:node-23:'
+      23: 'subnet-11;:node-1:1,1:node-24:'
+      24: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+  net-15:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-21:'
+      21: 'subnet-11;:node-1:1,1:node-22:'
+      22: 'subnet-11;:node-1:1,1:node-23:'
+      23: 'subnet-11;:node-1:1,1:node-24:'
+      24: 'subnet-11;:node-1:1,1:node-25:'
+      25: 'subnet-11;:node-1:1,1:node-26:'
+      26: 'subnet-11;:node-1:1,1:node-27:'
+      27: 'subnet-11;:node-1:1,1:node-28:'
+      28: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-16:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-21:'
+      21: 'subnet-11;:node-1:1,1:node-22:'
+      22: 'subnet-11;:node-1:1,1:node-23:'
+      23: 'subnet-11;:node-1:1,1:node-24:'
+      24: 'subnet-11;:node-1:1,1:node-25:'
+      25: 'subnet-11;:node-1:1,1:node-26:'
+      26: 'subnet-11;:node-1:1,1:node-27:'
+      27: 'subnet-11;:node-1:1,1:node-28:'
+      28: 'subnet-11;:node-1:1,1:node-29:'
+      29: 'subnet-11;:node-1:1,1:node-30:'
+      30: 'subnet-11;:node-1:1,1:node-31:'
+      31: 'subnet-11;:node-1:1,1:node-32:'
+      32: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-17:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-21:'
+      21: 'subnet-11;:node-1:1,1:node-22:'
+      22: 'subnet-11;:node-1:1,1:node-23:'
+      23: 'subnet-11;:node-1:1,1:node-24:'
+      24: 'subnet-11;:node-1:1,1:node-25:'
+      25: 'subnet-11;:node-1:1,1:node-26:'
+      26: 'subnet-11;:node-1:1,1:node-27:'
+      27: 'subnet-11;:node-1:1,1:node-28:'
+      28: 'subnet-11;:node-1:1,1:node-29:'
+      29: 'subnet-11;:node-1:1,1:node-30:'
+      30: 'subnet-11;:node-1:1,1:node-31:'
+      31: 'subnet-11;:node-1:1,1:node-32:'
+      32: 'subnet-11;:node-1:1,1:node-33:'
+      33: 'subnet-11;:node-1:1,1:node-34:'
+      34: 'subnet-11;:node-1:1,1:node-35:'
+      35: 'subnet-11;:node-1:1,1:node-36:'
+      36: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-18:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-21:'
+      21: 'subnet-11;:node-1:1,1:node-22:'
+      22: 'subnet-11;:node-1:1,1:node-23:'
+      23: 'subnet-11;:node-1:1,1:node-24:'
+      24: 'subnet-11;:node-1:1,1:node-25:'
+      25: 'subnet-11;:node-1:1,1:node-26:'
+      26: 'subnet-11;:node-1:1,1:node-27:'
+      27: 'subnet-11;:node-1:1,1:node-28:'
+      28: 'subnet-11;:node-1:1,1:node-29:'
+      29: 'subnet-11;:node-1:1,1:node-30:'
+      30: 'subnet-11;:node-1:1,1:node-31:'
+      31: 'subnet-11;:node-1:1,1:node-32:'
+      32: 'subnet-11;:node-1:1,1:node-33:'
+      33: 'subnet-11;:node-1:1,1:node-34:'
+      34: 'subnet-11;:node-1:1,1:node-35:'
+      35: 'subnet-11;:node-1:1,1:node-36:'
+      36: 'subnet-11;:node-1:1,1:node-37:'
+      37: 'subnet-11;:node-1:1,1:node-38:'
+      38: 'subnet-11;:node-1:1,1:node-39:'
+      39: 'subnet-11;:node-1:1,1:node-40:'
+      40: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+
+  net-19:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-21:'
+      21: 'subnet-11;:node-1:1,1:node-22:'
+      22: 'subnet-11;:node-1:1,1:node-23:'
+      23: 'subnet-11;:node-1:1,1:node-24:'
+      24: 'subnet-11;:node-1:1,1:node-25:'
+      25: 'subnet-11;:node-1:1,1:node-26:'
+      26: 'subnet-11;:node-1:1,1:node-27:'
+      27: 'subnet-11;:node-1:1,1:node-28:'
+      28: 'subnet-11;:node-1:1,1:node-29:'
+      29: 'subnet-11;:node-1:1,1:node-30:'
+      30: 'subnet-11;:node-1:1,1:node-31:'
+      31: 'subnet-11;:node-1:1,1:node-32:'
+      32: 'subnet-11;:node-1:1,1:node-33:'
+      33: 'subnet-11;:node-1:1,1:node-34:'
+      34: 'subnet-11;:node-1:1,1:node-35:'
+      35: 'subnet-11;:node-1:1,1:node-36:'
+      36: 'subnet-11;:node-1:1,1:node-37:'
+      37: 'subnet-11;:node-1:1,1:node-38:'
+      38: 'subnet-11;:node-1:1,1:node-39:'
+      39: 'subnet-11;:node-1:1,1:node-40:'
+      40: 'subnet-11;:node-1:1,1:node-41:'
+      41: 'subnet-11;:node-1:1,1:node-42:'
+      42: 'subnet-11;:node-1:1,1:node-43:'
+      43: 'subnet-11;:node-1:1,1:node-44:'
+      44: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+  net-20:
+    qdisc: 
+      qdisc-1: ["node-1:1", "node-2:1", "node-3:1", "node-4:1", "node-5:1", "node-6:1", "node-7:1", "node-8:1",  "node-9:1", "node-10:1"]
+    iconfig: {}
+    flows:
+      1: 'subnet-11;:node-1:1,1:node-2:'
+      2: 'subnet-11;:node-1:1,1:node-3:'
+      3: 'subnet-11;:node-1:1,1:node-4:'
+      4: 'subnet-11;:node-1:1,1:node-5:'
+      5: 'subnet-11;:node-1:1,1:node-6:'
+      6: 'subnet-11;:node-1:1,1:node-7:'
+      7: 'subnet-11;:node-1:1,1:node-8:'
+      8: 'subnet-11;:node-1:1,1:node-9:'
+      9: 'subnet-11;:node-1:1,1:node-10:'
+      10: 'subnet-11;:node-1:1,1:node-11:'
+      11: 'subnet-11;:node-1:1,1:node-12:'
+      12: 'subnet-11;:node-1:1,1:node-13:'
+      13: 'subnet-11;:node-1:1,1:node-14:'
+      14: 'subnet-11;:node-1:1,1:node-15:'
+      15: 'subnet-11;:node-1:1,1:node-16:'
+      16: 'subnet-11;:node-1:1,1:node-17:'
+      17: 'subnet-11;:node-1:1,1:node-18:'
+      18: 'subnet-11;:node-1:1,1:node-19:'
+      19: 'subnet-11;:node-1:1,1:node-20:'
+      20: 'subnet-11;:node-1:1,1:node-21:'
+      21: 'subnet-11;:node-1:1,1:node-22:'
+      22: 'subnet-11;:node-1:1,1:node-23:'
+      23: 'subnet-11;:node-1:1,1:node-24:'
+      24: 'subnet-11;:node-1:1,1:node-25:'
+      25: 'subnet-11;:node-1:1,1:node-26:'
+      26: 'subnet-11;:node-1:1,1:node-27:'
+      27: 'subnet-11;:node-1:1,1:node-28:'
+      28: 'subnet-11;:node-1:1,1:node-29:'
+      29: 'subnet-11;:node-1:1,1:node-30:'
+      30: 'subnet-11;:node-1:1,1:node-31:'
+      31: 'subnet-11;:node-1:1,1:node-32:'
+      32: 'subnet-11;:node-1:1,1:node-33:'
+      33: 'subnet-11;:node-1:1,1:node-34:'
+      34: 'subnet-11;:node-1:1,1:node-35:'
+      35: 'subnet-11;:node-1:1,1:node-36:'
+      36: 'subnet-11;:node-1:1,1:node-37:'
+      37: 'subnet-11;:node-1:1,1:node-38:'
+      38: 'subnet-11;:node-1:1,1:node-39:'
+      39: 'subnet-11;:node-1:1,1:node-40:'
+      40: 'subnet-11;:node-1:1,1:node-41:'
+      41: 'subnet-11;:node-1:1,1:node-42:'
+      42: 'subnet-11;:node-1:1,1:node-43:'
+      43: 'subnet-11;:node-1:1,1:node-44:'
+      44: 'subnet-11;:node-1:1,1:node-45:'
+      45: 'subnet-11;:node-1:1,1:node-46:'
+      46: 'subnet-11;:node-1:1,1:node-47:'
+      47: 'subnet-11;:node-1:1,1:node-48:'
+      48: 'subnet-11;:node-1:1,1:node-41:'
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the qdisc configuration manipulates/blocks priority-0 traffic.
+    check: false
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    num_net_cores: 0
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    nic_irq_rt: false
+
+qdiscconfigs:
+  qdisc-1:
+    name: 'Two queues delayed'
+    taprio: {}
+    netem: {}
+    queues:
+      1: { mode: netem, prio: [3], filter: "delay 0.03ms 0.01ms" }
+      2: { mode: be, prio: [2] }
+      3: { mode: be, prio: [1] } 
+      4: { mode: be, prio: [0,'*'] }
+
+ifaceconfings:
+  iconfig-1:
+    name: 'Changing default values'
+    gso: false
+    gro: false
+    tso: false
+    mtu: 9000

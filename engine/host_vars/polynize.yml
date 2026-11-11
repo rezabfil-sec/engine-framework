@@ -1,0 +1,104 @@
+---
+# variables for node algofi
+# hard drive to store data
+data_disk: "sda"
+
+# network card
+num_interfaces: 10
+node_ifaces:
+  # management host
+  # 1:
+  #   name: 'eno1np0'
+  #   mac: '3c:ec:ef:99:17:dc'
+  #   phc: '/dev/ptp1'
+  #   offload: no
+  1:
+    name: 'enp133s0f0'
+    mac: '50:7c:6f:55:a4:1e'
+    phc: '/dev/ptp1'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  2:
+    name: 'enp133s0f1'
+    mac: '50:7c:6f:55:a4:1f'
+    phc: '/dev/ptp2'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  3:
+    name: 'enp135s0f0'
+    mac: '50:7c:6f:55:ab:e0'
+    phc: '/dev/ptp3'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  4:
+    name: 'enp135s0f1'
+    mac: '50:7c:6f:55:ab:e1'
+    phc: '/dev/ptp4'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  5:
+    name: 'enp1s0f0'
+    mac: '3c:ec:ef:ab:d2:54'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  6:
+    name: 'enp1s0f1'
+    mac: '3c:ec:ef:ab:d2:55'
+    phc: '/dev/ptp6'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  7:
+    name: 'enp1s0f2'
+    mac: '3c:ec:ef:ab:d2:56'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  8:
+    name: 'enp1s0f3'
+    mac: '3c:ec:ef:ab:d2:57'
+    phc: '/dev/ptp9'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  9:
+    name: 'enp65s0f0'
+    mac: '6c:fe:54:59:bc:20'
+    phc: '/dev/ptp9'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+  10:
+    name: 'enp65s0f1'
+    mac: '6c:fe:54:59:bc:21'
+    phc: '/dev/ptp10'
+    offload: no
+    sriov: yes
+    sriov_driver: 'i40e'
+# Keeps changing on each reboot
+  # 11:
+  #   name: 'eth4'
+  #   mac: '3c:ec:ef:e2:b7:a3'
+  #   phc: '/dev/ptp11'
+  #   offload: no
+  #   sriov: yes
+  #   sriov_driver: 'tg3'
+# TEEs information
+# AMD
+tee_supported: yes
+tee_type: "SEV" # AMD SEV-SNP
+
+# Total number of CPUs
+# Hyper threading is on, so 64 vCPUs 
+number_vCPUs: 64
+# Unit in GB
+total_RAM: 768
+
+management_iface: eno1

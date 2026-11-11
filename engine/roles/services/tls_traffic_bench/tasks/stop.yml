@@ -1,0 +1,12 @@
+---
+# tls traffic bench stop
+
+- name: kill client.go
+  command: "pkill -f tls_bench_client"
+  when: service.mode == 'client'
+  ignore_errors: yes
+
+- name: kill server.go
+  command: "pkill -f tls_bench_server"
+  when: service.mode == 'server'
+  ignore_errors: yes

@@ -1,0 +1,20 @@
+[global]
+name=fio-seq-rw
+rw=rw
+rwmixread=50
+rwmixwrite=50
+bs={{ service.fio_block_size | default(fio_block_size) }}
+direct={{ service.fio_direct | default(fio_direct) }}
+numjobs=1
+directory={{ service.fio_location | default(fio_location) }}
+end_fsync={{ service.fio_end_fsync | default(fio_end_fsync) }}
+
+{% if service.fio_runtime is defined %}
+runtime={{ service.fio_runtime }}
+time_based=1
+{% endif %}
+
+[file1]
+size={{ service.fio_size | default(fio_size) }}
+ioengine={{ service.fio_engine | default(fio_engine) }}
+iodepth={{ service.fio_io_depth | default(fio_io_depth) }}

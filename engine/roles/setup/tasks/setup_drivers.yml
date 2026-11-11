@@ -1,0 +1,106 @@
+---
+- block:
+  - name: initialize list of drivers
+    set_fact:
+      list_nic_drivers: "{{ [] }}"
+  
+  - name: extract list of drivers from nodes
+    set_fact: 
+      list_nic_drivers: "{{ list_nic_drivers + [ item.value.sriov_driver | join | string ] }}"
+    when: item.value.sriov_driver is defined and item.value.sriov_driver is not in list_nic_drivers
+    loop: '{{ node_ifaces | dict2items }}'
+  
+  - debug: var=list_nic_drivers
+  - name: Extract driver version of ice
+    shell: 'modinfo ice --field version'
+    register: modinfo_version_ice
+  
+  - debug: var=list_nic_drivers
+  # ice 
+  - block:
+    - name: copy the ice driver
+      copy:
+        src: '{{ data_folder }}/software/{{ ice_driver_version }}.tar.gz'
+        dest: '{{ data_path }}/'
+    - name: uncompress the ice driver
+      unarchive: 
+        src: '{{ data_path }}//{{ ice_driver_version }}.tar.gz'
+        dest: '{{ data_path }}/'
+        remote_src: yes
+    - name: install the ice driver
+      shell: 'cd {{ data_path }}//{{ ice_driver_version }}/src && make install -j 8'
+    - name: reload ice driver
+      shell: 'rmmod ice; modprobe ice'
+    when: '"ice-" + modinfo_version_ice.stdout | string != ice_driver_version and "ice" in list_nic_drivers'
+  
+  # i40e  
+  - name: Extract driver version of i40e
+    shell: 'modinfo i40e --field version'
+    register: modinfo_version_i40e
+  
+  - block:
+    - name: copy the i40e driver
+      copy:
+        src: '{{ data_folder }}/software/{{ i40e_driver_version }}.tar.gz'
+        dest: '{{ data_path }}/'
+
+    - name: uncompress the i40e driver
+      unarchive: 
+        src: '{{ data_path }}/{{ i40e_driver_version }}.tar.gz'
+        dest: '{{ data_path }}/'
+        remote_src: yes
+
+    - name: install the i40e driver
+      shell: 'cd {{ data_path }}/{{ i40e_driver_version }}/src && make install -j 8'
+    
+    - name: reload i40e driver
+      shell: 'rmmod i40e; modprobe i40e'
+    when: '"i40e-" + modinfo_version_i40e.stdout | string != i40e_driver_version  and "i40e" in list_nic_drivers'
+
+  
+  # iavf is the vf driver for ice or i40e
+  - name: Extract driver version of ice
+    shell: 'modinfo iavf --field version'
+    register: modinfo_version_iavf
+  - block: 
+    - name: copy the iavf driver
+      copy:
+        src: '{{ data_folder }}/software/{{ iavf_driver_version }}.tar.gz'
+        dest: '{{ data_path }}/'
+
+    - name: uncompress the iavf driver
+      unarchive:
+        src: '{{ data_path }}/{{ iavf_driver_version }}.tar.gz'
+        dest: '{{ data_path }}/'
+        remote_src: yes
+
+    - name: install the iavf driver
+      shell: 'cd {{ data_path }}/{{ iavf_driver_version }}/src && make install -j 8'
+    
+    - name: reload iavf driver
+      shell: 'rmmod iavf; modprobe iavf'
+    when: '"iavf-" + modinfo_version_iavf.stdout | string != iavf_driver_version  and ("ice" in list_nic_drivers or "i40e" in list_nic_drivers)'
+
+  # ixgbe
+  # - name: Extract driver version of ice
+  #   shell: 'modinfo iavf --field version'
+  #   register: modinfo_version_ixgbe
+  # - block:
+  #   - name: copy the ixgbe driver
+  #     copy:
+  #       src: {{ data_folder }}/software/{{ ixgbe_driver_version }}.tar.gz
+  #       dest: {{ data_path }}/
+  #   - name: uncompress the iavf driver
+  #     unarchive:
+  #       src: '{{ data_path }}/{{ ixgbe_driver_version }}.tar.gz'
+  #       dest: '{{ data_path }}/'
+  #       remote_src: yes
+
+  #   - name: install the iavf driver
+  #     shell: 'cd {{ data_path }}/{{ ixgbe_driver_version }}/src && make install -j 8'
+    
+  #   - name: reload iavf driver
+  #     shell: 'rmmod ixgbe; modprobe ixgbe'
+  #   when: '"ixgbe-" + modinfo_version_iavf.stdout | string != ixgbe_driver_version and "ixgbe" in list_nic_drivers'
+
+  when: update_network_driver is true and is_container is not defined

@@ -1,0 +1,14 @@
+supervisor_ip: 172.16.11.1:2000
+peers: 
+- "172.16.11.1:2000"
+- "172.16.11.1:2001"
+- "172.16.12.1:2002"
+- "172.16.13.1:2003"
+base_port: 2000
+bc_type: Optimized
+num_dkg_runs: 5
+num_dkr_runs: 5
+num_players: 3
+num_sig_runs: 5
+scheme: GG20
+threshold: 1

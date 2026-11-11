@@ -1,0 +1,284 @@
+---
+# ---------------------- Set experiment configuration variables -----------------------------
+- name: set experiment index
+  set_fact:
+    experiment_run_index: "{{ exp_index }}"
+
+- debug: var=service_signals
+
+- name: set experiment tuple variables
+  set_fact:
+    "experiment_{{tupleVarName}}": "{{ exp_tuple[tupleVarNameIndex] }}"
+  loop: "{{ experiment.tupleVariableNames }}"
+  loop_control:
+    loop_var: tupleVarName
+    index_var: tupleVarNameIndex
+  when: experiment.tupleVariableNames is defined and experiment.loopOverNetwork is defined
+
+# ---------------------- [2] Stack -----------------------------
+
+# after network changes the ptp daemons break sometimes
+- name: restart clock synchronization
+  include_role:
+    name: roles/services/ptp
+    apply:
+      tags: [ stack, ptp ]
+  vars:
+    service: '{{ { "name": "ptp", "mode": ptp_clockmode | default("linuxptp") , "ptp_conf": ptp_linuxptp_conf | default("gPTP")} }}'
+  tags: [ stack, ptp ]
+  when: is_container is not defined and gcp is not defined # GCP VMs are not initialized with Linuxptp
+
+- name: clear service signals, experiment signals, and log file
+  copy:
+    content: ""
+    dest: "{{ item.value }}"
+  loop: '{{ file_paths | dict2items }}'
+  tags: always
+
+- name: start services by level
+  include_role:
+    name: roles/experiment
+    tasks_from: services.yml
+    apply:
+      tags: [ stack, service ]
+  vars:
+    level: '{{ item }}'
+  loop: '{{ service_levels }}'
+  tags: [ stack, service ]
+
+- name: register service signals
+  set_fact:
+    service_signals: '{{ (service_signals | int)  + 1 }}'
+  when: item.signal is defined and item.signal
+  loop: '{{ services }}'
+  tags: [ stack, service ]
+
+# ----------- Measurement Stack ------------
+
+# IDEA add more measurement services
+# - tcpdump on every interface on every node?
+#   - additional/alternative: application that records and adds timestamp of every packet
+# - ping for every existing flow
+# - record ptp offset on all nodes if deployed
+- block:
+  - name: set measurement probe services
+    set_fact:
+      probe_services:
+        - { name: tcpdump, size: 96, file: "probe_in", direction: "in", level: 0 }
+        - { name: tcpdump, size: 96, file: "probe_out", direction: "out", level: 0 }
+    tags: always
+ 
+  - name: append probe_services to services
+    set_fact:
+      services: "{{ services + probe_services }}"
+
+  - name: start measurement probes
+    include_role:
+      name: 'roles/services/{{ item.name }}'
+      apply:
+        tags: [ stack, measurement ]
+    vars:
+      level: '{{ item }}'
+    loop: '{{ probe_services }}'
+    tags: [ stack, measurement ]
+
+  - name: register service signals
+    set_fact:
+      service_signals: '{{ (service_signals | int)  + 1 }}'
+    when: item.signal is defined and item.signal
+    loop: '{{ services }}'
+    tags: [ stack, service ]
+  when: probe_tcpdumps is defined and probe_tcpdumps
+
+# ----------- Protocols ------------
+
+- name: implement protocols
+  include_role:
+    name: 'roles/protocols/{{ item.value.name }}'
+    apply:
+      tags: [ stack, protocols ]
+  vars:
+    protocol: '{{ item }}'
+  loop: '{{ protocols | default({}) | dict2items }}'
+  tags: [ stack, protocols ]
+
+# ---------------------- [3] Actions ---------------------------
+
+# TODO not defined yet
+# Prepare a script with commands to execute to perform actions on certain timestamps.
+# Upload script to the nodes. Choose a global start time of the experiment to which
+# the timestamps are counted relatively.
+# -> the run experiment script (timer/signal) can start the action scripts
+
+# ---------------------- [4] Run -------------------------------
+
+# Environment is ready, this step marks the logical start of the experiment
+# Log the start time in a file, point of reference for later evaluation / tasks
+#
+# Two experiment modes:
+# 1. Time: Run the experiment for a certain number of seconds.
+# 2. Signal: Wait until certain applications are finished (-> signals received)
+# Both modes stop the experiment immediately when an error signal is received
+
+- name: run experiment - time mode
+  command: "bash run_experiment t {{ experiment.time | default(experiment_time) }}"
+  when: experiment.signal is not defined
+
+- name: run experiment - signal mode
+  command: "bash run_experiment s {{ service_signals }} {{ experiment.timeout | default(experiment_timeout) }}"
+  when: experiment.signal is defined
+
+# ----------- Experiment done ------------
+- name: pause after an experiment is over
+  pause:
+  when: debug_mode is defined and debug_mode is true
+
+- name: stop services
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: stop.yml
+    apply:
+      tags: stop
+  vars:
+    service: '{{ item }}'
+  loop: '{{ services }}'
+  tags: stop
+
+- name: stop measurement probes
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: stop.yml
+    apply:
+      tags: stop
+  vars:
+    service: '{{ item }}'
+  loop: '{{ probe_services }}'
+  tags: stop
+  when: probe_tcpdumps is defined and probe_tcpdumps
+
+- name: stop clock synchronization
+  include_role:
+    name: roles/services/ptp
+    tasks_from: stop.yml
+    apply:
+      tags: [ stop, ptp ]
+  tags: [ stop, ptp ]
+  when: gcp is not defined
+
+# ---------------------- ([5] Post-Process) ----------------------
+# TODO this task can be done after each experiment or one layer above
+#   in the scenario playbook
+#   - Each experiment: Processing can be done on all nodes immediately
+#   - Scenario Playbook: Possible to compare different experiments
+# -> Prefer after each experiment, can be later combined with a scenario level
+#   post-processing approach
+- name: pause before the process
+  pause:
+  when: debug_mode is true
+
+- name: post-process service artifacts
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: process.yml
+    apply:
+      tags: process
+  vars:
+    service: '{{ item }}'
+  loop: '{{ services }}'
+  tags: process
+
+- name: parse pcaps into csv and plots on nodes
+  block:
+  - name: create subdirectories for engine
+    file:
+      path: '{{ data_path }}/process/{{engine_path}}'
+      state: directory
+  - name: copy engine folder to node
+    synchronize:
+      dest: '{{ data_path }}/process/{{ engine_path }}'
+      src: '{{ engine_path }}/'
+    ignore_errors: true
+    when: gcp is not defined
+  
+  - name: copy engine folder to node
+    synchronize:
+      dest: '{{ data_path }}/process/{{ engine_path }}'
+      src: '{{ engine_path }}/'
+    ignore_errors: yes
+    delegate_to: localhost
+    when: gcp is defined
+  
+  # convert pcap's to csv on the node
+  - name: convert pcaps to csv and plots
+    shell: 'python3 process.py -d ../../plays -f {{data_path}}/process/{{ hostvars["localhost"]["scene_folder"] }} {{ scene }} -c -p -pn -n {{inventory_hostname}} -e {{ experiment.name }} -i {{ num_isolated_cores }} 2>&1 | tee -a {{data_path}}/process/{{ hostvars["localhost"]["scene_folder"] }}/eval_log.txt'
+    args:
+      chdir: '{{data_path}}/process/{{engine_path}}/engine/roles/process/files'
+  when: parse_pcap_on_nodes is defined and parse_pcap_on_nodes
+
+# ---------------------- [6] Collect ---------------------------
+- name: pause before the collect
+  pause:
+  when: debug_mode is true
+
+- name: collect converted csv's and plots
+  block:
+    - synchronize:
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/{{ experiment.name }}'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}'
+    - synchronize:
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/plots'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}'
+    - synchronize:
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/pythonLog.txt'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}/{{ experiment.name }}/{{ node }}/parseLog.txt'
+    - synchronize:
+        mode: pull
+        src: '{{data_path}}/process/{{hostvars["localhost"]["scene_folder"]}}/eval_log.txt'
+        dest: '{{hostvars["localhost"]["scene_folder"]}}/{{ experiment.name }}/{{ node }}/parse_eval_log.txt'
+  when: parse_pcap_on_nodes is defined and parse_pcap_on_nodes
+  ignore_errors: true
+
+- name: collect experiment log files and recorded signals
+  fetch:
+    src: '{{ item.value }}'
+    dest: '{{ node_folder }}/'
+    flat: yes
+  loop: '{{ file_paths | dict2items }}'
+  tags: collect
+
+- name: delete experiment log files and recorded signals
+  file:
+    path: '{{ item.value }}'
+    state: absent
+  loop: '{{ file_paths | dict2items }}'
+  tags: collect
+
+- name: collect service artifacts
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: collect.yml
+  vars:
+    service: '{{ item }}'
+  loop: '{{ services }}'
+  tags: collect
+
+- debug: var=service_signals
+# ----------- Measurement Artifacts ------------
+
+- name: collect measurement artifacts
+  include_role:
+    name: 'roles/services/{{ item.name }}'
+    tasks_from: collect.yml
+  vars:
+    service: '{{ item }}'
+  loop: '{{ probe_services }}'
+  tags: collect
+  when: probe_tcpdumps is defined and probe_tcpdumps
+
+- name: reset experiment variables
+  set_fact:
+    service_signals: 0
+  tags: cleanup

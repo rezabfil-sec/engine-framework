@@ -1,0 +1,16 @@
+# add tcpdump service for measurement
+
+- name: create new tcpdump service
+  set_fact:
+    tcpdump_service:
+      name: tcpdump
+      size: 64
+      level: 0
+      flow: '{{ [service.flow] }}'
+      signal: no
+      file: '{{ service.port }}'
+      filter: 'udp dst port {{ service.port }}'
+
+- name: add new tcpdump service to services list
+  set_fact:
+    services: "{{ services + [tcpdump_service] }}"

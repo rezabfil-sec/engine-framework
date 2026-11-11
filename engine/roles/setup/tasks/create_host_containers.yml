@@ -1,0 +1,83 @@
+- name: reset required containers
+  set_fact:
+    required_containers: []
+
+- name: determine active containers for experiment
+  set_fact:
+    required_containers: "{{ (required_containers | default([])) + [ container ] }}"
+  when: container.name in experiment_nodes
+  loop: "{{ hostvars.localhost.containers[inventory_hostname] }}"
+  loop_control:
+    loop_var: container
+
+- name: debug required_containers
+  debug:
+    var: required_containers
+
+
+- block:
+  - name: remove existing leases file of lxc bridge dnsmasq dhcp server
+    file:
+      path: /var/lib/misc/dnsmasq.lxcbr0.leases
+      state: absent
+
+  - name: delete existing dnsmasq hosts
+    file:
+      path: "{{ lxc_dhcp_hosts }}"
+      state: absent
+
+  - name: re-create dnsmasq hosts
+    file:
+      path: "{{ lxc_dhcp_hosts }}"
+      state: touch
+
+  - name: add containers to dnsmasq hosts
+    lineinfile:
+      path: "{{ lxc_dhcp_hosts }}"
+      line: "{{ container.name }},{{ lxc_subnet_prefix }}.{{ container_index + 2 }}"
+    loop: "{{ required_containers }}"
+    loop_control:
+      loop_var: container
+      index_var: container_index
+
+  - name: add iptables nat forwarding rules
+    iptables:
+      table: nat
+      chain: PREROUTING
+      in_interface: "{{ management_iface }}"
+      protocol: tcp
+      destination_port: "{{ container.ssh_port }}"
+      jump: DNAT
+      to_destination: "{{ lxc_subnet_prefix }}.{{ container_index + 2 }}:22"
+    loop: "{{ required_containers }}"
+    loop_control:
+      loop_var: container
+      index_var: container_index
+
+  - name: restart lxc-net service
+    systemd:
+      state: restarted
+      daemon_reload: true
+      name: lxc-net
+
+  - name: create all LXC containers on host node
+    include_tasks: create_lxc_container.yml
+    loop: "{{ required_containers }}"
+    loop_control:
+      loop_var: container
+      index_var: container_index
+  when: inventory_hostname in hostvars.localhost.containers.keys() and container_runtime == 'lxc'
+
+- block:
+  - name: cleanup containerd containers and networks
+    include_role:
+      name: roles/setup
+      tasks_from: cleanup_containerd.yml
+
+  - name: create all containerd containers on host node
+    include_tasks: create_containerd_container.yml
+    loop: "{{ required_containers }}"
+    loop_control:
+      loop_var: container
+      index_var: container_index
+  when: inventory_hostname in hostvars.localhost.containers.keys() and container_runtime == 'containerd'

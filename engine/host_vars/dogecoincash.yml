@@ -1,0 +1,63 @@
+---
+# variables for node dogecoincash
+# hard drive to store data
+data_disk: "nvme0n1"
+
+# network card
+num_interfaces: 7
+node_ifaces:
+  1:
+    name: 'eno2'
+    mac: 'ac:1f:6b:7c:87:b1'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: no
+  2:
+    name: 'eno3'
+    mac: 'ac:1f:6b:7c:87:b2'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: no
+  3:
+    name: 'eno4'
+    mac: 'ac:1f:6b:7c:87:b3'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: no
+  4:
+    name: 'eno5'
+    mac: 'ac:1f:6b:7c:87:b4'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: no
+  5:
+    name: 'eno6'
+    mac: 'ac:1f:6b:7c:87:b5'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: no
+  6:
+    name: 'eno7'
+    mac: 'ac:1f:6b:7c:8b:84'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: yes
+    sriov_driver: ixgbe
+  7:
+    name: 'eno8'
+    mac: 'ac:1f:6b:7c:8b:85'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: ixgbe
+
+# TEEs information
+tee_supported: no
+
+# Total number of CPUs
+# Hyper threading is on, so 8 vCPUs 
+number_vCPUs: 8
+# Unit in GB
+total_RAM: 32
+
+management_iface: eno1

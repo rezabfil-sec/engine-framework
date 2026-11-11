@@ -1,0 +1,36 @@
+---
+# Download dependencies and install Cisco Nexus SmartNIC driver
+# NOTE: assumes / requires usage of ubuntu
+
+- name: Install software-properties-common
+  apt:
+    name: software-properties-common
+    update_cache: yes
+
+- name: Setup exablaze
+  shell: |
+    wget -qO- http://exablaze.com/downloads/GPG-KEY-exablaze | apt-key add -
+    apt-add-repository -y http://exablaze.com/downloads/apt/ubuntu/
+
+- name: Install exanic driver
+  apt:
+    name: exanic
+    update_cache: yes
+
+- name: Install exanic kernel module and run configure
+  shell: |
+    modprobe exanic
+    exanic-config
+
+- name: Assert successful exanic installation
+  shell: lsmod | grep -q exanic
+  register: ret
+  failed_when: ret.rc not in [0]
+
+# TODO: Make ports and speeds dynamic... Essentailly make the smartnic setup more dynamic :)
+- name: Set port speed for ExaNIC ports
+  shell: |
+    exanic-config ens4 up
+    exanic-config ens4d1 up
+    exanic-config ens4 speed 10000
+    exanic-config ens4d1 speed 10000

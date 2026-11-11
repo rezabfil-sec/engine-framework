@@ -1,0 +1,95 @@
+---
+# 2. Application and protocol stack
+#
+# Services are usually a synonym for applications
+# Services can be started grouped by nodes. The same service can be run multiple
+# times, with the same or different parameters. The service parameters vary heavily.
+# All available services and their parameters can be seen in the roles/services folder.
+
+# Further information about services:
+# Services are started during an experiment, the experiment can run in a signal
+# or timer mode, both are explained in more detail in the 04-experiment.yml file
+# In both cases every service is sending a signal to the experiment run script when it stops:
+# 0 if the service finished successfully and 1 when an error occurred.
+#
+# In all cases if a failure signal (1) is received by the experiment runner the
+# experiment is aborted.
+# When running the experiment in signal mode, the experiment finishes only when all
+# registered services send a success signal to the runner. To register a service
+# the parameter "signal: yes" must be defined in the service entry. Usually all
+# service are started with the run_service wrapper script that takes care of the
+# signaling and sending registered signals to the experiment runner.
+
+# For more details on applications see roles/services/<application>/tasks/main.yml
+# There you will find more information on available settings.
+
+stacks:
+  # https://www.tencentcloud.com/document/product/362/6741
+  # https://forums.lawrencesystems.com/t/linux-benchmarking-with-fio/11122
+  # https://cloud.google.com/compute/docs/disks/benchmarking-pd-performance
+  # https://cloud.google.com/blog/products/networking/using-netperf-and-ping-to-measure-network-latency
+  stack-1:
+    name: 'fio random reads, reflect disk latency'
+    services:
+      node-2:
+        - { name: fio, fio_config: 'fio-rand-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 1, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-3:
+        - { name: fio, fio_config: 'fio-rand-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 1, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-5:
+        - { name: fio, fio_config: 'fio-rand-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 1, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+    protocols: {}
+  stack-2:
+    name: 'fio random writes, reflect disk latency'
+    services:
+      node-2:
+        - { name: fio, fio_config: 'fio-rand-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 1, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-3:
+        - { name: fio, fio_config: 'fio-rand-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 1, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-5:
+        - { name: fio, fio_config: 'fio-rand-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 1, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+    protocols: {}
+
+  stack-3:
+    name: 'fio sequential reads, reflects disk throughput'
+    services:
+      node-2:
+        - { name: fio, fio_config: 'fio-seq-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '128k', fio_location: '/data/fio', signal: yes }
+      node-3:
+        - { name: fio, fio_config: 'fio-seq-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '128k', fio_location: '/data/fio', signal: yes }
+      node-5:
+        - { name: fio, fio_config: 'fio-seq-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '128k', fio_location: '/data/fio', signal: yes }
+    protocols: {}
+  stack-4:
+    name: 'fio sequential writes, reflects disk throughput'
+    services:
+      node-2:
+        - { name: fio, fio_config: 'fio-seq-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '128k', fio_location: '/data/fio', signal: yes }
+      node-3:
+        - { name: fio, fio_config: 'fio-seq-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '128k', fio_location: '/data/fio', signal: yes }
+      node-5:
+        - { name: fio, fio_config: 'fio-seq-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '128k', fio_location: '/data/fio', signal: yes }
+    protocols: {}
+
+  stack-5:
+    name: 'fio random reads, reflects disk IOPS'
+    services:
+      node-2:
+        - { name: fio, fio_config: 'fio-rand-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-3:
+        - { name: fio, fio_config: 'fio-rand-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-5:
+        - { name: fio, fio_config: 'fio-rand-read', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+    protocols: {}
+  stack-6:
+    name: 'fio random writes, reflects disk IOPS'
+    services:
+      node-2:
+        - { name: fio, fio_config: 'fio-rand-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-3:
+        - { name: fio, fio_config: 'fio-rand-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+      node-5:
+        - { name: fio, fio_config: 'fio-rand-write', fio_size: 10G, fio_runtime: 300, fio_io_depth: 32, fio_direct: 1,fio_block_size: '4k', fio_location: '/data/fio', signal: yes }
+    protocols: {}
+
+  
+ 

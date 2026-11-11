@@ -1,0 +1,34 @@
+---
+# triad main
+
+- name: set triad directory
+  set_fact:
+    triad_dir: '{{ data_path }}/{{ tdir }}'
+
+- name: create triad directory
+  file:
+    path: '{{ triad_dir }}'
+    state: directory
+    mode: 0755
+
+- name: copy triad files to node
+  copy:
+    src: '{{ item }}'
+    dest: '{{ triad_dir }}'
+  with_items:
+    - Makefile
+    - triad.cpp
+
+- name: compile triad
+  shell: make
+  args:
+    chdir: '{{ triad_dir }}'
+
+- name: run triad
+  command: >
+    run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+    ./triad {{ service.vector_size | default(vector_size) }} {{ service.repetitions | default(repetitions) }}
+  args:
+    chdir: '{{ triad_dir }}'
+  async: 2592000  # run in background - for 1 month or until finished/killed
+  poll: 0

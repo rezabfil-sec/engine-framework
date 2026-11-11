@@ -1,0 +1,18 @@
+---
+# Prepare set up cgroup CPU isolation and prepare cgroup for CPU isolated tasks
+
+- debug:
+    msg: "Non isolated cores are: {{ num_isolated_cores }}-{{ hostvars[inventory_hostname]['number_vCPUs'] | int - 1 }}"
+
+# TODO - uncomment for jammy, fix for focal
+# - name: Create cgroup for isolated tasks
+#   become: true
+#   shell: mkdir -p /sys/fs/cgroup/isol_tasks
+
+# - name: Fix CPU isolation to cgroup system slice
+#   become: true
+#   shell: echo "{{ num_isolated_cores }}-{{ hostvars[inventory_hostname]['number_vCPUs'] | int - 1 }}" > /sys/fs/cgroup/system.slice/cpuset.cpus
+
+# - name: Fix CPU isolation to cgroup user slice
+#   become: true
+#   shell: echo "{{ num_isolated_cores }}-{{ hostvars[inventory_hostname]['number_vCPUs'] | int - 1 }}" > /sys/fs/cgroup/user.slice/cpuset.cpus

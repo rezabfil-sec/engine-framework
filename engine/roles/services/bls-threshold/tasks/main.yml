@@ -1,0 +1,243 @@
+---
+- block:
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+
+  - name: Copy genhostfile to path
+    copy:
+      src: 'files/genhostfile.py'
+      dest: '/usr/local/bin/bls'
+      owner: root
+      group: root
+      mode: '0755'
+    tags: service
+
+  - name: Get scene folder
+    set_fact:
+      scene_folder: '{{ hostvars["localhost"]["scene_folder"] }}'
+
+  - name: Debug experiment Folder
+    debug:
+      msg: '{{ experiment_folder }}'
+
+  # Obtain ips of nodes
+  - name: Initialize the node ips list
+    set_fact:
+      node_list: '{{ [] }}'
+      node_ips: '{{ [] }}'
+
+  - name: Get experiment services
+    set_fact:
+      exp_services: '{{ stacks[experiment.stack].services }}'
+
+  - name: get list of nodes with participant role
+    script: files/get_participant_nodes.py '{{ exp_services | to_json }}' '{{ node_mapping | to_json }}'
+    register: experiment_nodes_out
+
+  - name: Obtain list of participant nodes
+    set_fact:
+      node_list: '{{ experiment_nodes_out.stdout | from_json }}'
+
+  - name: Debug node list
+    debug:
+      msg: '{{ node_list }}'
+
+  # Node_ip sample format: { 'id':0, 'name': goracle, 'ip': 10.1.2.1 }
+  - name: Loop over nodes to obtain ips
+    set_fact:
+      node_ips: "{{ node_ips + [{ 'id': idx, 'name': item, 'ip': hostvars[item].flow_ifaces.0.ip_src }] }}"
+    loop: '{{ node_list }}'
+    loop_control:
+      index_var: idx
+
+  - name: Debug node ips
+    debug:
+      msg: '{{ node_ips }}'
+
+  - name: get aggregator node
+    script: files/get_agg_node.py '{{ exp_services | to_json }}' '{{ node_mapping | to_json }}'
+    register: experiment_nodes_out
+
+  - name: Assign agg node
+    set_fact:
+      agg_node: '{{ experiment_nodes_out.stdout | from_json }}'
+
+  - name: Assign agg ip
+    set_fact:
+      agg_ip: '{{ hostvars[agg_node].flow_ifaces.0.ip_src }}'
+
+  - name: get client node
+    script: files/get_client_node.py '{{ exp_services | to_json }}' '{{ node_mapping | to_json }}'
+    register: experiment_nodes_out
+
+  - name: Assign client node
+    set_fact:
+      client_node: '{{ experiment_nodes_out.stdout | from_json }}'
+
+  - name: Debug config input folder
+    debug:
+      msg: '{{ setup_dir }}'
+
+  - name: Make noise-keys directory on node
+    file:
+      path: '{{ bls_dir }}/noise-keys'
+      state: directory
+      mode: '0755'
+
+  - name: Debug ids
+    debug:
+      msg: '{{ node_ips|map(attribute="id")|list }}'
+
+  - name: Assign node id and ip
+    set_fact:
+      node_id: '{{ item.id }}'
+      node_ip: '{{ item.ip }}'
+    delegate_to: '{{ item.name }}'
+    delegate_facts: true
+    loop: '{{ node_ips }}'
+
+  - name: Debug node id
+    debug:
+      msg: '{{ node_id }}'
+
+  - name: Debug node ip
+    debug:
+      msg: '{{ node_ip }}'
+
+  - name: Write agg ip to client node
+    set_fact:
+      agg_ip: '{{ agg_ip }}'
+    delegate_to: '{{ client_node }}'
+    delegate_facts: true
+
+  - name: Copy binary to bls dir
+    copy:
+      src: '{{ data_folder }}/software/threshold-bls'
+      dest: '{{ bls_dir }}/'
+      owner: root
+      group: root
+      mode: '0755'
+
+# TODO take just dict and parse inside script
+  - name: Create hostslist csv
+    script:
+      chdir: '{{ bls_dir }}'
+      cmd: files/genhostfile.py '{{ node_ips|map(attribute="id")|list }}' '{{ node_ips|map(attribute="ip")|list }}' {{ service.service_port }} hostslist.csv
+      executable: python3
+
+  - name: Generate noise keys
+    shell: ./threshold-bls p2p-keygen hostslist.csv phonebook.txt noise-keys
+    args:
+      chdir: '{{ bls_dir }}'
+
+  - name: Copy setup from node to localhost
+    fetch:
+      src: '{{ bls_dir }}/{{ item }}'
+      dest: '{{ setup_dir }}/'
+      flat: true
+    loop: ["hostslist.csv", "phonebook.txt"]
+    run_once: true
+
+  - name: Make noise-keys directory on local
+    file:
+      path: '{{ setup_dir }}/noise-keys'
+      state: directory
+      mode: '0755'
+    delegate_to: localhost
+    connection: local
+    run_once: true
+
+  - name: Debug experiment Folder
+    debug:
+      msg: '{{ experiment_number_nodes }}'
+
+  - name: Copy noise keys from node to localhost
+    fetch:
+      src: '{{ bls_dir }}/noise-keys/{{ id }}'
+      dest: '{{ setup_dir }}/noise-keys/'
+      flat: true
+    loop: "{{ range(0, (service.number_nodes if service.number_nodes is defined else experiment_number_nodes| int )) | list }}"
+    loop_control:
+      loop_var: id
+
+  when: service.role is defined and service.role == 'setup'
+
+- block:
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+
+  - name: Copy threshold binary to each node
+    copy:
+      src: '{{ data_folder }}/software/threshold-bls'
+      dest: '{{ bls_dir }}/'
+      owner: root
+      group: root
+      mode: '0755'
+    tags: service
+
+  - name: Copy setup to each node
+    copy:
+      src: '{{ setup_dir }}/'
+      dest: '{{ bls_dir }}'
+      owner: root
+      group: root
+      mode: '0755'
+    tags: service
+
+  - name: Make bls keys directory
+    file:
+      path: '{{ bls_dir }}/bls-keys'
+      state: directory
+      mode: '0755'
+
+  - name: Run DKG
+    command: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }}
+      ./threshold-bls keygen phonebook.txt noise-keys/{{ node_id }} bls-keys/{{ node_id }} {{ service.threshold if service.threshold is defined else experiment_threshold }} 40000 40000
+    async: 259200 # 1 month
+    poll: 0
+    args:
+      chdir: '/root/bls/'
+
+  - name: Run sign service
+    command: >
+      run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }}
+      ./threshold-bls {{ "sign-agg-service" if service.aggregator is defined else "sign-service-ext" }} {{ node_ip | string + ":" + service.agg_port | string if service.aggregator is defined else "" }} noise-keys/{{ node_id }} bls-keys/{{ node_id }} {{ service.phonebook_path | default("")}} 120000
+    async: 259200 # 1 month
+    poll: 0
+    args:
+      chdir: '/root/bls/'
+  # TODO should we run differently if container is defined?
+  when: service.role is defined and service.role == 'participant'
+
+- block:
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+
+  - name: Copy phonebook for addresses
+    copy:
+      src: '{{ setup_dir }}/phonebook.txt'
+      dest: '{{ bls_dir }}/'
+      owner: root
+      group: root
+      mode: '0755'
+    tags: service
+
+  - name: Copy bench for measurements
+    copy:
+      src: '{{ data_folder }}/software/bench'
+      dest: '{{ bls_dir }}/'
+      owner: root
+      group: root
+      mode: '0755'
+    tags: service
+
+  - name: Send sign request
+    command: >
+       run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} ./bench -r {{ service.file }}.csv {{ service.iterations }} true sign {{ agg_ip }}:{{ service.agg_port }} {{ service.msg_len }} {{ service.phonebook_path }} 7000 40000
+    async: 259200 # 1 month
+    poll: 0
+    args:
+      chdir: '/root/bls/'
+  when: service.role is defined and service.role == 'signclient'
+

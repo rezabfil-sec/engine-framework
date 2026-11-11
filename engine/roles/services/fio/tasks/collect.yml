@@ -1,0 +1,9 @@
+---
+# fio collect
+
+- name: collect fio output
+  fetch:
+    src: "{{ fio_output_dir }}/{{ fio_output_file }}"
+    dest: "{{ node_folder }}/{{ fio_output_file }}"
+    flat: yes
+  ignore_errors: yes

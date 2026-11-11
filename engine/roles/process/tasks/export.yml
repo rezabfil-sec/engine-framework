@@ -4,10 +4,19 @@
 # Second extract those vector statistics which can be used for comparison with the real world testbed to individual csv files
 # 
 # Requires some variables to be set beforhand (see first task), i.e.
-# - the base module that is relevant for the service, e.g. an instance in the app[] array,
+# - the base module that is relevant for the service, e.g. an instance in the app[] array, or an interface's macLayer,
 # - a string that will be used for created files
+# - optional indexes that will be used in case there are statistics to be captured for specific submodules in arrays, e.g. individual subqueues using cbs
 #
 # Uses the statistics defined in the service's default variable file 
+
+- name: rename vars based on loop items
+  set_fact:
+    module: '{{module_item}}'
+    file_name_base: '{{file_name_base_item}}'
+    indexes: '{{indexes_item|default([])}}'
+  when: 'service.name == "queue_monitor"'
+  tags: collect
 
 - name: calculate additonal information
   block:

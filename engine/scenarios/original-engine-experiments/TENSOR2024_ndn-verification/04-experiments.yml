@@ -1,0 +1,32 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+# In this file all the previous configurations come together
+# Every entry is one experiment that is run with the configuration defined in
+# the configurations referenced in the network, stack and action variable.
+# After all experiments are executed the scenario is finished.
+#
+# An experiment can be run in two different modes:
+# 1. Time mode: A timer is started and the experiment runs for N seconds
+# 2. Signal mode: Wait for services to successfully finish (e.g. send a fixed number
+#   of packets, send all data from a dataset, etc.), when they are then they will
+#   send a success signal. When all registered signals are received the experiment
+#   is stopped.
+# In both modes the experiment is immediately stopped after receiving an
+# error signal.
+#
+# The default mode is timer, with a default time in roles/experiment/defaults
+# When using the signal mode a maximum timeout can be specified when the experiment
+# should be aborted regardless of the signals, if not specified the default timeout
+# value is chosen from roles/experiment/defaults
+
+# You can comment out experiments that you don't want to run
+
+experiments:
+  - { network: 'net-07', stack: 'stack-207', action: 'action-1', time: 40, name: 'ndn-test-mqprio-normal-7hop' }
+  - { network: 'net-07', stack: 'stack-307', action: 'action-1', time: 40, name: 'ndn-test-mqprio-soft-7hop' }
+
+  - { network: 'net-207', stack: 'stack-207', action: 'action-1', time: 40, name: 'ndn-test-cbs-normal-7hop' }
+  - { network: 'net-307', stack: 'stack-307', action: 'action-1', time: 40, name: 'ndn-test-cbs-soft-7hop' }
+

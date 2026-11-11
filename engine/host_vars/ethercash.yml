@@ -1,0 +1,81 @@
+---
+# variables for node ethercash
+# hard drive to store data
+data_disk: "nvme0n1"
+
+
+# network card
+num_interfaces: 9
+node_ifaces:
+  # 1:
+  #   name: 'eno1'
+  #   mac: 'ac:1f:6b:7a:71:ca'
+  #   phc: '/dev/ptp5'
+  #   offload: no
+  1:
+    name: 'eno2'
+    mac: 'ac:1f:6b:7a:71:cb'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: no
+  2:
+    name: 'eno3'
+    mac: 'ac:1f:6b:7a:71:cc'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: no
+  3:
+    name: 'eno4'
+    mac: 'ac:1f:6b:7a:71:cd'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: no
+  4:
+    name: 'eno5'
+    mac: 'ac:1f:6b:7a:71:ce'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: no
+  5:
+    name: 'eno6'
+    mac: 'ac:1f:6b:7a:71:cf'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: no
+  6:
+    name: 'eno7'
+    mac: 'ac:1f:6b:7a:75:6e'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: yes
+    sriov_driver: ixgbe
+  7:
+    name: 'eno8'
+    mac: 'ac:1f:6b:7a:75:6f'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: ixgbe
+  8:
+    name: 'ens1f0'
+    mac: '00:1b:21:c1:3a:d4'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: ixgbe
+  9:
+    name: 'ens1f1'
+    mac: '00:1b:21:c1:3a:d6'
+    phc: '/dev/ptp7'
+    offload: no
+
+# TEEs information
+tee_supported: no
+
+# Total number of CPUs
+# Hyper threading is on, so 8 vCPUs 
+number_vCPUs: 8
+# Unit in GB
+total_RAM: 32
+
+management_iface: eno1

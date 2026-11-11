@@ -1,0 +1,24 @@
+---
+# this is not PTP -- it rather sets up chrony to use a PHC as clock source
+# said PHC is provided by the ptp_kvm module
+# !!! for accurate timekeeping, the host should be synchronized via PTP !!!
+
+- name: get ptp device number
+  shell: "grep ptp /proc/devices | awk '{print $1}'"
+  register: ptp_device_number
+  changed_when: false
+- block:
+  - name: create ptp device
+    command: "mknod /dev/ptp0 c {{ ptp_device_number.stdout }} 0"
+
+  - name: add ptp device as chrony source
+    lineinfile:
+      path: /etc/chrony/chrony.conf
+      line: "refclock PHC /dev/ptp0 poll 3 dpoll -2"
+
+  - name: comment out NTP sources for chrony
+    shell: "sed -i 's/^\\(server \\|pool \\|peer \\)/# &/g' /etc/chrony/chrony.conf"
+
+  - name: start chrony
+    command: "service chrony start"
+  when: ptp_device_number.stdout is defined and container_runtime == "containerd"

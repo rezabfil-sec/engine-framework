@@ -1,0 +1,195 @@
+---
+# 1. Network properties
+#
+# network: map tsn configurations to nodes and define network paths (flows)
+# tsn-configs: full tsn configuration
+
+# ------------------------------ FLOWS + TSN-map -------------------------------
+network:
+  net-121:
+    tsn:      
+      tsn-166: ["node-1:3", "node-2:1", "node-3:4", "node-4:2", "node-5:3", "node-6:4", "node-7:2"]
+    flows:
+      1: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:2,2:node-8:'
+      2: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:'
+      3: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:'
+      4: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:'
+      5: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:'
+      6: ':node-1:3,3:node-2:1,3:node-3:'
+      7: ':node-1:3,3:node-2:'
+      #PTP links
+      8: ':node-2:2,5:node-11:6,2:node-1:1,2:node-5:'
+      9: ':node-2:2,5:node-11:3,4:node-4:'
+      10: ':node-7:1,4:node-6:3,4:node-11:2,4:node-8:'
+      11: ':node-1:4,1:node-3:2,7:node-11:'
+      12: ':node-11:1,1:node-12:2,3:node-7:'
+    check: true
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. Requires the low latency kernel!!
+  
+  net-122:
+    tsn:      
+      tsn-167: ["node-1:3", "node-2:1", "node-3:4", "node-4:2", "node-5:3", "node-6:4", "node-7:2"]
+    flows:
+      1: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:2,2:node-8:'
+      2: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:'
+      3: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:'
+      4: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:'
+      5: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:'
+      6: ':node-1:3,3:node-2:1,3:node-3:'
+      7: ':node-1:3,3:node-2:'
+      #PTP links
+      8: ':node-2:2,5:node-11:6,2:node-1:1,2:node-5:'
+      9: ':node-2:2,5:node-11:3,4:node-4:'
+      10: ':node-7:1,4:node-6:3,4:node-11:2,4:node-8:'
+      11: ':node-1:4,1:node-3:2,7:node-11:'
+      12: ':node-11:1,1:node-12:2,3:node-7:'
+    check: true
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. Requires the low latency kernel!!
+
+  net-78:
+    tsn:      
+      tsn-66: ["node-1:3", "node-2:1", "node-3:4", "node-4:2", "node-5:3", "node-6:4", "node-7:2"]
+    flows:
+      1: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:2,2:node-8:'
+      2: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:'
+      3: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:'
+      4: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:'
+      5: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:'
+      6: ':node-1:3,3:node-2:1,3:node-3:'
+      7: ':node-1:3,3:node-2:'
+      #PTP links
+      8: ':node-2:2,5:node-11:6,2:node-1:1,2:node-5:'
+      9: ':node-2:2,5:node-11:3,4:node-4:'
+      10: ':node-7:1,4:node-6:3,4:node-11:2,4:node-8:'
+      11: ':node-1:4,1:node-3:2,7:node-11:'
+      12: ':node-11:1,1:node-12:2,3:node-7:'
+    check: true
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. Requires the low latency kernel!!  
+  # node-1: nelson; node-2: ralph; node-3: milhouse; node-4: otto; node-5: maggie; node-6: abe; node-7: bart
+  net-91:
+    tsn:      
+      tsn-83: ["node-1:3", "node-2:1", "node-3:4", "node-4:2", "node-5:3", "node-6:4", "node-7:2"]
+    flows:
+      1: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:2,2:node-8:'
+      2: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:'
+      3: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:'
+      4: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:'
+      5: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:'
+      6: ':node-1:3,3:node-2:1,3:node-3:'
+      7: ':node-1:3,3:node-2:'
+      #PTP links
+      8: ':node-2:2,5:node-11:6,2:node-1:1,2:node-5:'
+      9: ':node-2:2,5:node-11:3,4:node-4:'
+      10: ':node-7:1,4:node-6:3,4:node-11:2,4:node-8:'
+      11: ':node-1:4,1:node-3:2,7:node-11:'
+      12: ':node-11:1,1:node-12:2,3:node-7:'
+    check: true
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. Requires the low latency kernel!!    
+  net-92:
+    tsn:      
+      tsn-84: ["node-1:3", "node-2:1", "node-3:4", "node-4:2", "node-5:3", "node-6:4", "node-7:2"]
+    flows:
+      1: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:2,2:node-8:'
+      2: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:4,1:node-7:'
+      3: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:3,1:node-6:'
+      4: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:2,4:node-5:'
+      5: ':node-1:3,3:node-2:1,3:node-3:4,1:node-4:'
+      6: ':node-1:3,3:node-2:1,3:node-3:'
+      7: ':node-1:3,3:node-2:'
+      #PTP links
+      8: ':node-2:2,5:node-11:6,2:node-1:1,2:node-5:'
+      9: ':node-2:2,5:node-11:3,4:node-4:'
+      10: ':node-7:1,4:node-6:3,4:node-11:2,4:node-8:'
+      11: ':node-1:4,1:node-3:2,7:node-11:'
+      12: ':node-11:1,1:node-12:2,3:node-7:'
+    check: true
+    num_net_cores: 2 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: true # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. Requires the low latency kernel!!   
+  
+# ------------------------------ TSN configs -----------------------------------
+# NOTES:
+# - number of queue items is fixed depending on the number of hardware queues (Intel i210 = 4)
+# - available priorities for the prio list go from 0 to 15
+# - all priorities need to be assigned to the queues, use '*' in one queue for remaining priorities
+# Use queue 0 in a taprio sched for a guard band
+# ETF offload can only be set for queue 1 or 2, limitation of the intel i210 network card
+# ETF queues together with taprio must be used with txtime enabled or only special (timestamped) traffic works
+#
+# IMPORTANT:
+# ! Queue priorities MUST not overlap
+# ! Map all 16 priorities to queues or use '*' in one of the queues
+# ! All taprio Schedule durations MUST sum up to a factor of 1ms
+#
+
+tsnconfigs: # TSN configurations for nodes/interfaces
+  tsn-166:
+    name: TAPRIO with ETF in Deadline and Deadline mode
+    taprio:
+      txtime: true # Usage of txtime-assist mode
+      delay: 200000 # txtime delay
+      sched:
+        - { queue: [1], duration: 300 }
+        - { queue: [2], duration: 300 }
+        - { queue: [3], duration: 400 }
+    queues: # Configuration of individual HW queues, delta - fudge factor of ETF
+      1: { mode: etf, prio: [3], delta: 175000, offload: yes } # Supports HW offloading
+      2: { mode: etf, prio: [2], delta: 175000, offload: yes}
+      3: { mode: be, prio: [1,'*'] }
+
+  tsn-167:
+    name: TAPRIO with ETF in Deadline and Deadline mode
+    taprio:
+      txtime: true # Usage of txtime-assist mode
+      delay: 200000 # txtime delay
+      sched:
+        - { queue: [1], duration: 300 }
+        - { queue: [2], duration: 300 }
+        - { queue: [3], duration: 400 }
+    queues: # Configuration of individual HW queues, delta - fudge factor of ETF
+      1: { mode: etf, prio: [3], delta: 175000, deadline: yes, offload: yes } # Supports HW offloading
+      2: { mode: etf, prio: [2], delta: 175000, deadline: yes, offload: yes}
+      3: { mode: be, prio: [1,'*'] }
+
+  tsn-66:
+    name: TAPRIO with ETF in Deadline and Deadline mode
+    taprio:
+      txtime: true # Usage of txtime-assist mode
+      delay: 450000 # txtime delay
+      sched:
+        - { queue: [1], duration: 300 }
+        - { queue: [2], duration: 300 }
+        - { queue: [3], duration: 400 }
+    queues: # Configuration of individual HW queues, delta - fudge factor of ETF
+      1: { mode: etf, prio: [3], delta: 175000, offload: yes } # Supports HW offloading
+      2: { mode: etf, prio: [2], delta: 175000, deadline: yes, offload: yes}
+      3: { mode: be, prio: [1,'*'] }
+  tsn-83:
+    name: TAPRIO with ETF in Deadline and Deadline mode
+    taprio:
+      txtime: true # Usage of txtime-assist mode
+      delay: 450000 # txtime delay
+      sched:
+        - { queue: [1], duration: 300 }
+        - { queue: [2], duration: 300 }
+        - { queue: [3], duration: 400 }
+    queues: # Configuration of individual HW queues, delta - fudge factor of ETF
+      1: { mode: etf, prio: [3], delta: 175000, deadline: yes, offload: yes } # Supports HW offloading
+      2: { mode: etf, prio: [2], delta: 175000, deadline: yes, offload: yes}
+      3: { mode: be, prio: [1,'*'] }
+  tsn-84:
+    name: TAPRIO with ETF in Deadline and Deadline mode
+    taprio:
+      txtime: true # Usage of txtime-assist mode
+      delay: 450000 # txtime delay
+      sched:
+        - { queue: [1], duration: 300 }
+        - { queue: [2], duration: 300 }
+        - { queue: [3], duration: 400 }
+    queues: # Configuration of individual HW queues, delta - fudge factor of ETF
+      1: { mode: etf, prio: [3], delta: 175000, offload: no } # Supports HW offloading
+      2: { mode: etf, prio: [2], delta: 175000, offload: no}
+      3: { mode: be, prio: [1,'*'] }

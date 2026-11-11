@@ -1,0 +1,19 @@
+---
+# variables for virtual node clouda on GCP
+
+# SEV-SNP SETUP
+# ====================================================
+num_interfaces: 0
+node_ifaces: {}
+management_iface: ''
+
+# TEE information
+tee_supported: yes
+tee_type: "SEV-SNP"
+# GCP macine type
+machine_type : n2d-standard-32
+# GCP region
+region: europe-west4
+# GCP zone
+zone: europe-west4-a
+# ====================================================

@@ -15,14 +15,14 @@
 #   time  : time in seconds to transmit
 #   size  : size of the packet payload
 #   timeout :  time in milliseconds to try and establish a connection to the server
-#   use_core : which logical core to use for iperf3. Core numbering starts at 0. Optional, if not defined all cores may be used.
+#   use_core : which logical core to use for iperf3. Core numbering starts at 0. Optional, if not defined all non-isolated cores may be used.
 #   sync_start: synchronize the client's start with the start of the experiment. NOTE! Unless set otherwise, the iperf client will always start synced with experiment start!
 #
 # server:
 # - { name: iperf, role: server, (flow: 1), (port: 5000), (use_core: 2) }
 #   flow  : listen only to traffic from this flow
 #   port  : port to use
-#   use_core : which logical core to use for iperf3. Core numbering starts at 0. Optional, if not defined all cores may be used.
+#   use_core : which logical core to use for iperf3. Core numbering starts at 0. Optional, if not defined all non-isolated cores may be used.
 #
 #
 # iperf command:
@@ -44,6 +44,9 @@
 #
 
 # -------------------- iperf SERVER --------------------
+- include_tasks: setup.yml
+  when: (experiment_run_index|int) == 0
+
 - block:
   - name: server - extract bind address
     set_fact:
@@ -58,31 +61,34 @@
       path: '{{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}.log'
       state: absent
 
-  # - name: server - start iperf without affinity
-  #   command: >
-  #     run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
-  #     iperf3 -s -1 -p {{ service.port | default(iperf_port) }}
-  #     -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}.log
-  #     {{ "-B " + iperf_bind if (iperf_bind | length > 0) else "" }}
-  #   async: 2592000  # run in background - for 1 month or until finished/killed
-  #   poll: 0
+  - name: server - start iperf with affinity
+    # run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
+    # run_service_action <signal = service.signal> <start-after-sec = service.wait> <sync-start = service.sync_start> <stop-after-sec = service.run_time> <sync-stop = service.sync_stop> <cmd>
+    # Deafult settings: signal = False; start-after-sec = 0; sync-start = False; stop-after-sec = 0, aka. infinity; sync-stop = False
+    # The server will start before the experiment starts and be killed after the experiment ended.
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      {{ "cgexec -g cpuset:isol_tasks taskset " + ((2**service.use_core) | string) if service.use_core is defined else "" }}
+      iperf3 -s -1 -p {{ service.port | default(iperf_port) }}
+      -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}.log
+      {{ "-B " + iperf_bind if (iperf_bind | length > 0) else "" }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    when: network_config == "OvS" or network_config == "Physical" and is_container is not defined or is_container is defined and not is_container
 
   - name: server - start iperf with affinity
     # run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} 0
     # run_service_action <signal = service.signal> <start-after-sec = service.wait> <sync-start = service.sync_start> <stop-after-sec = service.run_time> <sync-stop = service.sync_stop> <cmd>
     # Deafult settings: signal = False; start-after-sec = 0; sync-start = False; stop-after-sec = 0, aka. infinity; sync-stop = False
+    # The server will start before the experiment starts and be killed after the experiment ended.
     command: >
       run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
-      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
       iperf3 -s -1 -p {{ service.port | default(iperf_port) }}
       -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) }}.log
       {{ "-B " + iperf_bind if (iperf_bind | length > 0) else "" }}
-    register: iperf_comm_srv
     async: 2592000  # run in background - for 1 month or until finished/killed
     poll: 0
-    
-  # - debug: msg="{{ iperf_comm_srv.cmd }}"
-
+    when: network_config == "SRIOV" or (is_container is defined and (is_container or not is_container))
   when: service.role == 'server'
 
 # -------------------- iperf CLIENT --------------------
@@ -105,104 +111,46 @@
       path: '{{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) | string }}.log'
       state: absent
 
-  # sleep for some time before starting the client, server must be ready
-  # until then otherwise client fails immediately
-  # priority is set by starting the application in the correct cgroup
-  # - name: client - start iperf client without affinity
-  #   shell: >
-  #     sleep {{ iperf_client_wait }} &&
-  #     run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start | default(0) else 0 }}
-  #     cgexec -g net_prio:{{ service.prio | default(0) }}
-  #     iperf3 -p {{ service.port | default(iperf_port) }}
-  #     -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) | string }}.log
-  #     -t {{ service.time | default(iperf_client_time) }}
-  #     -b {{ service.limit | default(iperf_client_limit) }}
-  #     {{ "-u" if service.udp is defined and service.udp else "" }}
-  #     {{ "-l " + service.size | string if service.size is defined else "" }} -c {{ ip }}
-  #   async: 2592000  # run in background - for 1 month or until finished/killed
-  #   poll: 0
-  #   loop: "{{ dest_ip }}"
-  #   loop_control:
-  #     loop_var: ip
-
-  # - debug:
-  #     msg: >
-  #       sleep {{ iperf_client_wait if service.sync_start is defined and not service.sync_start else 0 }} &&
-  #       run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }}
-  #       cgexec -g net_prio:{{ service.prio | default(0) }}
-  #       taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
-  #       iperf3 -p {{ service.port | default(iperf_port) }}
-  #       -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) | string }}.log
-  #       -t {{ service.time | default(iperf_client_time) }}
-  #       -b {{ service.limit | default(iperf_client_limit) }}
-  #       {{ "-u" if service.udp is defined and service.udp else "" }}
-  #       {{ "-l " + service.size | string if service.size is defined else "" }} -c {{ ip }}
-  #   loop: "{{ dest_ip }}"
-  #   loop_control:
-  #     loop_var: ip
-
-
   - name: client - start iperf client with affinity
     # run_service_action <signal = service.signal> <start-after-sec = service.wait> <sync-start = service.sync_start> <stop-after-sec = service.run_time> <sync-stop = service.sync_stop> <cmd>
     # Deafult settings: signal = False; start-after-sec = 0; sync-start = True; stop-after-sec = 0, aka. infinity; sync-stop = True
+    # The client will start with experiment start and finish with experiment end.
     shell: >
-      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop or service.sync_stop is not defined else 0 }}
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
       cgexec -g net_prio:{{ service.prio | default(0) }}
-      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
-      iperf3 -p {{ service.port | default(iperf_port) }}
+      {{ "cgexec -g cpuset:isol_tasks taskset " + ((2**service.use_core) | string) if service.use_core is defined else "" }}
+      {{ ( (iperf_location + '/iperf-3.' + iperf_version + '/src/') if (service.new is defined and service.new) else '' ) + 'iperf3' }} -p {{ service.port | default(iperf_port) }}
       -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) | string }}.log
       -t {{ service.time | default(iperf_client_time) }}
-      -b {{ service.limit | default(iperf_client_limit) }}
+      -b {{ service.limit | default(iperf_client_limit) }}{{ '/'+(service.burst|string) if service.burst is defined }}
+      {{ "--pacing-timer " + service.pacing | string if service.pacing is defined else "" }}
       {{ "-u" if service.udp is defined and service.udp else "" }}
       {{ "-l " + service.size | string if service.size is defined else "" }} -c {{ ip }}
-    register: iperf_comm_cli
     async: 2592000  # run in background - for 1 month or until finished/killed
     poll: 0
     loop: "{{ dest_ip }}"
     loop_control:
       loop_var: ip
-  
-  # - debug: msg="{{ iperf_comm_cli.cmd }}"
+    when: network_config == "OvS" or network_config == "Physical" and is_container is not defined or is_container is defined and not is_container
+
+  - name: client - start iperf client with affinity
+    # run_service_action <signal = service.signal> <start-after-sec = service.wait> <sync-start = service.sync_start> <stop-after-sec = service.run_time> <sync-stop = service.sync_stop> <cmd>
+    # Deafult settings: signal = False; start-after-sec = 0; sync-start = True; stop-after-sec = 0, aka. infinity; sync-stop = True
+    # The client will start with experiment start and finish with experiment end.
+    shell: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      {{ ( (iperf_location + '/iperf-3.' + iperf_version + '/src/') if (service.new is defined and service.new) else '' ) + 'iperf3' }} -p {{ service.port | default(iperf_port) }}
+      -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) | string }}.log
+      -t {{ service.time | default(iperf_client_time) }}
+      -b {{ service.limit | default(iperf_client_limit) }}{{ '/'+(service.burst|string) if service.burst is defined }}
+      {{ "--pacing-timer " + service.pacing | string if service.pacing is defined else "" }}
+      {{ "-u" if service.udp is defined and service.udp else "" }}
+      {{ "-l " + service.size | string if service.size is defined else "" }} -c {{ ip }}
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+    loop: "{{ dest_ip }}"
+    loop_control:
+      loop_var: ip
+    when: (network_config == "SRIOV" or network_config == "Physical") and is_container is defined and is_container
 
   when: service.role == 'client'
-
-
-# # -------------------- iperf TEST_CLIENT --------------------
-# - block:
-#   - name: test_client - initialize iperf_ip list
-#     set_fact: "dest_ip={{ [] }}"
-
-#   - name: test_client - get destination ip
-#     set_fact: "dest_ip={{ dest_ip + [ iface.ip_dst ] }}"
-#     when: (service.flow | int) == (iface.flow | int)
-#     loop: "{{ flow_ifaces }}"
-#     loop_control:
-#       loop_var: iface
-
-#   - fail: msg="No iperf test_client destination ip(s)"
-#     when: dest_ip | length <= 0
-
-#   - name: test_client - reset log file
-#     file:
-#       path: '{{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) | string }}.log'
-#       state: absent
-
-#   - name: test_client - start iperf client with affinity
-#     # run_service_test <signal = service.signal> <start-after-sec = service.wait> <sync-start = service.sync_start> <stop-after-sec = service.run_time> <sync-stop = service.sync_stop> <cmd>
-#     shell: >
-#       run_service_test {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop or service.sync_stop is not defined else 0 }}
-#       cgexec -g net_prio:{{ service.prio | default(0) }}
-#       taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
-#       iperf3 -p {{ service.port | default(iperf_port) }}
-#       -i 0.2 --json --logfile {{ data_path }}/iperf_{{ service.role }}_{{ service.port | default(iperf_port) | string }}.log
-#       -t {{ service.time | default(iperf_client_time) }}
-#       -b {{ service.limit | default(iperf_client_limit) }}
-#       {{ "-u" if service.udp is defined and service.udp else "" }}
-#       {{ "-l " + service.size | string if service.size is defined else "" }} -c {{ ip }}
-#     async: 2592000  # run in background - for 1 month or until finished/killed
-#     poll: 0
-#     loop: "{{ dest_ip }}"
-#     loop_control:
-#       loop_var: ip
-
-#   when: service.role == 'test_client'

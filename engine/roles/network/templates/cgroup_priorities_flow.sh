@@ -1,7 +1,7 @@
 #!/bin/bash
 # {{ ansible_managed }}
 
-# Set TSN traffic cgroup priorities for flow interfaces
+# Set qdisc traffic cgroup priorities for flow interfaces
 
 # print all commands and exit immediately on failure
 set -x

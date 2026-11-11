@@ -19,8 +19,6 @@ def parse_cli(args):
                         help='Json file with priority to flow mappings')
     parser.add_argument('-i', '--flowicn',
                         help='Json file with icn-enabled flows mappings')
-    parser.add_argument('-s', '--sourcepush', action='store_true', 
-                        help='Specify whether this node is a push shource')
     # parser.add_argument('-t', '--forwarders',
     #                     help='Json file with all flows')
 
@@ -55,12 +53,6 @@ def add_face(flow, mac):
 
 def add_route(mac, path):
     cmd = f'nfdc route add {path} ether://[{mac}]'
-    print(cmd)
-    run_command(cmd)
-
-# type: 'admit' or 'serve'; state: 'on' or 'off'
-def conf_cs(type, state):
-    cmd = f'nfdc cs config {type} {state}'
     print(cmd)
     run_command(cmd)
 
@@ -155,7 +147,6 @@ name = parser_args.node
 flowfile = parser_args.flowfile
 priofile = parser_args.flowprios
 icnflowsfile = parser_args.flowicn
-pushsource = parser_args.sourcepush
 # forwardersfile = parser_args.forwarders
 
 # print("Executing on", name)
@@ -225,11 +216,4 @@ for prio in nodeRoutes:
     for route in nodeRoutes[prio]:
         print('Adding route', route, 'on eth face', nodeRoutes[prio][route])
         add_route(nodeRoutes[prio][route], route)
-
-if pushsource:
-    print('Working on node', name, ' - node is a push source, not disabling cache')
-else:
-    print('Working on node', name, ' - node is not a push source, disabling cache')
-    conf_cs('admit', 'off')
-    conf_cs('serve', 'off')
 

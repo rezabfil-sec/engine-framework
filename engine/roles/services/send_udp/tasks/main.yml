@@ -13,7 +13,9 @@
 #   priority: [tsn/d] packets will be sent with this priority
 #   delay   : [tsn/d] delta from wake up to txtime in nanoseconds
 #   interval: [tsn/d] send packets in this interval, in nanoseconds
-#   sync_start: synchronize the dervice start with the start of the experiment
+#   sync_start: synchronize the service start with the start of the experiment
+#   length: payload length
+#   min_mode: (yes/no) use packet generation without tsn related options
 #
 # -------------------- Forward UDP TAI ----------------------
 # Forward send UDP traffic on hops until destinations
@@ -31,7 +33,7 @@
   - name: forward - start forward next hop
     shell: >
       run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
-      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      {{ "cgexec -g cpuset:isol_tasks taskset " + ((2**service.use_core) | string) if service.use_core is defined else "" }}
       {{ data_path }}/{{ forward_name }} -i {{ iface.name }}
       -n {{ service.number_packets | default(forward_num_packets) }}
       -U {{ service.port | default(next_hop_port) }}
@@ -60,7 +62,7 @@
     command: 'gcc -o {{ send_udp }} -pthread {{ send_udp }}.c'
     args:
       chdir: "{{ data_path }}"
-  - name: Sleep before start sending
+  - name: Sleep before start sending # FIXME
     command: sleep 15
   # - debug: 
   #     msg: >
@@ -86,7 +88,7 @@
   - name: client - start send
     shell: >
       run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
-      taskset {{ 2**service.use_core if service.use_core is defined else 255 }}
+      {{ "cgexec -g cpuset:isol_tasks taskset " + ((2**service.use_core) | string) if service.use_core is defined else "" }}
       {{ data_path }}/{{ send_udp }} -i {{ iface.name }}
       -n {{ service.number_packets | default(num_packets) }}
       -f {{ data_path }}/{{ log_name }}{{ service.role }}_p{{ service.port | default(source_port) | string }}_f{{ service.flow | string }}.csv
@@ -101,6 +103,8 @@
       {{ "-D" if service.tsnd is defined else "" }}
       {{ "-r" if service.tsn is not defined and service.tsnd is not defined else "" }}
       {{ "-s" if service.tsn is not defined and service.tsnd is not defined else "" }}
+      {{ ("-l " + (service.length | string)) if service.length is defined else "" }}
+      {{ "-q" if service.min_mode is defined and service.min_mode }}
     async: 2592000  # run in background - for 1 month or until finished/killed
     poll: 0
     when: (service.flow | int) == (iface.flow | int)

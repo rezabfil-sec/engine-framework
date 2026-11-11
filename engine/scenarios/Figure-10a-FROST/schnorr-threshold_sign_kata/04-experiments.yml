@@ -1,0 +1,37 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+# In this file all the previous configurations come together
+# Every entry is one experiment that is run with the configuration defined in
+# the configurations referenced in the network, stack and action variable.
+# After all experiments are executed the scenario is finished.
+#
+# An experiment can be run in two different modes:
+# 1. Time mode: A timer is started and the experiment runs for N seconds
+# 2. Signal mode: Wait for services to successfully finish (e.g. send a fixed number
+#   of packets, send all data from a dataset, etc.), when they are then they will
+#   send a success signal. When all registered signals are received the experiment
+#   is stopped.
+# In both modes the experiment is immediately stoppped after receiving an
+# error signal.
+#
+# The default mode is timer, with a default time in roles/experiment/defaults
+# When using the signal mode a maximum timeout can be specified when the experiment
+# should be aborted regardless of the signals, if not specified the default timeout
+# value is chosen from roles/experiment/defaults
+
+experiments:
+
+    - { network: 'net-2', stack: 'stack-3', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-3', loopOverNetwork: [ [ 3, 2 ]] , tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-3', stack: 'stack-5', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-5', loopOverNetwork: [ [ 5, 2 ], [ 5, 4 ] ], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-5', stack: 'stack-7', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-7', loopOverNetwork: [ [ 7, 2 ], [ 7, 4 ], [ 7, 6 ]], tupleVariableNames: ["number_nodes", "threshold"] }    
+    - { network: 'net-6', stack: 'stack-9', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-9', loopOverNetwork: [ [ 9, 2 ], [ 9, 4 ], [ 9, 8 ]], tupleVariableNames: ["number_nodes", "threshold"] }    
+    - { network: 'net-9', stack: 'stack-12', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-12', loopOverNetwork: [ [ 12, 2 ], [ 12, 4 ], [ 12, 8 ], [ 12, 11 ]], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-12', stack: 'stack-16', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-16', loopOverNetwork: [ [ 16, 2 ], [ 16, 4 ], [ 16, 8 ], [ 16, 15 ]], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-13', stack: 'stack-20', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-20', loopOverNetwork: [ [ 20, 2 ], [ 20, 4 ], [ 20, 8 ], [ 20, 16 ], [ 20, 19 ] ], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-14', stack: 'stack-24', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-24', loopOverNetwork: [ [ 24, 2 ], [ 24, 4 ], [ 24, 8 ], [ 24, 16 ], [ 24, 23 ] ], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-15', stack: 'stack-28', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-28', loopOverNetwork: [ [ 28, 2 ], [ 28, 4 ], [ 28, 8 ], [ 28, 16 ], [ 28, 27 ] ], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-16', stack: 'stack-32', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-32', loopOverNetwork: [ [ 32, 2 ], [ 32, 4 ], [ 32, 8 ], [ 32, 16 ], [ 32, 31 ] ], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-17', stack: 'stack-36', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-36', loopOverNetwork: [ [ 36, 2 ], [ 36, 4 ], [ 36, 8 ], [ 36, 16 ], [ 36, 32 ], [ 36, 35 ] ], tupleVariableNames: ["number_nodes", "threshold"] }
+    - { network: 'net-18', stack: 'stack-40', action: 'action-1', timeout: 10000, signal: true, name: 'sign-schnorr-threshold-40', loopOverNetwork: [ [ 40, 2 ], [ 40, 4 ], [ 40, 8 ], [ 40, 16 ], [ 40, 32 ], [ 40, 39 ] ], tupleVariableNames: ["number_nodes", "threshold"] }

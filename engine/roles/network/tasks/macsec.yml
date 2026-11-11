@@ -1,0 +1,27 @@
+---
+# ============================================================================================================
+# Sets up a MACSec interface for every interface in use_ifaces
+# Currently uses the same key for every interface -- this is
+# not meant for any real security purposes, but rather measuring
+# the impact of MACSec on traffic / PTP behaviour.
+# ============================================================================================================
+- name: reload emacsec kernel module
+  shell: |
+    modprobe --remove emacsec
+    modprobe emacsec
+
+- name: add macsec interface
+  shell: | 
+    ip link add link {{ node_ifaces[item | int].name }} macsec{{ item | int }} type macsec replay on window 256
+    ip link set macsec{{ item | int }} up
+  loop: '{{ use_ifaces }}'
+
+- name: add macsec tx channel
+  shell:  ip macsec add macsec{{ item | int }} tx sa 0 pn 1 on key 01 dffafc8d7b9a43d5b9a3dfbbf6a30c16
+  loop: '{{ use_ifaces }}'
+
+- name: add macsec rx channels
+  # debug:
+  #   msg: "Got peer_mac {{ hostvars[node_mapping[item.1]]['node_ifaces'][item.0 | int]['mac'] }}"
+  include_tasks: macsec_peer.yml
+  loop: '{{ peer_ifaces }}'

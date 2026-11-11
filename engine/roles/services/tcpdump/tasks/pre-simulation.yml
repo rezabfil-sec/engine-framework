@@ -25,7 +25,7 @@
       ifaces: "{{ [] }}"
   - name: determine filenames and corresponding interfaces; increase service per node per interface counter
     set_fact:
-      file_names: "{{ file_names | default([]) + [( result_path  + '/EngineNetwork.' + node_alias + '.switch.eth[' + interface + '].macLayer.pcapRecorder[' + ( ( num_tcpdump_per_interface[node][interface] | default(0) ) + 1 ) | string + '].pcap')] }}" # TODO: do not hardcode topo
+      file_names: "{{ file_names | default([]) + [( result_path  + '/Topo220329NoLisa.' + node_alias + '.switch.eth[' + interface + '].macLayer.pcapRecorder[' + ( ( num_tcpdump_per_interface[node][interface] | default(0) ) + 1 ) | string + '].pcap')] }}" # TODO: do not hardcode topo
       ifaces: "{{ ifaces | default([]) + [ interface ] }}"
       num_tcpdump_per_interface: "{{ num_tcpdump_per_interface | default({}) | combine( { node: { interface: ( num_tcpdump_per_interface[node][interface] | default(0) ) + 1 } } ) }}"
     loop: "{{ interfaces }}"

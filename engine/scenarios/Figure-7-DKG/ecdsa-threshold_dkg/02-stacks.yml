@@ -1,0 +1,888 @@
+---
+# 2. Application and protocol stack
+#
+# Services are usually a synonym for applications
+# Services can be started grouped by nodes. The same service can be run multiple
+# times, with the same or different parameters. The service parameters vary heavily.
+# All available services and their parameters can be seen in the roles/services folder.
+
+# Further information about services:
+# Services are started during an experiment, the experiment can run in a signal
+# or timer mode, both are explained in more detail in the 04-experiment.yml file
+# In both cases every service is sending a signal to the experiment run script when it stops:
+# 0 if the service finished successfully and 1 when an error occurred.
+#
+# In all cases if a failure signal (1) is received by the experiment runner the
+# experiment is aborted.
+# When running the experiment in signal mode, the experiment finishes only when all
+# registered services send a success signal to the runner. To register a service
+# the parameter "signal: yes" must be defined in the service entry. Usually all
+# service are started with the run_service wrapper script that takes care of the
+# signaling and sending registered signals to the experiment runner.
+
+# For more details on applications see roles/services/<application>/tasks/main.yml
+# There you will find more information on available settings.
+
+stacks:
+
+
+# -------------------------------------------- SIGN, single node, n: 3,5,6,7,9,10,11,12,13,14,16,... t: 2,4,8,16, ------------------------------------------------------------------------------------------------------------------------------
+  stack-3:
+    name: 'sign_stack_3'
+    services:
+      node-1:
+            - { name: ecdsa-threshold, role: participant, id: 1, level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1, 2],  priority: 3 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2, level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3, level: 1, sync_start: yes, use_core: 2 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, source_node: [1], flows: [1, 2, 3], level: 0 }
+            - { name: ecdsa-threshold, role: client, iterations: 500, test_mode: dkg,  level: 2, file: n3_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-5:
+    name: 'sign_stack_5'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup,  single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500, test_mode: dkg,  level: 2, file: n5_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+
+  stack-6:
+    name: 'sign_stack_6'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup,  single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500, test_mode: dkg,  level: 2, file: n5_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-7:
+    name: 'sign_stack_7'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup,  single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500, test_mode: dkg,  level: 2, file: n7_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-9:
+    name: 'sign_stack_9'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n9_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-10:
+    name: 'sign_stack_10'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n10_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-11:
+    name: 'sign_stack_11'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n11_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-12:
+    name: 'sign_stack_12'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n12_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-13:
+    name: 'sign_stack_13'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n13_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-14:
+    name: 'sign_stack_14'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n14_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-16:
+    name: 'sign_stack_16'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-15:
+            - { name: ecdsa-threshold, role: participant, id: 15,  level: 1, sync_start: yes, use_core: 16 }
+      node-16:
+            - { name: ecdsa-threshold, role: participant, id: 16,  level: 1, sync_start: yes, use_core: 17 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ], level: 0, sync_start: no }
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n16_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-20:
+    name: 'sign_stack_20'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-15:
+            - { name: ecdsa-threshold, role: participant, id: 15,  level: 1, sync_start: yes, use_core: 16 }
+      node-16:
+            - { name: ecdsa-threshold, role: participant, id: 16,  level: 1, sync_start: yes, use_core: 17 }
+      node-17:
+            - { name: ecdsa-threshold, role: participant, id: 17,  level: 1, sync_start: yes, use_core: 18 }
+      node-18:
+            - { name: ecdsa-threshold, role: participant, id: 18,  level: 1, sync_start: yes, use_core: 19 }
+      node-19:
+            - { name: ecdsa-threshold, role: participant, id: 19,  level: 1, sync_start: yes, use_core: 20 }
+      node-20:
+            - { name: ecdsa-threshold, role: participant, id: 20,  level: 1, sync_start: yes, use_core: 21 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ], level: 0, sync_start: no }      
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n20_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-24:
+    name: 'sign_stack_24'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-15:
+            - { name: ecdsa-threshold, role: participant, id: 15,  level: 1, sync_start: yes, use_core: 16 }
+      node-16:
+            - { name: ecdsa-threshold, role: participant, id: 16,  level: 1, sync_start: yes, use_core: 17 }
+      node-17:
+            - { name: ecdsa-threshold, role: participant, id: 17,  level: 1, sync_start: yes, use_core: 18 }
+      node-18:
+            - { name: ecdsa-threshold, role: participant, id: 18,  level: 1, sync_start: yes, use_core: 19 }
+      node-19:
+            - { name: ecdsa-threshold, role: participant, id: 19,  level: 1, sync_start: yes, use_core: 20 }
+      node-20:
+            - { name: ecdsa-threshold, role: participant, id: 20,  level: 1, sync_start: yes, use_core: 21 }
+      node-21:
+            - { name: ecdsa-threshold, role: participant, id: 21,  level: 1, sync_start: yes, use_core: 22 }
+      node-22:
+            - { name: ecdsa-threshold, role: participant, id: 22,  level: 1, sync_start: yes, use_core: 23 }
+      node-23:
+            - { name: ecdsa-threshold, role: participant, id: 23,  level: 1, sync_start: yes, use_core: 24 }
+      node-24:
+            - { name: ecdsa-threshold, role: participant, id: 24,  level: 1, sync_start: yes, use_core: 25 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 ], level: 0, sync_start: no }      
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n24_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-28:
+    name: 'sign_stack_28'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-15:
+            - { name: ecdsa-threshold, role: participant, id: 15,  level: 1, sync_start: yes, use_core: 16 }
+      node-16:
+            - { name: ecdsa-threshold, role: participant, id: 16,  level: 1, sync_start: yes, use_core: 17 }
+      node-17:
+            - { name: ecdsa-threshold, role: participant, id: 17,  level: 1, sync_start: yes, use_core: 18 }
+      node-18:
+            - { name: ecdsa-threshold, role: participant, id: 18,  level: 1, sync_start: yes, use_core: 19 }
+      node-19:
+            - { name: ecdsa-threshold, role: participant, id: 19,  level: 1, sync_start: yes, use_core: 20 }
+      node-20:
+            - { name: ecdsa-threshold, role: participant, id: 20,  level: 1, sync_start: yes, use_core: 21 }
+      node-21:
+            - { name: ecdsa-threshold, role: participant, id: 21,  level: 1, sync_start: yes, use_core: 22 }
+      node-22:
+            - { name: ecdsa-threshold, role: participant, id: 22,  level: 1, sync_start: yes, use_core: 23 }
+      node-23:
+            - { name: ecdsa-threshold, role: participant, id: 23,  level: 1, sync_start: yes, use_core: 24 }
+      node-24:
+            - { name: ecdsa-threshold, role: participant, id: 24,  level: 1, sync_start: yes, use_core: 25 }
+      node-25:
+            - { name: ecdsa-threshold, role: participant, id: 25,  level: 1, sync_start: yes, use_core: 26 }
+      node-26:
+            - { name: ecdsa-threshold, role: participant, id: 26,  level: 1, sync_start: yes, use_core: 27 }
+      node-27:
+            - { name: ecdsa-threshold, role: participant, id: 27,  level: 1, sync_start: yes, use_core: 28 }
+      node-28:
+            - { name: ecdsa-threshold, role: participant, id: 28,  level: 1, sync_start: yes, use_core: 29 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28  ], level: 0, sync_start: no }    
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n28_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-32:
+    name: 'sign_stack_32'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-15:
+            - { name: ecdsa-threshold, role: participant, id: 15,  level: 1, sync_start: yes, use_core: 16 }
+      node-16:
+            - { name: ecdsa-threshold, role: participant, id: 16,  level: 1, sync_start: yes, use_core: 17 }
+      node-17:
+            - { name: ecdsa-threshold, role: participant, id: 17,  level: 1, sync_start: yes, use_core: 18 }
+      node-18:
+            - { name: ecdsa-threshold, role: participant, id: 18,  level: 1, sync_start: yes, use_core: 19 }
+      node-19:
+            - { name: ecdsa-threshold, role: participant, id: 19,  level: 1, sync_start: yes, use_core: 20 }
+      node-20:
+            - { name: ecdsa-threshold, role: participant, id: 20,  level: 1, sync_start: yes, use_core: 21 }
+      node-21:
+            - { name: ecdsa-threshold, role: participant, id: 21,  level: 1, sync_start: yes, use_core: 22 }
+      node-22:
+            - { name: ecdsa-threshold, role: participant, id: 22,  level: 1, sync_start: yes, use_core: 23 }
+      node-23:
+            - { name: ecdsa-threshold, role: participant, id: 23,  level: 1, sync_start: yes, use_core: 24 }
+      node-24:
+            - { name: ecdsa-threshold, role: participant, id: 24,  level: 1, sync_start: yes, use_core: 25 }
+      node-25:
+            - { name: ecdsa-threshold, role: participant, id: 25,  level: 1, sync_start: yes, use_core: 26 }
+      node-26:
+            - { name: ecdsa-threshold, role: participant, id: 26,  level: 1, sync_start: yes, use_core: 27 }
+      node-27:
+            - { name: ecdsa-threshold, role: participant, id: 27,  level: 1, sync_start: yes, use_core: 28 }
+      node-28:
+            - { name: ecdsa-threshold, role: participant, id: 28,  level: 1, sync_start: yes, use_core: 29 }
+      node-29:
+            - { name: ecdsa-threshold, role: participant, id: 29,  level: 1, sync_start: yes, use_core: 30 }
+      node-30:
+            - { name: ecdsa-threshold, role: participant, id: 30,  level: 1, sync_start: yes, use_core: 31 }
+      node-31:
+            - { name: ecdsa-threshold, role: participant, id: 31,  level: 1, sync_start: yes, use_core: 48 }
+      node-32:
+            - { name: ecdsa-threshold, role: participant, id: 32,  level: 1, sync_start: yes, use_core: 33 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32  ], level: 0, sync_start: no } 
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n32_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+
+  stack-36:
+    name: 'sign_stack_36'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-15:
+            - { name: ecdsa-threshold, role: participant, id: 15,  level: 1, sync_start: yes, use_core: 16 }
+      node-16:
+            - { name: ecdsa-threshold, role: participant, id: 16,  level: 1, sync_start: yes, use_core: 17 }
+      node-17:
+            - { name: ecdsa-threshold, role: participant, id: 17,  level: 1, sync_start: yes, use_core: 18 }
+      node-18:
+            - { name: ecdsa-threshold, role: participant, id: 18,  level: 1, sync_start: yes, use_core: 19 }
+      node-19:
+            - { name: ecdsa-threshold, role: participant, id: 19,  level: 1, sync_start: yes, use_core: 20 }
+      node-20:
+            - { name: ecdsa-threshold, role: participant, id: 20,  level: 1, sync_start: yes, use_core: 21 }
+      node-21:
+            - { name: ecdsa-threshold, role: participant, id: 21,  level: 1, sync_start: yes, use_core: 22 }
+      node-22:
+            - { name: ecdsa-threshold, role: participant, id: 22,  level: 1, sync_start: yes, use_core: 23 }
+      node-23:
+            - { name: ecdsa-threshold, role: participant, id: 23,  level: 1, sync_start: yes, use_core: 24 }
+      node-24:
+            - { name: ecdsa-threshold, role: participant, id: 24,  level: 1, sync_start: yes, use_core: 25 }
+      node-25:
+            - { name: ecdsa-threshold, role: participant, id: 25,  level: 1, sync_start: yes, use_core: 26 }
+      node-26:
+            - { name: ecdsa-threshold, role: participant, id: 26,  level: 1, sync_start: yes, use_core: 27 }
+      node-27:
+            - { name: ecdsa-threshold, role: participant, id: 27,  level: 1, sync_start: yes, use_core: 28 }
+      node-28:
+            - { name: ecdsa-threshold, role: participant, id: 28,  level: 1, sync_start: yes, use_core: 29 }
+      node-29:
+            - { name: ecdsa-threshold, role: participant, id: 29,  level: 1, sync_start: yes, use_core: 30 }
+      node-30:
+            - { name: ecdsa-threshold, role: participant, id: 30,  level: 1, sync_start: yes, use_core: 31 }
+      node-31:
+            - { name: ecdsa-threshold, role: participant, id: 31,  level: 1, sync_start: yes, use_core: 48 }
+      node-32:
+            - { name: ecdsa-threshold, role: participant, id: 32,  level: 1, sync_start: yes, use_core: 33 }
+      node-33:
+            - { name: ecdsa-threshold, role: participant, id: 33,  level: 1, sync_start: yes, use_core: 17 }
+      node-34:
+            - { name: ecdsa-threshold, role: participant, id: 34,  level: 1, sync_start: yes, use_core: 18 }
+      node-35:
+            - { name: ecdsa-threshold, role: participant, id: 35,  level: 1, sync_start: yes, use_core: 19 }
+      node-36:
+            - { name: ecdsa-threshold, role: participant, id: 36,  level: 1, sync_start: yes, use_core: 20 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36  ], level: 0, sync_start: no }      
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n36_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}
+
+  stack-40:
+    name: 'sign_stack_40'
+    services:
+      node-1:
+            - { name: nftables, level: 0, destinations: [1, 2, 3, 4, 5, 6, 7, 8, 9 ],  priority: 3 }
+            - { name: ecdsa-threshold, role: participant, id: 1,  level: 1, sync_start: yes, use_core: 2 }
+      node-2:
+            - { name: ecdsa-threshold, role: participant, id: 2,  level: 1, sync_start: yes, use_core: 3 }
+            - { name: nftables, level: 0, destinations: [1],  priority: 3 }
+      node-3:
+            - { name: ecdsa-threshold, role: participant, id: 3,  level: 1, sync_start: yes, use_core: 4 }
+            - { name: nftables, level: 0, destinations: [2],  priority: 3 }
+      node-4:
+            - { name: ecdsa-threshold, role: participant, id: 4,  level: 1, sync_start: yes, use_core: 5 }
+            - { name: nftables, level: 0, destinations: [3],  priority: 3 }
+      node-5:
+            - { name: ecdsa-threshold, role: participant, id: 5,  level: 1, sync_start: yes, use_core: 6 }
+            - { name: nftables, level: 0, destinations: [4],  priority: 3 }
+      node-6:
+            - { name: ecdsa-threshold, role: participant, id: 6,  level: 1, sync_start: yes, use_core: 7 }
+            - { name: nftables, level: 0, destinations: [5],  priority: 3 }
+      node-7:
+            - { name: ecdsa-threshold, role: participant, id: 7,  level: 1, sync_start: yes, use_core: 8 }
+            - { name: nftables, level: 0, destinations: [6],  priority: 3 }
+      node-8:
+            - { name: ecdsa-threshold, role: participant, id: 8,  level: 1, sync_start: yes, use_core: 9 }
+            - { name: nftables, level: 0, destinations: [7],  priority: 3 }
+      node-9:
+            - { name: ecdsa-threshold, role: participant, id: 9,  level: 1, sync_start: yes, use_core: 10 }
+            - { name: nftables, level: 0, destinations: [8],  priority: 3 }
+      node-10:
+            - { name: ecdsa-threshold, role: participant, id: 10,  level: 1, sync_start: yes, use_core: 11 }
+            - { name: nftables, level: 0, destinations: [9],  priority: 3 }
+      node-11:
+            - { name: ecdsa-threshold, role: participant, id: 11,  level: 1, sync_start: yes, use_core: 12 }
+      node-12:
+            - { name: ecdsa-threshold, role: participant, id: 12,  level: 1, sync_start: yes, use_core: 13 }
+      node-13:
+            - { name: ecdsa-threshold, role: participant, id: 13,  level: 1, sync_start: yes, use_core: 14 }
+      node-14:
+            - { name: ecdsa-threshold, role: participant, id: 14,  level: 1, sync_start: yes, use_core: 15 }
+      node-15:
+            - { name: ecdsa-threshold, role: participant, id: 15,  level: 1, sync_start: yes, use_core: 16 }
+      node-16:
+            - { name: ecdsa-threshold, role: participant, id: 16,  level: 1, sync_start: yes, use_core: 17 }
+      node-17:
+            - { name: ecdsa-threshold, role: participant, id: 17,  level: 1, sync_start: yes, use_core: 18 }
+      node-18:
+            - { name: ecdsa-threshold, role: participant, id: 18,  level: 1, sync_start: yes, use_core: 19 }
+      node-19:
+            - { name: ecdsa-threshold, role: participant, id: 19,  level: 1, sync_start: yes, use_core: 20 }
+      node-20:
+            - { name: ecdsa-threshold, role: participant, id: 20,  level: 1, sync_start: yes, use_core: 21 }
+      node-21:
+            - { name: ecdsa-threshold, role: participant, id: 21,  level: 1, sync_start: yes, use_core: 22 }
+      node-22:
+            - { name: ecdsa-threshold, role: participant, id: 22,  level: 1, sync_start: yes, use_core: 23 }
+      node-23:
+            - { name: ecdsa-threshold, role: participant, id: 23,  level: 1, sync_start: yes, use_core: 24 }
+      node-24:
+            - { name: ecdsa-threshold, role: participant, id: 24,  level: 1, sync_start: yes, use_core: 25 }
+      node-25:
+            - { name: ecdsa-threshold, role: participant, id: 25,  level: 1, sync_start: yes, use_core: 26 }
+      node-26:
+            - { name: ecdsa-threshold, role: participant, id: 26,  level: 1, sync_start: yes, use_core: 27 }
+      node-27:
+            - { name: ecdsa-threshold, role: participant, id: 27,  level: 1, sync_start: yes, use_core: 28 }
+      node-28:
+            - { name: ecdsa-threshold, role: participant, id: 28,  level: 1, sync_start: yes, use_core: 29 }
+      node-29:
+            - { name: ecdsa-threshold, role: participant, id: 29,  level: 1, sync_start: yes, use_core: 30 }
+      node-30:
+            - { name: ecdsa-threshold, role: participant, id: 30,  level: 1, sync_start: yes, use_core: 31 }
+      node-31:
+            - { name: ecdsa-threshold, role: participant, id: 31,  level: 1, sync_start: yes, use_core: 48 }
+      node-32:
+            - { name: ecdsa-threshold, role: participant, id: 32,  level: 1, sync_start: yes, use_core: 33 }
+      node-33:
+            - { name: ecdsa-threshold, role: participant, id: 33,  level: 1, sync_start: yes, use_core: 17 }
+      node-34:
+            - { name: ecdsa-threshold, role: participant, id: 34,  level: 1, sync_start: yes, use_core: 18 }
+      node-35:
+            - { name: ecdsa-threshold, role: participant, id: 35,  level: 1, sync_start: yes, use_core: 19 }
+      node-36:
+            - { name: ecdsa-threshold, role: participant, id: 36,  level: 1, sync_start: yes, use_core: 20 }
+      node-37:
+            - { name: ecdsa-threshold, role: participant, id: 37,  level: 1, sync_start: yes, use_core: 21 }
+      node-38:
+            - { name: ecdsa-threshold, role: participant, id: 38,  level: 1, sync_start: yes, use_core: 22 }
+      node-39:
+            - { name: ecdsa-threshold, role: participant, id: 39,  level: 1, sync_start: yes, use_core: 23 }
+      node-40:
+            - { name: ecdsa-threshold, role: participant, id: 40,  level: 1, sync_start: yes, use_core: 24 }
+      node-41:
+            - { name: ecdsa-threshold, role: setup, single_thread: yes, source_node: [1], flows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 ], level: 0, sync_start: no }     
+            - { name: ecdsa-threshold, role: client,  iterations: 500,  test_mode: dkg,  level: 2, file: n40_t2_client_dkg, group: [1], signal: yes }
+    protocols: {}

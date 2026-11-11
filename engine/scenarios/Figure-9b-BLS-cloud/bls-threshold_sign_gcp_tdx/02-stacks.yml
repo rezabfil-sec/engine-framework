@@ -1,0 +1,835 @@
+---
+# 2. Application and protocol stack
+#
+# Services are usually a synonym for applications
+# Services can be started grouped by nodes. The same service can be run multiple
+# times, with the same or different parameters. The service parameters vary heavily.
+# All available services and their parameters can be seen in the roles/services folder.
+
+# Further information about services:
+# Services are started during an experiment, the experiment can run in a signal
+# or timer mode, both are explained in more detail in the 04-experiment.yml file
+# In both cases every service is sending a signal to the experiment run script when it stops:
+# 0 if the service finished successfully and 1 when an error occurred.
+#
+# In all cases if a failure signal (1) is received by the experiment runner the
+# experiment is aborted.
+# When running the experiment in signal mode, the experiment finishes only when all
+# registered services send a success signal to the runner. To register a service
+# the parameter "signal: yes" must be defined in the service entry. Usually all
+# service are started with the run_service wrapper script that takes care of the
+# signaling and sending registered signals to the experiment runner.
+
+# For more details on applications see roles/services/<application>/tasks/main.yml
+# There you will find more information on available settings.
+
+stacks:
+
+
+# -------------------------------------------- SIGN, single node, n: 3,5,6,7,9,10,11,12,13,14,16,... t: 2,4,8,16, ------------------------------------------------------------------------------------------------------------------------------
+  stack-3:
+    name: 'sign_stack_3_2'
+    services:
+      node-1:
+        - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+        - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+        - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+        - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+        - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n3_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: { }
+
+  stack-5:
+    name: 'sign_stack_5'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+
+      node-41:
+            - {  name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n5_t4_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+
+  stack-6:
+    name: 'sign_stack_6'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, threshold: 5, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n6_t5_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-7:
+    name: 'sign_stack_7'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, threshold: 6, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n7_t6_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-9:
+    name: 'sign_stack_9'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n9_t8_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-10:
+    name: 'sign_stack_10'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n9_t8_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-11:
+    name: 'sign_stack_11'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n11_t10_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-12:
+    name: 'sign_stack_12'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n12_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-13:
+    name: 'sign_stack_13'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n13_t11_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-14:
+    name: 'sign_stack_14'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n14_t11_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-16:
+    name: 'sign_stack_16'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-15:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-16:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n16_t11_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-20:
+    name: 'sign_stack_20'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-15:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-16:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-17:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-18:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-19:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-20:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n20_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-24:
+    name: 'sign_stack_24'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-15:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-16:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-17:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-18:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-19:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-20:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-21:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-22:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-23:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-24:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n24_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-28:
+    name: 'sign_stack_28'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-15:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-16:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-17:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-18:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-19:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-20:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-21:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-22:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-23:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-24:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-25:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-26:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-27:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-28:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n28_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-32:
+    name: 'sign_stack_32'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-15:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-16:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-17:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-18:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-19:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-20:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-21:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-22:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-23:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-24:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-25:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-26:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-27:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-28:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-29:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-30:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-31:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-32:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n32_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+
+  stack-36:
+    name: 'sign_stack_36'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-15:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-16:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-17:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-18:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-19:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-20:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-21:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-22:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-23:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-24:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-25:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-26:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-27:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-28:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-29:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-30:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-31:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-32:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-33:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-34:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-35:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-36:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n36_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}
+
+  stack-40:
+    name: 'sign_stack_40'
+    services:
+      node-1:
+            - { name: bls-threshold, role: setup, level: 0, sync_start: no, service_port: 42000  }
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-2:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-3:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-4:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-5:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-6:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-7:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-8:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-9:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-10:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-11:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-12:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-13:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-14:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-15:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-16:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-17:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-18:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-19:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-20:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-21:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-22:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-23:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-24:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-25:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-26:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-27:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-28:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-29:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-30:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-31:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-32:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-33:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-34:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-35:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-36:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-37:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-38:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-39:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes }
+      node-40:
+            - { name: bls-threshold, role: participant, level: 1, sync_start: yes, aggregator: yes, agg_port: 41999, phonebook_path: phonebook.txt }
+      node-41:
+            - { name: bls-threshold, role: signclient, level: 2, agg_port: 41999, iterations: 500, msg_len: 256, file: n40_t2_client_sign_l256, phonebook_path: phonebook.txt, signal: yes }
+    protocols: {}

@@ -1,0 +1,6 @@
+---
+# triad defaults
+
+tdir: triad
+vector_size: 65536
+repetitions: 4096

@@ -5,35 +5,47 @@
 num_interfaces: 11
 node_ifaces:
   1:
-    name: 'enp8s0'
-    mac: '6c:b3:11:52:54:98'
-    phc: '/dev/ptp0'
-    clock: '6cb311.fffe.525498-1'
-  2:
     name: 'enp9s0'
-    mac: '6c:b3:11:52:54:99'
-    phc: '/dev/ptp1'
-    clock: '6cb311.fffe.525498-2'
-  3:
+    mac: '88:c9:b3:b6:07:09'
+    phc: '/dev/ptp0'
+    clock: '88c9b3.fffe.b60709-1'
+    bandwidth: 2.5
+    sriov: no
+  2:
     name: 'enp10s0'
-    mac: '6c:b3:11:52:54:9a'
-    phc: '/dev/ptp2'
-    clock: '6cb311.fffe.525498-3'
-  4:
+    mac: '88:c9:b3:b6:07:0a'
+    phc: '/dev/ptp1'
+    clock: '88c9b3.fffe.b60709-2'
+    bandwidth: 2.5
+    sriov: no
+  3:
     name: 'enp11s0'
-    mac: '6c:b3:11:52:54:9b'
+    mac: '88:c9:b3:b6:07:0b'
+    phc: '/dev/ptp2'
+    clock: '88c9b3.fffe.b60709-3'
+    bandwidth: 2.5
+    sriov: no
+  4:
+    name: 'enp12s0'
+    mac: '88:c9:b3:b6:07:0c'
     phc: '/dev/ptp3'
-    clock: '6cb311.fffe.525498-4'
+    clock: '88c9b3.fffe.b60709-4'
+    bandwidth: 2.5
+    sriov: no
   5:
     name: 'eno1'
     mac: '3c:ec:ef:46:61:70'
     phc: '/dev/ptp4'
     clock: '6cb311.fffe.525498-5'
+    bandwidth: 1
+    sriov: no
   6:
     name: 'eno2'
     mac: '3c:ec:ef:46:61:71'
     phc: '/dev/ptp5'
     clock: '6cb311.fffe.525498-6'
+    bandwidth: 1
+    sriov: no
 # Iface eno3 omitted - used for a IPMI connection, so cant be used individually
   # 7:
   #   name: 'eno3'
@@ -44,23 +56,41 @@ node_ifaces:
     mac: '3c:ec:ef:46:61:73'
     phc: '/dev/ptp7'
     offload: no
+    bandwidth: 1
+    sriov: no
   8:
     name: 'eno5'
     mac: '3c:ec:ef:46:61:74'
     phc: '/dev/ptp8'
     offload: no
+    bandwidth: 1
+    sriov: no
   9:
     name: 'eno6'
     mac: '3c:ec:ef:46:61:75'
     phc: '/dev/ptp9'
     offload: no
+    bandwidth: 1
+    sriov: no
   10:
     name: 'eno7'
     mac: '3c:ec:ef:46:69:b6'
     offload: no
     bandwidth: 10
+    sriov: yes
+    sriov_driver: ixgbe
   11:
     name: 'eno8'
     mac: '3c:ec:ef:46:69:b7'
     offload: no
     bandwidth: 10
+    sriov: yes
+    sriov_driver: ixgbe
+
+# Total number of CPUs
+# Hyper threading is on, so 8 vCPUs 
+number_vCPUs: 8
+# Unit in GB
+total_RAM: 128
+
+management_iface: eno3

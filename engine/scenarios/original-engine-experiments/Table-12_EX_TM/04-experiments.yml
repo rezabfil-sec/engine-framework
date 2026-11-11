@@ -1,0 +1,22 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+## Tab 12
+### Table-12_EX_TM
+- {  network: 'net-119', stack: 'stack-21',  action: 'action-1', time: 120, name: '7_hops-taprio_offload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-119', stack: 'stack-22',  action: 'action-1', time: 120, name: '6_hops-taprio_offload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-119', stack: 'stack-23',  action: 'action-1', time: 120, name: '5_hops-taprio_offload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-119', stack: 'stack-24',  action: 'action-1', time: 120, name: '4_hops-taprio_offload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-119', stack: 'stack-25',  action: 'action-1', time: 120, name: '3_hops-taprio_offload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-119', stack: 'stack-26',  action: 'action-1', time: 120, name: '2_hops-taprio_offload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-119', stack: 'stack-27',  action: 'action-1', time: 120, name: '1_hops-taprio_offload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+
+- {  network: 'net-120', stack: 'stack-21',  action: 'action-1', time: 120, name: '7_hops-taprio_nooffload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-120', stack: 'stack-22',  action: 'action-1', time: 120, name: '6_hops-taprio_nooffload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-120', stack: 'stack-23',  action: 'action-1', time: 120, name: '5_hops-taprio_nooffload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-120', stack: 'stack-24',  action: 'action-1', time: 120, name: '4_hops-taprio_nooffload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-120', stack: 'stack-25',  action: 'action-1', time: 120, name: '3_hops-taprio_nooffload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-120', stack: 'stack-26',  action: 'action-1', time: 120, name: '2_hops-taprio_nooffload_180txtime_175delta_threeflows_shift_200perhop_400windows'}
+- {  network: 'net-120', stack: 'stack-27',  action: 'action-1', time: 120, name: '1_hops-taprio_nooffload_180txtime_175delta_threeflows_shift_200perhop_400windows'}

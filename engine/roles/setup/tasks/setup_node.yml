@@ -2,66 +2,103 @@
 # Basic node setup
 
 # not needed yet - maybe for post-processing
-# - name: checkout tsn repository
+# - name: checkout toolchain repository
 #   git:
-#     repo: 'https://{{ git_tsn_user }}:{{ git_tsn_token }}@{{ git_tsn_repo }}'
-#     dest: '{{ data_path }}/tsn'
-#     version: '{{ git_tsn_branch }}'
+#     repo: 'https://{{ git_toolchain_user }}:{{ git_toolchain_token }}@{{ git_toolchain_repo }}'
+#     dest: '{{ data_path }}/toolchain'
+#     version: '{{ git_toolchain_branch }}'
 #     update: yes
 
 # grab time from internet and perform one time update
 - name: oneshot system clock update
   shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
   register: dateupdate
+  when: is_container is not defined
 
 - debug: msg="{{ dateupdate.stdout }}"
+  when: is_container is not defined
 
-# - name: wait after clock update
-#   shell: sleep 60
-
-# - name: oneshot system clock update
-#   shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
-
-# - name: verify date and time
-#   command: date
-#   register: date
-
-# - debug: msg="{{ date.stdout }}"
 
 # install packages not included in the node base image
-- name: update list of packages
-  apt: update_cache=yes force_apt_get=yes
+- block: 
+  - name: update list of packages
+    apt: update_cache=yes force_apt_get=yes
+    
+  - name: install linux dependencies
+    apt: 
+      name:
+        - bison
+        - flex
   
-- name: install linux dependecies
-  apt: 
-    name:
-      - bison
-      - flex
+  # NOTE -- please append changes made here to the EnGINE Dockerfiles
+  - name: install extra packages
+    apt:
+      name:
+        - libcmocka-dev
+        - pkg-config
+        - cgroup-tools
+        # - python3-apt
+        - python3-pip
+        - scapy
+        - nftables
+        # - openvswitch-switch
+        # - ethtool
+        # - iperf3
+        - gnuplot
+        - libtool
+        - autoconf
+        - libsodium-dev
+        - libb2-dev
+        - tshark
+        - rsync
+        - software-properties-common
+        - curl
+        - expect
+        - bc
+        - fio
+        - iftop
+        - htop
+        - ethtool
+        # Install stuff needed to compile netperf/netserver
+        # NOTE! This can be removed as soon as we include netperf in the image!
+        # - autotools-dev
+        # - automake
+        # - texinfo
+      state: present
 
-- name: install extra packages
+  # install python packages not included in the node base image
+  # NOTE -- please append changes made here to the EnGINE Dockerfiles
+
+  - name: remove externally-managed
+    file:
+      path: /usr/lib/python3.11/EXTERNALLY-MANAGED
+      state: absent
+    ignore_errors: true
+
+  - name: install python packages
+    pip:
+      name:
+        - psutil
+        - seaborn
+        - pandas==1.3.5
+        - pypacker
+        - matplotlib==3.5.3
+        - numpy==1.24.3
+        - netifaces
+        - python-ndn
+        - web3
+        - eth-keys
+  # each container set up in own service or part of dockerfile
+  when: is_container is not defined
+  #or (is_container and container_runtime != 'lxc') or (is_container and container_runtime != 'containerd')
+  # when: is_container is not defined or (is_container and container_runtime != 'containerd')
+
+- name: install - lxc-utils
   apt:
-    name:
-      - libcmocka-dev
-      - pkg-config
-      - cgroup-tools
-      - python3-pip
-      - scapy
-      - gnuplot
-      - libtool
-      - autoconf
-      - libsodium-dev
-      - libb2-dev
-      - tshark
+    name: lxc-utils
     state: present
-# install python packages not included in the node base image
-- name: install python packages
-  pip:
-    name: 
-      - psutil
-      - pandas==1.3.5
-      - pypacker
-      - matplotlib
-      - python-ndn
+  when: (is_container is defined and not is_container) and container_runtime == 'lxc' and gcp is not defined
+
 # distribute service and experiment script
 - name: copy service and experiment script to nodes
   template:
@@ -79,6 +116,7 @@
     mode: '0775'
     state: directory
 
+
 # format and mount hard drive for data storage
 - block:
   - name: format data hard drive
@@ -93,7 +131,7 @@
       fstype: ext4
       state: mounted
 
-  when: data_disk | length > 0
+  when: (data_disk | length > 0) and gcp is not defined
 
 # copy custom scripts to node in order to later import them
 - name: copy scripts to node

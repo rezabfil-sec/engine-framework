@@ -1,0 +1,43 @@
+---
+# fio main
+
+- name: set fio output directory
+  set_fact:
+    fio_output_dir: "{{ data_path }}/{{ service.fio_output_dir | default(fio_output_dir) }}"
+
+- name: set fio output file
+  set_fact:
+    fio_output_file: "{{ service.fio_config }}-out.json"
+
+- name: create fio directories
+  file:
+    path: "{{ fio_dir }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ fio_output_dir }}"
+    - "{{ service.fio_location | default(fio_location) }}"
+  loop_control:
+    loop_var: fio_dir
+
+- name: copy config template to node
+  template:
+    src: "{{ service.fio_config }}.j2"
+    dest: "{{ fio_output_dir }}/{{ service.fio_config }}.fio"
+    mode: 0644
+
+- name: drop caches
+  shell: >
+    sync && echo 3 > /proc/sys/vm/drop_caches
+  when: is_container is not defined and service.drop_caches | default(drop_caches)
+
+- name: drop caches on host
+  shell: >
+    sync && echo 3 > /proc/sys/vm/drop_caches
+  delegate_to: "{{ hostvars[inventory_hostname].ansible_ssh_host }}"
+  when: is_container is defined and service.drop_caches | default(drop_caches)
+
+- name: run fio
+  command: >
+    run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+    fio {{ fio_output_dir }}/{{ service.fio_config }}.fio --output {{ fio_output_dir }}/{{ fio_output_file }} --output-format=json

@@ -1,0 +1,80 @@
+---
+# 0. Nodes
+# Define and map nodes required for the scenario
+#
+# Scenario can be moved around in the infrastructure or
+# updated after a re-wiring of the network more easily.
+#
+
+# ---------------------------------------------
+# 0. Option
+# Specify the settings for CPU Isolation
+
+# Specify if you want to use the low-latency kernel
+# Set to "no" or leave out if you don't want to use the low-latency kernel
+use_low_latency_kernel: "no"
+
+# Set the number of isolated cores. Cores starting with core 0 will be isolated. 
+# Set to 0 or leave out if you want no cores to be isolated!
+num_isolated_cores: 0
+
+network_config: 'Physical'
+
+# set processing_node to localhost or delete the variable if processing should be done on management host
+# default: localhost
+processing_node: localhost
+
+# TODO - add these new tcpdump options to the other scenarios
+# determines if pcaps should be converted to csv on experiment nodes, then sent to a single host
+# default: false
+parse_pcap_on_nodes: false
+
+# this option creates tcpdump services for iperf server/clients and send_udp source/sinks.
+# for send_udp, you need to add a extra redundant send_udp service to the node at the end of the flow  with role: sink and flow and port defined
+# example: - { name: send_udp, role: sink, flow: 1, port: 1005 }
+# tcpdump file name should be "p{port}"
+# you can add a variable "tcpdump: off" to a iperf/sendudp service to disable auto tcpdump collection for that specific service
+# default: false
+auto_tcpdump_collection: false
+
+#does not start probe tcpdumps
+# TODO does not work on LXC containers yet
+probe_tcpdumps: false
+
+
+# ---------------------------------------------
+# 1. Option
+# Load the nodes for a pre-defined topology and its node mapping
+# Empty string to use own definition
+
+# A topology from the scenarios/topologies folder
+topology: ""
+
+# ---------------------------------------------
+# 2. Option
+# Define your own required hosts and their mapping
+# if the topology variable is defined it takes precedence
+
+# A list with the required nodes with real hostname
+nodes:
+  - octorand
+  - opulous
+
+containers:
+  octorand:
+    - { name: octorand-snp1, ssh_port: 10022 }
+  opulous:
+    - { name: opulous-snp1, ssh_port: 10022 }
+
+pos_node_image: "-s ubuntu-focal-snp-iommu-avic-sriov@2023-08-25T21:04:30+00:00"
+container_runtime: 'containerd'
+containerd_runtime: 'io.containerd.run.kata.v2'
+kata_config: 'kata-configuration-snp'
+
+# The mapping of the above nodes to node-X names
+# the node-X names are used in the rest of the scenario configuration
+node_mapping:
+  node-1: octorand-snp1
+  node-2: opulous-snp1
+  node-3: octorand
+  node-4: opulous

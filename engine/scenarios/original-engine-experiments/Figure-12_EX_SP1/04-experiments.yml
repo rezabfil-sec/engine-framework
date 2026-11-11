@@ -1,0 +1,7 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+  # Figure-12_EX_SP1 - 3 hop with one cbs flow. CBS applied on all hops. Normal Ubuntu kernel without any optimizations
+  - { network: 'net-44', stack: 'stack-84',  action: 'action-1', time: 1200, name: '4-queue_2-cbs_2-be_1-streams_3-hop_with-hop-cbs-iperf-line-limit100-20min'  }

@@ -1,0 +1,104 @@
+---
+# tls traffic bench main
+
+# ============== Common ==============
+- name: create tls bench directory
+  file:
+    path: '{{ tls_bench_dir }}'
+    state: directory
+    mode: 0755
+
+- name: remove old Go version
+  file:
+    path: /usr/local/go
+    state: absent
+
+- name: set Go version 1.19.12
+  set_fact:
+    golang_version: '1.19.12'
+
+- name: download Go
+  get_url:
+    url: https://golang.org/dl/go{{ golang_version }}.linux-amd64.tar.gz
+    dest: /tmp/go{{ golang_version }}.linux-amd64.tar.gz
+    mode: '0644'
+
+- name: install Go
+  unarchive:
+    src: /tmp/go{{ golang_version }}.linux-amd64.tar.gz
+    dest: /usr/local
+    remote_src: yes
+
+- name: check golang in /usr/local/go
+  stat:
+    path: /usr/local/go
+  register: golang_installed
+
+- name: set golang binary
+  set_fact:
+    golang_binary: /usr/local/go/bin/go
+  when: golang_installed.stat.exists
+
+- name: set golang binary
+  set_fact:
+    golang_binary: go
+  when: not golang_installed.stat.exists
+
+# ============== Client Mode ==============
+- block:
+  - fail:
+      msg: "destination is not defined"
+    when: service.dest_ip is not defined # and service.dest_ip is not defined
+
+  - name: copy tls bench files to node
+    copy:
+      src: '{{ tls_bench_file }}'
+      dest: '{{ tls_bench_dir }}'
+    with_items:
+      - tls_bench_client.go
+    loop_control:
+      loop_var: tls_bench_file
+
+  # - name: load destination ip
+  #   set_fact:
+  #     dest_ip: '{{ "10." + curflow.value.split(";")[0].split("-")[1] + "." + ((flow_id+1)|string) + ".2" if curflow.value.split(":")[1] == node else ("10." + curflow.value.split(";")[0].split("-")[1] + "." + ((flow_id+1)|string) + ".1") }}'
+  #   when: 'service.dest_name is defined and service.dest_ip is not defined and (curflow.value.split(":")[1] == node and curflow.value.split(":")[-2] == service.dest_name) or (curflow.value.split(":")[1] == service.dest_name and curflow.value.split(":")[-2] == node)'
+  #   loop: '{{ flows | dict2items }}'
+  #   loop_control:
+  #     index_var: flow_id
+  #     loop_var: curflow
+
+  - name: run tls bench (client)
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      {{ golang_binary }} run tls_bench_client.go -b {{ service.packet_size | default(packet_size) }} -d {{ service.data_size_mb | default(data_size_mb) }} -s {{ service.network_speed_mbps | default(network_speed_mbps) }} -port {{ service.port | default(port) }} -addr {{ service.dest_ip }}
+    args:
+      chdir: '{{ tls_bench_dir }}'
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  when: service.mode == 'client'
+
+
+
+# ============== Server Mode ==============
+- block:
+  - name: copy tls bench files to node
+    copy:
+      src: '{{ tls_bench_file }}'
+      dest: '{{ tls_bench_dir }}'
+    with_items:
+      - tls_bench_server.go
+      - server.crt
+      - server.key
+    loop_control:
+      loop_var: tls_bench_file
+
+  - name: run tls bench (server)
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }}
+      {{ golang_binary }} run tls_bench_server.go -b {{ service.packet_size | default(packet_size) }} -port {{ service.port | default(port) }}
+    args:
+      chdir: '{{ tls_bench_dir }}'
+    async: 2592000  # run in background - for 1 month or until finished/killed
+    poll: 0
+  when: service.mode == 'server'

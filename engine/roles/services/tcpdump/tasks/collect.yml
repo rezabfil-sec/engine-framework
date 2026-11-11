@@ -1,21 +1,58 @@
 ---
 # Collect tcpdump artifacts
 
+# If SR-IOV mode use the virtual ifaces
+- block:
+  - debug: var=used_hw_ifaces
+  - debug: var=used_virtual_ifaces
+  - name: collect tcpdump pcap file(s)
+    fetch:
+      src: '{{ data_path }}/process/{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap'
+      dest: '{{ node_folder }}/'
+      flat: yes
+      fail_on_missing: no
+    loop: "{{ used_virtual_ifaces }}"
+    loop_control:
+      loop_var: iface
+
+  - name: delete node tcpdump pcap file
+    file:
+      path: '{{ data_path }}/process/{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface }}.pcap'
+      state: absent
+    loop: "{{ used_virtual_ifaces }}"
+    loop_control:
+      loop_var: iface
+    ignore_errors: false
+  when: network_config == "SRIOV" and not (service.iostats | default(iostats) | bool)
+
+# Collect probes and other physical iface artifacts
 - name: collect tcpdump pcap file(s)
   fetch:
-    src: '{{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
+    src: '{{ data_path }}/process/{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
     dest: '{{ node_folder }}/'
     flat: yes
     fail_on_missing: no
   loop: "{{ node_ifaces | dict2items }}"
   loop_control:
     loop_var: iface
+  when: not (service.iostats | default(iostats) | bool)
+
+- name: collect iostats file
+  fetch:
+    src: '{{ data_path }}/process/{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}-iostats.csv'
+    dest: '{{ node_folder }}/'
+    flat: yes
+    fail_on_missing: no
+  loop: "{{ node_ifaces | dict2items }}"
+  loop_control:
+    loop_var: iface
+  when: service.iostats | default(iostats) | bool
 
 - name: delete node tcpdump pcap file
   file:
-    path: '{{ data_path }}/process{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
+    path: '{{ data_path }}/process/{{ node_folder }}/tcpdump_{{ service.file + "_" if service.file is defined else "" }}{{ iface.value.name}}.pcap'
     state: absent
   loop: "{{ node_ifaces | dict2items }}"
   loop_control:
     loop_var: iface
-  ignore_errors: yes
+  ignore_errors: false

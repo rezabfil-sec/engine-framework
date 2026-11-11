@@ -1,0 +1,58 @@
+[package]
+name = "bls"
+version = "0.1.4"
+authors = ["Doron <doronz@zengo.com>", "Omer <omer@zengo.com>", "Denis <dsurv@yandex.ru>"]
+description = "threshold BLS library"
+edition = "2018"
+
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0"
+zeroize = "1"
+rand = "0.7.3"
+pairing-plus = "0.19"
+ff-zeroize = "0.6.3"
+round-based = { version = "0.1.0", features = [] }
+thiserror = "1.0.23"
+
+[dependencies.curv]
+git = "https://github.com/ZenGo-X/curv"
+tag = "v0.6.2"
+default-features = false
+
+[dev-dependencies]
+criterion = "0.3.3"
+bls_sigs_ref = "0.3.0"
+sha2 = "0.8.0"
+round-based = { version = "0.1.0", features = ["dev"] }
+
+# Example dependencies
+tonic = "0.4"
+prost = "0.7"
+tokio = { version = "1.0.2", features = ["full"] }
+tokio-stream = { version = "0.1.2", features = ["net"] }
+futures = "0.3.12"
+async-stream = "0.3.0"
+tracing = "0.1.22"
+tracing-subscriber = "0.2.15"
+anyhow = "1.0.38"
+serde_json = "1.0"
+structopt = "0.3.21"
+hex = "0.4.2"
+
+[build-dependencies]
+tonic-build = "0.4.2"
+
+[lib]
+crate-type = ["lib"]
+
+[features]
+default = ["curv/rust-gmp-kzen"]
+# Internally used feature for testing purposes. You normally don't want to use it.
+dev = []
+
+[[bench]]
+name = "criterion"
+harness = false
+required-features = ["dev"]

@@ -1,0 +1,34 @@
+[package]
+name = "threshold-bls"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt = {version = "0.3", default-features = false, features = ["color"] }
+bls = {path = "../multi-party-bls"} #{git = "https://github.com/ZenGo-X/multi-party-bls"}
+tokio = {version = "1.21.0", features = ["full"]}
+snow = "0.9.0"
+lazy_static = "1.4.0"
+futures = "0.3.24"
+tracing = "0.1.36"
+anyhow = "1.0.65"
+round-based = "0.1.7"
+serde = "1.0.144"
+serde_json = "1.0.85"
+async-std = "1.12.0"
+clap = {version = "4.0.11", features = ["derive"]}
+csv = "1.1.6"
+hex = "0.4.3"
+rand = { version = "0.7", features=["small_rng"] }
+
+[dependencies.curv]
+git = "https://github.com/ZenGo-X/curv"
+tag = "v0.6.2"
+default-features = false
+
+[[bin]]
+name = "bench"
+path = "src/bench.rs"
+harness = false

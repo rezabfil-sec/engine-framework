@@ -1,0 +1,54 @@
+- name: obtain access token
+  script: ../../files/obtain_access_token.py
+  register: access_token
+- debug:
+    var: access_token.stdout
+- name: create an Intel TDX VM
+  uri:
+    url: "https://compute.googleapis.com/compute/beta/projects/{{ gcp_config.project }}/zones/{{processed_instance_dict['zone']}}/instances"
+    method: POST
+    body: | # Change the machine type during actual testing
+      {
+        "machineType": "zones/{{processed_instance_dict['zone']}}/machineTypes/{{name_mt.1}}", 
+        "name": "{{processed_instance_dict['name']}}",
+        "labels": {
+          "env": "engine_nodes"
+        },
+        "minCpuPlatform": "Intel Sapphire Rapids",
+        "confidentialInstanceConfig": {
+         "confidentialInstanceType": "TDX"
+        },
+        "disks": [
+          {
+            "autoDelete": true,
+            "boot": true,
+            "initializeParams": {
+              "sourceImage": "projects/tdx-guest-images/global/images/family/ubuntu-2204-lts",
+              "diskSizeGb": "{{gcp_config.disk.size}}",
+              "diskType": "projects/{{ gcp_config.project }}/zones/{{processed_instance_dict['zone']}}/diskTypes/pd-balanced"
+            }
+          }
+        ],
+        "networkInterfaces": {{processed_instance_dict["networkInterfaces"]}},
+        "scheduling": {
+          "automaticRestart": true,
+          "nodeAffinities": [],
+          "onHostMaintenance": "TERMINATE",
+          "preemptible": false
+        },
+        "zone": "{{processed_instance_dict['zone']}}",
+        "canIpForward": true, 
+        "shieldedInstanceConfig": {
+          "enableSecureBoot": true,
+          "enableVtpm": true,
+          "enableIntegrityMonitoring": true
+        }
+      }
+    headers:
+      Host: "www.googleapis.com"
+      Content-Type: "application/json"
+      Authorization: "Bearer {{ access_token.stdout | string | trim }}"
+    status_code: 200
+    body_format: json
+  register: response
+  ignore_errors: yes

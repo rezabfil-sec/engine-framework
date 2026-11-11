@@ -1,0 +1,5 @@
+USE_LXC_BRIDGE="true"
+LXC_DHCP_RANGE="{{ lxc_subnet_prefix }}.253,{{ lxc_subnet_prefix }}.254"
+LXC_ADDR="{{ lxc_subnet_prefix }}.1"
+LXC_NETWORK="{{ lxc_subnet_prefix }}.0/24"
+LXC_DHCP_CONFILE="{{ lxc_dhcp_conf }}"

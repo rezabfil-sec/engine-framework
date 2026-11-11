@@ -1,0 +1,270 @@
+# network variables
+- name: load network paths
+  set_fact:
+    flows: "{{ network[experiment.network].flows }}"
+  tags: always
+
+#### NDN/ICN variables #####
+- block:
+    # load forwarders variable if experiment is an ndn experiment
+    - name: load ndn forwarders
+      set_fact:
+        forwarders: "{{ network[experiment.network].forwarders }}"
+
+    # load flow priorities if experiment is an ndn experiment
+    - name: load icn flows
+      set_fact:
+        icn_flows: "{{ network[experiment.network].icn_flows }}"
+
+    # load flow priorities if experiment is an ndn experiment
+    - name: load flow prios
+      set_fact:
+        flow_prio: "{{ network[experiment.network].flow_prio }}"
+  when: ndn is defined and ndn
+
+# merge scenario and pre-defined flows
+- include_vars: "../../../scenarios/topologies/{{ network[experiment.network].topo_flows }}.yml"
+  when: network[experiment.network].topo_flows is defined
+  tags: always
+- name: load pre-defined network paths
+  set_fact:
+    flows: "{{ flows | combine(basic_flows) }}"
+  when: network[experiment.network].topo_flows is defined and basic_flows is defined and basic_flows | length > 0
+  tags: always
+
+- name: setting physical names
+  set_fact: "used_physical_ifaces={{ [] }}"
+# qdisc variables
+- name: initialize qdisc_config list
+  set_fact: "qdisc_configs={{ [] }}"
+  tags: always
+- name: load node qdisc config
+  set_fact:
+    qdisc_configs: '{{ qdisc_configs + [ { "qdisc": item.0.key, "ifaces": item.1.split(":")[1] | default("") } ] }}'
+  when: node in item.1.split(":")[0]
+  loop: '{{ network[experiment.network].qdisc | dict2items | subelements("value") }}'
+  tags: always
+
+# iface variables
+- name: initialize iface_config list
+  set_fact: "iface_configs={{ [] }}"
+  tags: always
+- name: load node iface config
+  set_fact:
+    iface_configs: '{{ iface_configs + [ { "iconfig": item.0.key, "ifaces": item.1.split(":")[1] | default("") } ] }}'
+  when: node in item.1.split(":")[0]
+  loop: '{{ network[experiment.network].iconfig | dict2items | subelements("value") }}'
+  tags: always
+
+# stack (service + protocol) and action variables
+- name: load stack and actions
+  set_fact:
+    services: "{{ stacks[experiment.stack].services[node] | default([]) }}"
+    protocol: "{{ stacks[experiment.stack].protocols }}"
+    action: "{{ actions[experiment.action][node] | default([]) }}"
+  tags: always
+
+# adds tcpdump services if auto_tcpdump_collection is true
+- name: add tcpdump collection automatically
+  include_role:
+    name: "roles/services/{{ item.name }}"
+    tasks_from: measurement.yml
+    apply:
+      tags: [stack, service]
+  loop: "{{ services }}"
+  when:
+    auto_tcpdump_collection is defined and auto_tcpdump_collection and item.name in ['iperf', 'send_udp'] and
+    (item.tcpdump is not defined or item.tcpdump)
+  vars:
+    service: "{{ item }}"
+  tags: [stack, service, measurement]
+
+# ---------------------- Output folders --------------------------
+
+- name: set experiment folder
+  set_fact:
+    experiment_folder: '{{ hostvars["localhost"]["scene_folder"] }}/{{ experiment_index}}_{{experiment.network}}_{{experiment.stack}}_{{experiment.action}}{{ "_" + experiment.name if experiment.name is defined else ""}}'
+    node_folder: '{{ hostvars["localhost"]["scene_folder"] }}/{{ experiment_index}}_{{experiment.network}}_{{experiment.stack}}_{{experiment.action}}{{ "_" + experiment.name if experiment.name is defined else ""}}/{{node}}_{{inventory_hostname}}'
+  tags: always
+
+- name: create experiment folders
+  file:
+    path: "{{ item }}"
+    mode: "0775"
+    state: directory
+  #delegate_to: localhost
+  loop:
+    - "{{ experiment_folder }}"
+    - "{{ node_folder }}"
+  tags: always
+
+- name: create folder for tcpdump pcap
+  file:
+    path: "{{ data_path }}/process{{ node_folder }}"
+    state: directory
+
+- name: store experiment metadata
+  copy:
+    content: "{{ item.content | to_nice_json }}"
+    dest: "{{ experiment_folder }}/exp_{{ item.destination }}.config"
+  loop:
+    - {
+        "content": "{{ network[experiment.network] }}",
+        "destination": "network",
+      }
+    - {
+        "content": "{{ stacks[experiment.stack] | default([]) }}",
+        "destination": "stack",
+      }
+    - {
+        "content": "{{ actions[experiment.action] | default([]) }}",
+        "destination": "actions",
+      }
+  #delegate_to: localhost
+  tags: always
+
+# ---------------------- [1] Network ---------------------------
+- name: start network configuration
+  block:
+    - name: apply qdisc configuration
+      include_role:
+        name: roles/network
+        tasks_from: qdisc_control.yml
+        apply:
+          tags: [qdisc, network]
+      vars:
+        qdisc_config: "{{ item }}"
+      when: qdisc_configs | length > 0
+      loop: "{{ qdisc_configs }}"
+      tags: [qdisc, network]
+
+    - name: apply iface configuration
+      include_role:
+        name: roles/network
+        tasks_from: iface_control.yml
+        apply:
+          tags: [ifacec, network]
+      vars:
+        iface_config: "{{ item }}"
+      when: iface_configs | length > 0
+      loop: "{{ iface_configs }}"
+      tags: [ifacec, network]
+
+    - name: apply network flows
+      include_role:
+        name: roles/network
+        tasks_from: ovs_flows.yml
+        apply:
+          tags: [ovs, network]
+      when: flows | length > 0 and network_config == "OvS"
+      tags: [ovs, network]
+
+    - name: apply network flows
+      include_role:
+        name: roles/network
+        tasks_from: physical_flows.yml
+        apply:
+          tags: [phy, network]
+      when: flows | length > 0 and network_config == "Physical"
+      tags: [phy, network]
+
+    - name: apply network flows
+      include_role:
+        name: roles/network
+        tasks_from: sriov_flows.yml
+        apply:
+          tags: [sriov, network]
+      when: flows | length > 0 and network_config == "SRIOV"
+      tags: [sriov, network]
+
+    - name: apply ndn flows
+      include_role:
+        name: roles/network
+        tasks_from: ndn_flows.yml
+        apply:
+          tags: [network]
+      when: flows | length > 0 and ndn is defined and ndn and node in forwarders
+      tags: [network]
+
+    - name: apply bridge flows
+      include_role:
+        name: roles/network
+        tasks_from: bridge_flows.yml
+        apply:
+          tags: [bridge, network]
+      when: >
+        flows | length > 0 and 
+        inventory_hostname in hostvars["localhost"]["containers"].keys() and
+        is_container is not defined and container_runtime == "containerd"
+      tags: [bridge, network]
+  when: gcp is not defined
+
+# GCP START ====================================================================
+- name: get hostname of the node
+  command: hostname
+  register: hostname
+- name: initialize node_ifaces and flow_ifaces in gcp
+  block:
+    - set_fact:
+        node_ifaces: '{{hostvars["localhost"].nodes_ifaces[hostname.stdout]}}'
+        ignore_errors: yes
+      when: is_container is not defined
+    
+    - set_fact:
+        flow_ifaces: '{{hostvars["localhost"].nodes_flows_ifaces[hostname.stdout]}}'
+        ignore_errors: yes
+  when: gcp is defined
+
+- name: adjust node_ifaces and flow_ifaces for containers in gcp
+  block:
+    - debug:
+        var: '{{hostvars["localhost"].container_ip | to_json}}'
+    - name: flow_ifaces containers adjustment
+      script: ../../../GCP_tools/files/adjust_flow_ifaces_cont.py '{{flow_ifaces | to_json }}' '{{hostvars["localhost"].container_ip | to_json}}'
+      register: adjusted_flow_ifaces_raw
+    - set_fact:
+        adjusted_flow_ifaces: "{{adjusted_flow_ifaces_raw.stdout}}"
+    - set_fact:
+        flow_ifaces: "{{adjusted_flow_ifaces}}"
+    - name: node_ifaces containers adjustment in gcp
+      set_fact:
+        node_ifaces:
+          "0":
+            "name": "eth0"
+            "internal_ip": '{{hostvars["localhost"].container_ip[hostname.stdout]}}'
+  when: is_container is defined and gcp is defined
+
+# GCP END ====================================================================
+
+# TODO: This does not work for containers
+- name: check network connectivity
+  include_role:
+    name: roles/services/ping
+    apply:
+      tags: [network, check]
+  vars:
+    service: "{{ item }}"
+  when: network[experiment.network].check is defined and network[experiment.network].check
+  #and is_container is not defined
+  loop:
+    - { name: ping, ignore: yes }
+    - { name: ping }
+  tags: [network, check]
+
+- name: setup macsec interfaces
+  include_role:
+    name: roles/network
+    tasks_from: macsec.yml
+    apply:
+      tags: [network, macsec]
+  when: use_ifaces | length > 0 and network[experiment.network].macsec is defined and network[experiment.network].macsec and gcp is not defined
+  tags: [network, macsec]
+
+# start loop after network
+- name: repeat experiment
+  include_tasks: experiment_after_network.yml
+  loop: "{{ experiment.loopOverNetwork if experiment.loopOverNetwork is defined else ['run once'] }}"
+  loop_control:
+    loop_var: exp_tuple
+    index_var: exp_index
+# end loop here

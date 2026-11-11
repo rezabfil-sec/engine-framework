@@ -1,0 +1,92 @@
+---
+# variables for node mabel
+
+# network card
+num_interfaces: 11
+node_ifaces:
+  ## Intel i225 card 1
+  1:
+    name: 'enp113s0'
+    mac: '88:c9:b3:b6:06:19'
+    phc: '/dev/ptp1'
+    bandwidth: 2.5
+    sriov: no
+  2:
+    name: 'enp114s0'
+    mac: '88:c9:b3:b6:06:1a'
+    phc: '/dev/ptp2'
+    bandwidth: 2.5
+    sriov: no
+  3:
+    name: 'enp115s0'
+    mac: '88:c9:b3:b6:06:1b'
+    phc: '/dev/ptp3'
+    bandwidth: 2.5
+    sriov: no
+  4:
+    name: 'enp116s0'
+    mac: '88:c9:b3:b6:06:1c'
+    phc: '/dev/ptp4'
+    bandwidth: 2.5
+    sriov: no
+  ## Intel i225 card 2
+  5:
+    name: 'enp159s0'
+    mac: '88:c9:b3:b6:06:2d'
+    phc: '/dev/ptp5'
+    bandwidth: 2.5
+    sriov: no
+  6:
+    name: 'enp160s0'
+    mac: '88:c9:b3:b6:06:2e'
+    phc: '/dev/ptp6'
+    bandwidth: 2.5
+    sriov: no
+  7:
+    name: 'enp161s0'
+    mac: '88:c9:b3:b6:06:2f'
+    phc: '/dev/ptp7'
+    bandwidth: 2.5
+    sriov: no
+  8:
+    name: 'enp162s0'
+    mac: '88:c9:b3:b6:06:30'
+    phc: '/dev/ptp8'
+    bandwidth: 2.5
+    sriov: no
+  ## Built-in Intel X550T
+  # Iface eno1 omitted - management interface
+  # 9:
+  #   name: 'eno1'
+  #   mac: '3c:ec:ef:df:a5:92'
+  #   phc: '/dev/ptp9'
+  9:
+    name: 'eno2'
+    mac: '3c:ec:ef:df:a5:93'
+    phc: '/dev/ptp10'
+    offload: no
+    bandwidth: 10
+    sriov: no
+  ## Intel E810
+  10:
+    name: 'ens4f0'
+    mac: '50:7c:6f:4e:a6:44'
+    phc: '/dev/ptp0'
+    offload: no
+    bandwidth: 25
+    sriov: no
+  11:
+    name: 'ens4f1'
+    mac: '50:7c:6f:4e:a6:45'
+    phc: '/dev/ptp0'
+    offload: no
+    bandwidth: 25
+    sriov: no
+
+# Total number of CPUs
+# Hyper threading is on, so 8 vCPUs 
+number_vCPUs: 24
+# Unit in GB
+total_RAM: 128
+
+management_iface: eno1

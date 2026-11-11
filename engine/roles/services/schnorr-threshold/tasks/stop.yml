@@ -1,0 +1,17 @@
+---
+# Stop application
+
+- name: Stop signing service
+  command: pkill -f tres
+  ignore_errors: true
+  when: service.role == 'participant'
+
+- name: Stop client service
+  command: pkill -f bench
+  ignore_errors: true
+  when: service.role == 'client'
+
+- name: Stop cargo service
+  command: pkill -f cargo
+  ignore_errors: true
+  when: service.role == 'dalek_bench'

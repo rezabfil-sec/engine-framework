@@ -1,0 +1,6 @@
+---
+# Schnorr service default values
+schnorr_tmp_dir: "{{ experiment_tmp_dir }}/schnorr_tmp"
+default_iterations: 100
+default_msg_len: 256
+default_num_nonces: 100

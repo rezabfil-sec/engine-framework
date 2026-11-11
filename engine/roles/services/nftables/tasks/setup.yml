@@ -1,0 +1,13 @@
+---
+# Nftables dependencies
+- name: update list of packages
+  apt: update_cache=yes force_apt_get=yes
+  become: true
+  when: is_container is defined and container_runtime == 'lxc'
+
+- name: Install nftables
+  apt:
+    name:
+      - nftables
+    state: present
+  when: is_container is defined and container_runtime == 'lxc'

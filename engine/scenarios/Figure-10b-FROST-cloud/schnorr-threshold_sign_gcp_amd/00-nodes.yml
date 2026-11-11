@@ -1,0 +1,194 @@
+---
+# 0. Nodes
+# Define and map nodes required for the scenario
+#
+# Scenario can be moved around in the infrastructure or
+# updated after a re-wiring of the network more easily.
+#
+
+# ---------------------------------------------
+# 0. Option
+# Specify the settings for CPU Isolation
+
+# Specify if you want to use the low-latency kernel
+# Set to "no" or leave out if you don't want to use the low-latency kernel
+use_low_latency_kernel: "yes"
+
+# Set the number of isolated cores. Cores starting with core 0 will be isolated. 
+# Set to 0 or leave out if you want no cores to be isolated!
+num_isolated_cores: 0
+
+# Disable hyperthreading on nodes
+disable_cpu_ht: "no"
+
+# Disable CPU turbo
+disable_cpu_turbo: "yes"
+
+# Set CPU to performance mode
+set_cpu_perf: "no"
+
+# Specify number of SR-IOV ifaces
+num_virtual_ifaces: 11
+
+processing_node: localhost
+
+parse_pcap_on_nodes: false
+
+# this option creates tcpdump services for iperf server/clients and send_udp source/sinks.
+# for send_udp, you need to add a extra redundant send_udp service to the node at the end of the flow  with role: sink and flow and port defined
+# example: - { name: send_udp, role: sink, flow: 1, port: 1005 }
+# tcpdump file name should be "p{port}"
+# you can add a variable "tcpdump: off" to a iperf/sendudp service to disable auto tcpdump collection for that specific service
+# default: false
+# FIXME - requires a change in the process pipeline
+auto_tcpdump_collection: false
+
+# does not start probe tcpdumps
+# TODO does not work on LXC containers yet
+probe_tcpdumps: false
+
+# ptp_clockmode: 'linuxptp'
+ptp_clockmode: 'switch_mode'
+
+# Requires network_config: PHY
+# Requires network_config: physical
+network_config: 'Physical'
+
+# Debug flag true or false to pause during experiment execution
+debug_mode: false
+
+
+pos_node_image_low_latency: '"-s ubuntu-focal-snp-iommu-avic-sriov@2023-08-25T21:04:30+00:00"'
+# ---------------------------------------------
+# 1. Option
+# Load the nodes for a pre-defined topology and its node mapping
+# Empty string to use own definition
+
+container_runtime: 'containerd'
+containerd_runtime: 'runc'
+containerd_image: 'engine-default-gcp'
+
+# A topology from the scenarios/topologies folder
+topology: ""
+# ---------------------------------------------
+# 1. Option
+# Load the nodes for a pre-defined topology and its node mapping
+# Empty string to use own definition
+
+
+# //
+# topology: "topo-01"
+
+
+# ---------------------------------------------
+# 2. Option
+# Define your own required hosts and their mapping
+# if the topology variable is defined it takes precedence
+
+# A list with the required nodes with real hostname
+# nodes: []
+# //
+nodes:
+  - clouda-tdx
+  - cloudb-tdx
+  - cloudc-tdx
+  - cloudd-tdx
+
+# The mapping of the above nodes to node-X names
+# the node-X names are used in the rest of the scenario configuration
+# node_mapping: []
+# //
+containers:
+  clouda-tdx:
+    - { name: part1, ssh_port: 10022 }
+    - { name: part2, ssh_port: 10023 }
+    - { name: part3, ssh_port: 10024 }
+    - { name: part4, ssh_port: 10025 }
+    - { name: part5, ssh_port: 10026 }
+    - { name: part6, ssh_port: 10027 }
+    - { name: part7, ssh_port: 10028 }
+    - { name: part8, ssh_port: 10029 }
+    - { name: part9, ssh_port: 10030 }
+    - { name: part10, ssh_port: 10031 }
+  cloudb-tdx:
+    - { name: part11, ssh_port: 10022 }
+    - { name: part12, ssh_port: 10023 }
+    - { name: part13, ssh_port: 10024 }
+    - { name: part14, ssh_port: 10025 }
+    - { name: part15, ssh_port: 10026 }
+    - { name: part16, ssh_port: 10027 }
+    - { name: part17, ssh_port: 10028 }
+    - { name: part18, ssh_port: 10029 }
+    - { name: part19, ssh_port: 10030 }
+    - { name: part20, ssh_port: 10031 }
+  cloudc-tdx:
+    - { name: part21, ssh_port: 10022 }
+    - { name: part22, ssh_port: 10023 }
+    - { name: part23, ssh_port: 10024 }
+    - { name: part24, ssh_port: 10025 }
+    - { name: part25, ssh_port: 10026 }
+    - { name: part26, ssh_port: 10027 }
+    - { name: part27, ssh_port: 10028 }
+    - { name: part28, ssh_port: 10029 }
+    - { name: part29, ssh_port: 10030 }
+    - { name: part30, ssh_port: 10031 }
+  cloudd-tdx:
+    - { name: part31, ssh_port: 10022 }
+    - { name: part32, ssh_port: 10023 }
+    - { name: part33, ssh_port: 10024 }
+    - { name: part34, ssh_port: 10025 }
+    - { name: part35, ssh_port: 10026 }
+    - { name: part36, ssh_port: 10027 }
+    - { name: part37, ssh_port: 10028 }
+    - { name: part38, ssh_port: 10029 }
+    - { name: part39, ssh_port: 10030 }
+    - { name: part40, ssh_port: 10031 }
+    - { name: client, ssh_port: 10032 }
+
+
+node_mapping:
+  node-1: part1
+  node-2: part2
+  node-3: part3
+  node-4: part4
+  node-5: part5
+  node-6: part6
+  node-7: part7
+  node-8: part8
+  node-9: part9
+  node-10: part10
+  node-11: part11
+  node-12: part12
+  node-13: part13
+  node-14: part14
+  node-15: part15
+  node-16: part16
+  node-17: part17
+  node-18: part18
+  node-19: part19
+  node-20: part20
+  node-21: part21
+  node-22: part22
+  node-23: part23
+  node-24: part24
+  node-25: part25
+  node-26: part26
+  node-27: part27
+  node-28: part28
+  node-29: part29
+  node-30: part30
+  node-31: part31
+  node-32: part32
+  node-33: part33
+  node-34: part34
+  node-35: part35
+  node-36: part36
+  node-37: part37
+  node-38: part38
+  node-39: part39
+  node-40: part40
+  node-41: client
+  node-96: clouda-tdx
+  node-97: cloudb-tdx
+  node-98: cloudc-tdx
+  node-99: cloudd-tdx

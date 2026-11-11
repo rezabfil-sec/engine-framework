@@ -1,0 +1,28 @@
+{#
+Sets common parameters for the SendUdp* modules.
+When including this template, the variable 'module' has to be set, i.e: 
+{% set module = '(source|sink|s)'
+{% include '[...]/qdisc_app.j2' %}
+-#}
+{% if service.signal is defined and service.signal -%}
+{% if signal_mode_times.append( ( ( service.number_packets | default(60000) ) * ( service.interval | default(0.001) ) ) | float ) %}{% endif -%}
+{% endif -%}
+{% set prefix = network_ned_short + "." + node_mapping[services_key] + ".device.app[" + device_numApps[services_key]|string + "]." + module -%}
+{% if module != 's' -%}
+{{prefix}}.typename = "{{"Send" if module == 'source' else 'Recv'}}UdpPacket{{module.capitalize()}}"
+{% endif -%}
+
+{{prefix}}.mode = "{% if 'tsn' in service.keys() %}tsn{% elif 'tsnd' in service.keys() %}tsnd{% else %}none{% endif %}"
+
+{% if service.number_packets is defined -%}
+{{prefix}}.numPackets = {{service.number_packets}}
+{% endif -%}
+{% if service.delay is defined -%}
+{{prefix}}.delay = {{service.delay}}ns
+{% endif -%}
+{% if service.interval is defined -%}
+{{prefix}}.interval = {{service.interval}}ns
+{% endif -%}
+{% if service.length is defined -%}
+{{prefix}}.packetLength = {{service.length}}B
+{% endif -%}

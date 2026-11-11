@@ -1,0 +1,100 @@
+---
+# Collect results Schnorr
+- block:
+  - block:
+  # used for default way -- not overloop
+    - name: Collect schnorr
+      fetch:
+        src: "/root/{{ service.file }}.csv"
+        dest: "{{ node_folder }}/{{ service.file }}.csv"
+        flat: yes
+
+    - name: remove schnorr file single
+      file:
+        path: "/root/{{ service.file }}.csv"
+        state: absent
+
+    - name: remove schnorr local node
+      file:
+        path: "{{ experiment_folder }}/{{ binary_name }}"
+        state: absent
+      loop: ["bench", "tres"]
+      loop_control:
+        loop_var: binary_name
+      delegate_to: localhost
+      connection: local
+    when: service.number_nodes is defined
+  # used for loop over experiments, same logic in main.yml, just need to copy in the right format
+  - block:
+    - name: Collect schnorr sign
+      fetch:
+        src: "/root/{{ service.file }}.csv"
+        dest: "{{ node_folder }}/n{{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }}_t{{ service.threshold if service.threshold is defined else experiment_threshold }}_client_sign_l{{ service.msg_len }}.csv"
+        flat: yes
+      when: service.test_mode == "sign"
+
+    - name: Collect schnorr dkg
+      fetch:
+        src: "/root/{{ service.file }}.csv"
+        dest: "{{ node_folder }}/n{{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }}_t{{ service.threshold if service.threshold is defined else experiment_threshold }}_client_dkg.csv"
+        flat: yes
+      when: service.test_mode == "dkg"
+
+    - name: Collect schnorr preprocess
+      fetch:
+        src: "/root/{{ service.file }}.csv"
+        dest: "{{ node_folder }}/n{{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }}_t{{ service.threshold if service.threshold is defined else experiment_threshold }}_client_preprocess.csv"
+        flat: yes
+      when: service.test_mode == "preprocess"
+
+    - name: remove schnorr files multiple
+      file:
+        path: "/root/{{ service.file }}.csv"
+        state: absent
+
+    - name: remove schnorr local node multiple
+      file:
+        path: "{{ experiment_folder }}/{{ binary_name }}"
+        state: absent
+      loop: ["bench", "tres"]
+      loop_control:
+        loop_var: binary_name
+      delegate_to: localhost
+      connection: local
+      when: ( experiment_run_index | int ) == ( experiment.loopOverNetwork | length - 1)
+    when: service.number_nodes is not defined
+  when: service.role == 'client'
+
+- block:
+# FIXME
+  - debug: var=frost_dalek_json
+  - name: store participants ips in a file
+    copy:
+      content: "{{ frost_dalek_json | tojson }}"
+      dest: '/root/frost_dalek_benchmarks.json"'
+
+  - name: Collect schnorr dalek
+    fetch:
+      src: "/root/frost_dalek_benchmarks.json"
+      dest: "{{ node_folder }}/"
+      flat: yes
+    ignore_errors: true
+
+  - name: Collect schnorr dalek
+    fetch:
+      src: "/data/schnorr-threshold/frost-borg/test_1.json"
+      dest: "{{ node_folder }}/"
+      flat: yes
+
+  - name: Collect schnorr reports
+    synchronize:
+      src: "{{ data_path }}/schnorr-threshold/frost-borg/target/criterion/reports"
+      dest: "{{ node_folder }}"
+      mode: pull
+    
+  - name: remove schnorr borg target
+    file:
+      path: "{{ data_path }}/schnorr-threshold/frost-borg/target"
+      state: absent
+  
+  when: service.role == 'dalek_bench'

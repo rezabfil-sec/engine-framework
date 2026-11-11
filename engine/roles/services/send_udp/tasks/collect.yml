@@ -42,5 +42,4 @@
     loop: "{{ flow_ifaces }}"
     loop_control:
       loop_var: iface
-  when: service.role == 'source'
-
+  when: service.role == 'source' and ((service.min_mode is not defined) or (not service.min_mode))

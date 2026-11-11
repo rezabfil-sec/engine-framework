@@ -1,0 +1,142 @@
+---
+# 2. Application and protocol stack
+#
+# Services are usually a synonym for applications
+# Services can be started grouped by nodes. The same service can be run multiple
+# times, with the same or different parameters. The service parameters vary heavily.
+# All available services and their parameters can be seen in the roles/services folder.
+
+# Further information about services:
+# Services are started during an experiment, the experiment can run in a signal
+# or timer mode, both are explained in more detail in the 04-experiment.yml file
+# In both cases every service is sending a signal to the experiment run script when it stops:
+# 0 if the service finished successfully and 1 when an error occurred.
+#
+# In all cases if a failure signal (1) is received by the experiment runner the
+# experiment is aborted.
+# When running the experiment in signal mode, the experiment finishes only when all
+# registered services send a success signal to the runner. To register a service
+# the parameter "signal: yes" must be defined in the service entry. Usually all
+# service are started with the run_service wrapper script that takes care of the
+# signaling and sending registered signals to the experiment runner.
+
+# For more details on applications see roles/services/<application>/tasks/main.yml
+# There you will find more information on available settings.
+
+stacks:
+  stack-1:
+    name: 'triad 2^5 - 2^27'
+    services:
+      node-1:
+        - { name: triad, vector_size: 134217728, repetitions: 134217728, signal: yes }
+      node-2:
+        - { name: triad, vector_size: 134217728, repetitions: 134217728, signal: yes }
+    protocols: {}
+
+  stack-2:
+    name: 'matrix benchmark 32x32'
+    services:
+      node-1:
+        - { name: matrix_bench, matrix_dim: 32, signal: yes }
+      node-2:
+        - { name: matrix_bench, matrix_dim: 32, signal: yes }
+    protocols: {}
+
+  stack-3:
+    name: 'matrix benchmark 64x64'
+    services:
+      node-1:
+        - { name: matrix_bench, matrix_dim: 64, signal: yes }
+      node-2:
+        - { name: matrix_bench, matrix_dim: 64, signal: yes }
+    protocols: {}
+
+  stack-4:
+    name: 'matrix benchmark 128x128'
+    services:
+      node-1:
+        - { name: matrix_bench, matrix_dim: 128, signal: yes }
+      node-2:
+        - { name: matrix_bench, matrix_dim: 128, signal: yes }
+    protocols: {}
+
+  stack-5:
+    name: 'matrix benchmark 256x256'
+    services:
+      node-1:
+        - { name: matrix_bench, matrix_dim: 256, signal: yes }
+      node-2:
+        - { name: matrix_bench, matrix_dim: 256, signal: yes }
+    protocols: {}
+
+  stack-6:
+    name: 'matrix benchmark 512x512'
+    services:
+      node-1:
+        - { name: matrix_bench, matrix_dim: 512, signal: yes }
+      node-2:
+        - { name: matrix_bench, matrix_dim: 512, signal: yes }
+    protocols: {}
+
+  stack-7:
+    name: 'fio sequential reads'
+    services:
+      node-2:
+      # https://cloud.google.com/compute/docs/disks/benchmarking-pd-performance
+        - { name: fio, fio_config: 'fio-seq-read', fio_size: 10G, fio_runtime: 60, fio_io_depth: 64, fio_direct: 1,fio_block_size: '1M', fio_location: '/data/fio', signal: yes }
+    protocols: {}
+
+  stack-11:
+    name: 'tls traffic benchmark pdu 128'
+    services:
+      node-1:
+        - { name: tls_traffic_bench, mode: 'server', port: 12341, packet_size: 128, level: 1 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+      node-2:
+        - { name: tls_traffic_bench, mode: 'client', dest_ip: '10.1.1.9', port: 12341, packet_size: 128, data_size_mb: 5000, signal: yes, sync_start: yes, level: 2 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+    protocols: {}
+
+  stack-12:
+    name: 'tls traffic benchmark pdu 256'
+    services:
+      node-1:
+        - { name: tls_traffic_bench, mode: 'server', port: 12341, packet_size: 256, level: 1 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+      node-2:
+        - { name: tls_traffic_bench, mode: 'client', dest_ip: '10.1.1.9', port: 12341, packet_size: 256, data_size_mb: 5000, signal: yes, sync_start: yes, level: 2 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+    protocols: {}
+  
+  stack-13:
+    name: 'tls traffic benchmark pdu 512'
+    services:
+      node-1:
+        - { name: tls_traffic_bench, mode: 'server', port: 12341, packet_size: 512, level: 1 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+      node-2:
+        - { name: tls_traffic_bench, mode: 'client', dest_ip: '10.1.1.9', port: 12341, packet_size: 512, data_size_mb: 5000, signal: yes, sync_start: yes, level: 2 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+    protocols: {}
+
+  stack-14:
+    name: 'tls traffic benchmark pdu 1024'
+    services:
+      node-1:
+        - { name: tls_traffic_bench, mode: 'server', port: 12341, packet_size: 1024, level: 1 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+      node-2:
+        - { name: tls_traffic_bench, mode: 'client', dest_ip: '10.1.1.9', port: 12341, packet_size: 1024, data_size_mb: 5000, signal: yes, sync_start: yes, level: 2 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+    protocols: {}
+
+  stack-15:
+    name: 'tls traffic benchmark pdu 1500'
+    services:
+      node-1:
+        - { name: tls_traffic_bench, mode: 'server', port: 12341, packet_size: 1500, level: 1 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+      node-2:
+        - { name: tls_traffic_bench, mode: 'client', dest_ip: '10.1.1.9', port: 12341, packet_size: 1500, data_size_mb: 5000, signal: yes, sync_start: yes, level: 2 }
+        - { name: tcpdump, file: 'tls-dump', flows: yes, filter: "tcp port 12341", iostats: yes, level: 0 }
+    protocols: {}

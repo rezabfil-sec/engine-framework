@@ -1,0 +1,52 @@
+- name: obtain access token
+  script: ../../files/obtain_access_token.py
+  register: access_token
+- debug:
+    var: access_token.stdout
+- name: create an AMD SEV-SNP VM
+  uri:
+    url: "https://compute.googleapis.com/compute/beta/projects/{{ gcp_config.project }}/zones/{{processed_instance_dict['zone']}}/instances"
+    method: POST
+    body: | # Change the machine type during actual testing
+      {
+        "machineType": "zones/{{processed_instance_dict['zone']}}/machineTypes/{{name_mt.1}}", 
+        "name": "{{processed_instance_dict['name']}}",
+        "labels": {
+          "env": "engine_nodes"
+        },
+        "minCpuPlatform": "AMD Milan",
+        "confidentialInstanceConfig": {
+         "confidentialInstanceType": "SEV_SNP"
+        },
+        "disks": [
+          {
+            "autoDelete": true,
+            "boot": true,
+            "initializeParams": {
+              "sourceImage": "{{gcp_config.disk.image}}",
+              "diskSizeGb": "{{gcp_config.disk.size}}",
+              "diskType": "projects/{{ gcp_config.project }}/zones/{{processed_instance_dict['zone']}}/diskTypes/pd-balanced"
+            }
+          }
+        ],
+        "networkInterfaces": {{processed_instance_dict["networkInterfaces"]}},
+        "scheduling": {
+          "automaticRestart" : "true",
+          "onHostMaintenance": "TERMINATE"
+        },
+        "zone": "{{processed_instance_dict['zone']}}",
+        "canIpForward": true,
+        "shieldedInstanceConfig": {
+          "enableSecureBoot": true,
+          "enableVtpm": true,
+          "enableIntegrityMonitoring": true
+        }
+      }
+    headers:
+      Host: "www.googleapis.com"
+      Content-Type: "application/json"
+      Authorization: "Bearer {{ access_token.stdout | string | trim }}"
+    status_code: 200
+    body_format: json
+  register: response
+  ignore_errors: yes

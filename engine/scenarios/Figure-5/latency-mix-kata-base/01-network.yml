@@ -1,0 +1,91 @@
+---
+# 1. Network
+# Define the network properties
+#
+# Concepts:
+# --------
+# Network: The "network" variable has different network instances (net-1, net-2, etc.)
+#   as subelements. Every instance is split into two main parts:
+#  1 Flows: The network topology is entirely defined through the flows.
+#      Only nodes and interfaces that occur in a flow are part of the topology!
+#      It is recommended to add node-to-node flows to build the basic topology and
+#      on top of that add "long-distance" or more complex flows that are later used
+#      by services/applications.
+#  2 TSN: Map TSN configurations to nodes and interfaces
+#
+# TSNConfigs: The "tsnconfigs" variable contains the full tsn configurations
+#   that are referenced in the network instances.
+#
+
+# ------------------------------ FLOWS + T  SN-map -------------------------------
+network:
+  net-2:
+    qdisc: {}
+    iconfig: {}
+      # tsn-3: ["node-1:1.3"]
+    #OvS flows aim to offer L2 forwarding wit L3 functionality on the source and sink.
+    #Physical and SR-IOV Setups target to connect devices based on IPs. However, there is no (currently) L3 routing. Therefore, the connection can be only via one hop. For that can be used the new format as "subnet-XX;:node-X:iface,iface:node-X:". The way how IPs are computed ensures they are unique and ping works on them.
+    # Requires network_config: Physical/SR-IOV in group_vars/all.yml
+    # Below config for Physical setup:
+    flows:
+      1: 'subnet-8;:node-1:1,1:node-2:'
+      # PTP for octorand and opulous, change in 00-nodes correctly
+      #2: 'subnet-6;:node-1:5,13:node-3:'
+      # PTP for algofi and zone, gard and goracle (same ports)
+      2: 'subnet-7;:node-1:2,2:node-3:'
+      3: 'subnet-9;:node-1:1,1:node-3:'
+    check: false
+    num_net_cores: 0 # Specify the number of cores assigned to NIC IRQs. Cores beginning with core 0 will be allocated to the IRQs. E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    nic_irq_rt: false # Specify if the NIC IRQs will be set to real-time priority in the linux kernel
+
+
+#------------------------------ TSN configs -----------------------------------
+
+# NOTE:
+# - number of queue items is fixed depending on the number of hardware queues (Intel i210 = 4)
+# - available priorities for the prio list go from 0 to 15
+# - all priorities need to be assigned to the queues, use '*' in one queue for remaining priorities
+# Use queue 0 in a taprio sched entry for a guard band
+# ETF offload can only be set for queue 1 or 2, limitation of the intel i210 network card
+# ETF queues together with taprio must be used with txtime enabled or only special (timestamped) traffic works
+#
+# IMPORTANT:
+# ! Queue priorities MUST not overlap
+# ! Map all 16 priorities to queues or use '*' in one of the queues
+# ! All taprio Schedule durations MUST sum up to a factor of 1ms
+# ! The maximum number of schedule entries is 13
+#
+# Every queues entry creates a queue with the defined behavior.
+# The prio parameter defines what priorities should be processed by this queue.
+# Always define at least one queue, the minimum default queue can look like this:
+# {mode: be, prio: ['*']}
+# These are the main queue modes, optional parameters are in brackets:
+# 1. Best-Effort - use the default FIFO (first-in-first-out) queuing
+# { mode: be, prio: [0,1,'*'] }
+# 2. Credit-Based-Shaping - use the TSN credit shaper to queue packets (802.1Qav)
+#   the idle/send/high/low parameters must be set according to the av standard
+#   Offload uses the Qav feature of supported network cards, this can only be
+#   used in queues 1 + 2 for the Intel i210.
+# { mode: cbs, prio: [2,3], idle: '0', send: '0', high: '0', low: '0', (offload: true) }
+# 3. Earliest Time First - queue the packets based on their launch timestamp.
+#   Offload uses the Launch-Time Feature of supported network cards, this can only
+#   be used in queue 1 + 2 for the Intel i210.
+#   The default mode is strict, where packets are sent on their launch timestamp
+#   with "deadline: yes" this is changed to deadline_mode where packets are sent
+#   latest at their launch timestamp
+# { mode: etf, prio: [4], (delta: 150000), (offload: true), (deadline: yes) }
+#
+# Taprio, which is the Time-aware priority scheduler 802.1Qbv, is configured
+# in addition to the queues.
+
+# TODO change schedule queue entries to a list instead of value
+#        - { queue: 0, duration: 100 }
+#        - { queue: [0,1], duration: 200 }
+# TODO special-case txtime-assist is activated - multiple traffic classes map to
+#  a single hw queue - change taprio schedules
+#  the maximum number of traffic classes is still 8 even when multiple tcs can be
+#  mapped to the same hw queue.
+
+# Holds all TSN configurations
+qdiscconfigs: {}
+ifaceconfigs: {}

@@ -1,0 +1,184 @@
+---
+# 1. Network
+# Define the network properties
+#
+# Concepts:
+# --------
+# Network: The "network" variable has different network instances (net-1, net-2, etc.)
+#   as subelements. Every instance is split into two main parts:
+#  1 Flows: The network topology is entirely defined through the flows.
+#      Only nodes and interfaces that occur in a flow are part of the topology!
+#      It is recommended to add node-to-node flows to build the basic topology and
+#      on top of that add "long-distance" or more complex flows that are later used
+#      by services/applications.
+#  2 TSN: Map TSN configurations to nodes and interfaces
+#
+# TSNConfigs: The "tsnconfigs" variable contains the full tsn configurations
+#   that are referenced in the network instances.
+#
+
+# ------------------------------ FLOWS + TSN-map -------------------------------
+network:
+  # One instance of a network that is referenced later in the experiment definition
+  # multiple instances can be used to compare different network properties
+  net-1:
+    # Define the tsn mapping
+    # empty dictionary for no tsn configuration in the network
+    tsn: {}
+    # //
+    # Key is the tsn pointer to the full configuration and a list with nodes where
+    # this config should be applied, if only the node is specified the configuration
+    # is applied on all interfaces, with ":" the interfaces can be specified separated
+    # by comma, the interface numbers correspond to the same interface keys as the flows
+    # the numbers are defined in the host_vars for every node
+    tsn:
+      tsn-1: ["node-1:1", "node-2"]
+      tsn-2: ["node-3:2,4", "node:2"]
+    # Flows define the network topology.
+    # There should be always at least one flow, otherwise all nodes are separated
+    # from each other. In order to build a complete topology, all flows need
+    # to be defined touching the interfaces and nodes in the topology even if they
+    # are not going to be used.
+    # Check >scenarios/topologies/topo-full.png for for all nodes and connections between them.
+    # Three-node topology with node-1, node-2, node-3 in a triangle
+    flows:
+      1: ':node-1:1,1:node-2:'
+      2: ':node-1:2,6:node-3:5,2:node-2:'
+    # The pre-defined topologies (>scenarios/topologies) have also flows that
+    # cover all node-to-node connections for this topology. Define the topo_flows
+    # variable to merge the here defined flows with the pre-defined topology flows.
+    # As an alternative they can be copied manually into the flows and adjusted.
+    # Keep in mind, if you use the topo_flows you don't need to define direct
+    # node-to-node connections again but can reuse them, look into the topo_flows
+    # file to get the flow numbers.
+    (topo_flows: "topo-01")
+    # If check is defined and true a ping is executed in both directions for every flow,
+    # directly after setting up the network, this ensures basic connectivity
+    # NOTE this can fail if e.g. the tsn configuration manipulates/blocks priority-0 traffic.
+    (check: true)
+    # Specify the number of cores assigned to NIC IRQs. 
+    # Cores beginning with core 0 will be allocated to the IRQs. 
+    # E.g. if specified to 2 means that IRQs will be allocated to cores 0 and 1
+    # Can be left out if you want to use the Linux defaults
+    (num_net_cores: 2)
+    # Specify if the NIC IRQs will be set to real-time priority in the linux kernel. 
+    # NOTE Requires the low latency kernel to be selected in 00-nodes.yml !!!
+    # Can be left out if you don't want to use real-time priority for the NIC IRQs
+    (nic_irq_rt: true)
+
+
+  # another network instance with the same topology but a different tsn mapping
+  net-2:
+    tsn:
+      tsn-1: ["node-1", "node-2:2"]
+    flows:
+      1: ':node-1:1,1:node-2:'
+      2: ':node-1:2,6:node-3:5,2:node-2:'
+
+# ------------------------------ TSN configs -----------------------------------
+# NOTE:
+# - number of queue items is fixed depending on the number of hardware queues (Intel i210 = 4)
+# - available priorities for the prio list go from 0 to 15
+# - all priorities need to be assigned to the queues, use '*' in one queue for remaining priorities
+# Use queue 0 in a taprio sched entry for a guard band
+# ETF offload can only be set for queue 1 or 2, limitation of the intel i210 network card
+# ETF queues together with taprio must be used with txtime enabled or only special (timestamped) traffic works
+#
+# IMPORTANT:
+# ! Queue priorities MUST not overlap
+# ! Map all 16 priorities to queues or use '*' in one of the queues
+# ! All taprio Schedule durations MUST sum up to a factor of 1ms
+# ! The maximum number of schedule entries is 13
+#
+# Every queues entry creates a queue with the defined behavior.
+# The prio parameter defines what priorities should be processed by this queue.
+# Always define at least one queue, the minimum default queue can look like this:
+# {mode: be, prio: ['*']}
+# These are the main queue modes, optional parameters are in brackets:
+# 1. Best-Effort - use the default FIFO (first-in-first-out) queuing
+# { mode: be, prio: [0,1,'*'] }
+# 2. Credit-Based-Shaping - use the TSN credit shaper to queue packets (802.1Qav)
+#   the idle/send/high/low parameters must be set according to the av standard
+#   Offload uses the Qav feature of supported network cards, this can only be
+#   used in queues 1 + 2 for the Intel i210.
+# { mode: cbs, prio: [2,3], idle: '0', send: '0', high: '0', low: '0', (offload: true) }
+# 3. Earliest Time First - queue the packets based on their launch timestamp.
+#   Offload uses the Launch-Time Feature of supported network cards, this can only
+#   be used in queue 1 + 2 for the Intel i210.
+#   The default mode is strict, where packets are sent on their launch timestamp
+#   with "deadline: yes" this is changed to deadline_mode where packets are sent
+#   latest at their launch timestamp
+# { mode: etf, prio: [4], (delta: 150000), (offload: true), (deadline: yes) }
+#
+# Taprio, which is the Time-aware priority scheduler 802.1Qbv, is configured
+# in addition to the queues.
+
+# TODO change schedule queue entries to a list instead of value
+#        - { queue: 0, duration: 100 }
+#        - { queue: [0,1], duration: 200 }
+# TODO special-case txtime-assist is activated - multiple traffic classes map to
+#  a single hw queue - change taprio schedules
+#  the maximum number of traffic classes is still 8 even when multiple tcs can be
+#  mapped to the same hw queue.
+
+# Holds all TSN configurations
+tsnconfigs:
+  # One full tsn configuration
+  tsn-1:
+    # Use taprio
+    taprio:
+      # enable or disable txtime_assist mode
+      # if enabled a launch timestamp is added to all packets so they are sent
+      # when their schedule is active
+      txtime: false
+      # define the schedules or send windows
+      # every entry is one send window, where multiple, one or no queues are active
+      # the queue number refers to the defined queues below
+      # if no queue is selected "[0]" this entry acts as a guard window
+      # for synchronization and post-processing reasons the sum of all entries must
+      # be a factor of 1s/1ms
+      sched:
+        - { queue: [1], duration: 200 }
+        - { queue: [0], duration: 100 }
+        - { queue: [2], duration: 200 }
+        - { queue: [0], duration: 100 }
+        - { queue: [3], duration: 300 }
+        - { queue: [0], duration: 100 }
+    # As many queue entries can be created as network card hardware queues are available
+    # In the below example all three possible modes are shown, the Intel i210 has 4 queues
+    queues:
+      1: { mode: etf, prio: [1], deadline: yes }
+      2: { mode: cbs, prio: [4,5], idle: '100', send: '100', high: '100', low: '100' }
+      # the default traffic (priority 0) queue is important, as all traffic where
+      # the priority is not explicitly set will go through this queue (e.g. ping,
+      # or services where no priority is defined)
+      3: { mode: be, prio: [0,1,'*'] }
+  # two more possible tsn configurations
+  tsn-2:
+    # optional name to describe the purpose of the configuration
+    name: 'Security'
+    # De-activate taprio with an empty dictionary or leave it undefined
+    taprio: {}
+    queues:
+      1: { mode: cbs, prio: [2,3], idle: '0', send: '0', high: '0', low: '0' }
+      2: { mode: etf, prio: [2] }
+      3: { mode: etf, prio: [3] }
+      4: { mode: be, prio: [4,'*'] }
+  tsn-3:
+    name: 'Entertainment'
+    taprio:
+      txtime: false
+      sched:
+        - { queue: 1, duration: 250 }
+        - { queue: 0, duration: 50 }
+        - { queue: 2, duration: 250 }
+        - { queue: 0, duration: 50 }
+        - { queue: 3, duration: 250 }
+        - { queue: 0, duration: 50 }
+        - { queue: 4, duration: 50 }
+        - { queue: 0, duration: 50 }
+    queues:
+      1: { mode: be, prio: [1] }
+      2: { mode: cbs, prio: [2], idle: '0', send: '0', high: '0', low: '0' }
+      3: { mode: cbs, prio: [3], idle: '0', send: '0', high: '0', low: '0' }
+      4: { mode: be, prio: [4,'*'] }

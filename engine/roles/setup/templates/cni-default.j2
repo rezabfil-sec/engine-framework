@@ -1,0 +1,46 @@
+{
+  "cniVersion": "1.0.0",
+  "name": "bridge",
+  "nerdctlID": "17f29b073143d8cd97b5bbe492bdeffec1c5fee55cc1fe2112c8b9335f8b6121",
+  "nerdctlLabels": {
+    "nerdctl/default-network": "true"
+  },
+  "plugins": [
+    {
+      "type": "bridge",
+      "bridge": "{{ containerd_bridge }}",
+      "isGateway": true,
+      "ipMasq": true,
+      "hairpinMode": true,
+      "ipam": {
+        "ranges": [
+          [
+            {
+              "gateway": "{{ containerd_bridge_prefix + cur_node.key.split("-")[1].split(":")[0] + '.1' }}",
+              "subnet": "{{ containerd_bridge_prefix + cur_node.key.split("-")[1].split(":")[0] + '.0/24' }}"
+            }
+          ]
+        ],
+        "routes": [
+          {
+            "dst": "0.0.0.0/0"
+          }
+        ],
+        "type": "host-local"
+      }
+    },
+    {
+      "type": "portmap",
+      "capabilities": {
+        "portMappings": true
+      }
+    },
+    {
+      "type": "firewall",
+      "ingressPolicy": "same-bridge"
+    },
+    {
+      "type": "tuning"
+    }
+  ]
+}

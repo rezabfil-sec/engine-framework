@@ -21,34 +21,69 @@
 - name: oneshot system clock update
   shell: date -s "$(date -d "$(curl -sI google.com| grep -i '^date:'|cut -d' ' -f2-)" | xargs -I {} date --date='{}' "+%Y-%m-%d %H:%M:%S")"
 
-- name: checkout ptp repositories
-  git:
-    repo: '{{ item.url }}'
-    dest: '{{ data_path }}/{{ item.folder }}'
-    version: '{{ item.branch | default("HEAD") }}'
-    update: yes
-    recursive: yes
-  loop: '{{ ptp_excelfore + ptp_linuxptp }}'
-
 # Excelfore
-- name: configure excelfore
-  shell: './autogen.sh'
-  args:
-    chdir: '{{ data_path }}/{{ item.folder }}'
-  loop: '{{ ptp_excelfore }}'
-- name: compile excelfore
-  shell: '../configure && make install && ldconfig'
-  args:
-    chdir: '{{ data_path }}/{{ item.folder }}/build'
-  loop: '{{ ptp_excelfore }}'
+- block: 
+  - name: checkout excelfore
+    git:
+      repo: '{{ item.url }}'
+      dest: '{{ data_path }}/{{ item.folder }}'
+      version: '{{ item.branch | default("HEAD") }}'
+      update: yes
+      recursive: yes
+    loop: '{{ ptp_excelfore }}'
 
-# Linuxptp
+  - name: configure excelfore
+    shell: './autogen.sh'
+    args:
+      chdir: '{{ data_path }}/{{ item.folder }}'
+    loop: '{{ ptp_excelfore }}'
+
+  - name: compile excelfore
+    shell: '../configure && make install && ldconfig'
+    args:
+      chdir: '{{ data_path }}/{{ item.folder }}/build'
+    loop: '{{ ptp_excelfore }}'
+  when: ptp_linuxptp_mode == 'excelfore'
+
+# Linuxptp (default)
 # TODO apply excelfore phc2sys patch
-- name: compile linuxptp
-  command: 'make install'
-  args:
-    chdir: '{{ data_path }}/{{ item.folder }}'
-  loop: '{{ ptp_linuxptp }}'
+# if fails here, run make clean on all machines manually
+- block:
+  - name: checkout ptp repositories
+    git:
+      repo: '{{ item.url }}'
+      dest: '{{ data_path }}/{{ item.folder }}'
+      version: '{{ item.branch | default("HEAD") }}'
+      update: yes
+      recursive: yes
+    loop: '{{ ptp_linuxptp_default }}'
+    when: ptp_linuxptp_mode == 'default'
+
+  - name: compile linuxptp (default)
+    command: 'make clean install'
+    args:
+      chdir: "{{ data_path }}/{{ item.folder }}"
+    loop: '{{ ptp_linuxptp_default }}'
+  when: ptp_linuxptp_mode == 'default'
+
+# Linuxptp (secext)
+- block:
+  - name: checkout ptp repositories
+    git:
+      repo: '{{ item.url }}'
+      dest: '{{ data_path }}/{{ item.folder }}'
+      version: '{{ item.branch | default("HEAD") }}'
+      update: yes
+      recursive: yes
+    loop: '{{ ptp_linuxptp_secext }}'
+
+  - name: compile linuxptp (secext)
+    command: 'make clean install'
+    args:
+      chdir: "{{ data_path }}/{{ item.folder }}/{{ 'linuxptp' }}"
+    loop: '{{ ptp_linuxptp_secext }}'
+  when: ptp_linuxptp_mode == 'secext'
+
 
 # Checkclock
 - name: fetch checkclock script

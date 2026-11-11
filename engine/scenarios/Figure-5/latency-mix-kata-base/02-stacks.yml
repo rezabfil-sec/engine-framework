@@ -1,0 +1,188 @@
+---
+# 2. Application and protocol stack
+#
+# Services are usually a synonym for applications
+# Services can be started grouped by nodes. The same service can be run multiple
+# times, with the same or different parameters. The service parameters vary heavily.
+# All available services and their parameters can be seen in the roles/services folder.
+
+# Further information about services:
+# Services are started during an experiment, the experiment can run in a signal
+# or timer mode, both are explained in more detail in the 04-experiment.yml file
+# In both cases every service is sending a signal to the experiment run script when it stops:
+# 0 if the service finished successfully and 1 when an error occurred.
+#
+# In all cases if a failure signal (1) is received by the experiment runner the
+# experiment is aborted.
+# When running the experiment in signal mode, the experiment finishes only when all
+# registered services send a success signal to the runner. To register a service
+# the parameter "signal: yes" must be defined in the service entry. Usually all
+# service are started with the run_service wrapper script that takes care of the
+# signaling and sending registered signals to the experiment runner.
+stacks:  
+  stack-2:
+    name: 'Iperf masurement 100B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 100, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+
+  stack-3:
+    name: 'Iperf masurement 200B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 200, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-4:
+    name: 'Iperf masurement 300B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 300, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+    
+  stack-5:
+    name: 'Iperf masurement 400B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 400, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-6:
+    name: 'Iperf masurement 500B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 500, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-7:
+    name: 'Iperf masurement 600B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 600, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-8:
+    name: 'Iperf masurement 700B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 700, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-9:
+    name: 'Iperf masurement 800B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 800, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-10:
+    name: 'Iperf masurement 900B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 900, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-11:
+    name: 'Iperf masurement 1000B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 1000, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-12:
+    name: 'Iperf masurement 1100B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 1100, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-13:
+    name: 'Iperf masurement 1200B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 1200, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+
+  stack-14:
+    name: 'Iperf masurement 1300B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 1300, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}
+  
+  stack-15:
+    name: 'Iperf masurement 1400B'
+    services:
+      node-1:
+        - { name: iperf, role: server, flow: 1, port: 1001, level: 0, signal: yes }       
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "sink",  signal: no, iostats: no }
+
+      node-2:
+        - { name: iperf, role: client, flow: 1, port: 1001, limit: 94400000, time: 10, size: 1400, level: 1, sync_start: yes, signal: yes, udp: yes }
+        - { name: tcpdump, flow: [1], size: 64, filter: "udp dst port 1001", file: "p1001", level: 0, profile: "iperf3", group_id: [1], role: "source",  signal: no, iostats: no }
+    protocols: {}

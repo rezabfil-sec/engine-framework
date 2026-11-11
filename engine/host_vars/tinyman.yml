@@ -1,0 +1,75 @@
+---
+# variables for node tinyman
+# hard drive to store data
+data_disk: "nvme0n1"
+
+# network card
+num_interfaces: 7
+node_ifaces:
+  # 1:
+  #   name: 'eno1'
+  #   mac: '3c:ec:ef:98:01:34'
+  #   phc: '/dev/ptp5'
+  #   offload: no
+  1:
+    name: 'ens2f0'
+    mac: '50:7c:6f:16:c7:a2'
+    phc: '/dev/ptp1'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  2:
+    name: 'ens2f1'
+    mac: '50:7c:6f:16:c7:a3'
+    phc: '/dev/ptp2'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  3:
+    name: 'ens4f0'
+    mac: '50:7c:6f:16:c9:26'
+    phc: '/dev/ptp1'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  4:
+    name: 'ens4f1'
+    mac: '50:7c:6f:16:c9:27'
+    phc: '/dev/ptp2'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  5:
+    name: 'ens6f0'
+    mac: '6c:fe:54:59:99:38'
+    phc: '/dev/ptp3'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  6:
+    name: 'ens6f1'
+    mac: '6c:fe:54:59:99:39'
+    phc: '/dev/ptp4'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  7:
+    name: 'eno2'
+    mac: '3c:ec:ef:98:01:35'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ixgbe'
+
+# TEEs information
+# Intel, RAM: 16GB
+tee_supported: yes
+tee_type: "SGX" # Intel SGX
+
+# Total number of CPUs
+# Hyper threading is on, so 48 vCPUs 
+number_vCPUs: 48
+# Unit in GB
+total_RAM: 512
+
+management_iface: eno1

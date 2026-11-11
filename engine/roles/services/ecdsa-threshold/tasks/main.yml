@@ -1,0 +1,168 @@
+---
+# ECDSA service main
+- block:
+  # handles all bits, outcome is rust-impl is present in the node & the localhost
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+
+  # Need to update the functionality for the IPs
+  - name: copy config to a node file
+    copy:
+      src: 'files/create-cfg.py'
+      dest: '/root/'
+      mode: '0755'
+  
+  - name: initialize participation_ips
+    set_fact:
+      participation_ips: "{{ [] }}"
+
+  - name: extract first IP of a source from flow for participation nodes
+    set_fact:
+      participation_ips: "{{ participation_ips + [ item.1.ip_src ] }}"
+    when: (item.0 | int ) == (item.1.flow | int) and service.source_node is defined
+    loop: "{{ service.source_node | default([]) | product(flow_ifaces) | list }}"
+
+  - debug: var=participation_ips
+  
+  - name: extract IPs from flow for participation nodes
+    set_fact:
+      participation_ips: "{{ participation_ips + [ item.1.ip_dst ] }}"
+    when: (item.0 | int ) == (item.1.flow | int) and service.flows is defined
+    loop: "{{ service.flows | default([]) | product(flow_ifaces) | list }}"
+  
+  - debug: var=participation_ips
+
+  - name: store participants ips in a file
+    copy:
+      content: "{{ participation_ips | tojson }}"
+      dest: '/root/participation_ips.json'
+  
+  # participation_ips.json 2000 3 1 10 "GG20" "Optimization"
+
+  - name: create config and keys on a node
+    command: > 
+      python3 /root/create-cfg.py /root/participation_ips.json {{ service.port if service.port is defined else default_base_port }} {{ service.number_nodes if service.number_nodes is defined else experiment_number_nodes }} {{ service.threshold if service.threshold is defined else experiment_threshold }} {{ service.iterations if service.iterations is defined else default_iterations }} {{ service.scheme if service.scheme is defined else default_scheme }} {{ service.comm_type if service.comm_type is defined else default_comm_type }} {{ experiment_run_index|int }}
+
+  - name: Creates config directory
+    file:
+      path: '{{ experiment_folder }}/config'
+      state: directory
+    delegate_to: localhost
+    connection: local
+
+  - name: Creates keys directory
+    file:
+      path: '{{ experiment_folder }}/keys'
+      state: directory
+    delegate_to: localhost
+    connection: local
+    when: (experiment_run_index|int) == 0
+
+  - name: copy private keys to localhost
+    fetch:
+      src: '/root/keys/keyfile_{{ id }}.keys'
+      dest: '{{ experiment_folder }}/keys/'
+      flat: true
+    loop: "{{ range(1, (service.number_nodes if service.number_nodes is defined else experiment_number_nodes) | int + 1 ) | list }}"
+    loop_control:
+      loop_var: id
+    when: (experiment_run_index|int) == 0
+
+  - name: copy configs to localhost
+    fetch:
+      src: '/root/config.yaml'
+      dest: '{{ experiment_folder }}/config/'
+      flat: true
+  when: service.role is defined and service.role == 'setup'
+
+
+# Assume here ECDSA is built for participant
+- block:
+  # Consider for binaries and given version e.g., 22.04 ubuntu
+  - include_tasks: setup.yml
+    when: (experiment_run_index|int) == 0
+
+  - name: check if file rust-impl is present on a node
+    stat:
+      path: '/root/rust-impl'
+    register: impl_ready
+
+  # Copy binary to the node if not present
+  - name: copy bench to a node file
+    copy:
+      src: '{{ experiment_folder }}/rust-impl'
+      dest: '/root/'
+      mode: '0755'
+    when: not impl_ready.stat.exists
+
+  # We need all the keys
+  - name: copy public keys to a node
+    copy:
+      src: '{{ experiment_folder }}/keys'
+      dest: '/root/'
+    when: (experiment_run_index|int) == 0
+
+  # We need the config
+  - name: copy config to a node
+    copy:
+      src: '{{ experiment_folder }}/config/config.yaml'
+      dest: '/root/'
+
+  - name: Start ECDSA bench service
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }} /root/rust-impl run {{ service.id }}
+    #  > /root/n{{ service.number_nodes }}_peer{{ service.id }}.out 2>&1
+    async: 259200 # 1 month
+    when: is_container is not defined or is_container is defined and not is_container
+    poll: 0
+
+  - name: Start ECDSA bench service
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }} /root/rust-impl run {{ service.id }}
+    #  > /root/n{{ service.number_nodes }}_peer{{ service.id }}.out 2>&1
+    async: 259200 # 1 month
+    poll: 0
+    when: is_container is defined and is_container
+
+  when: service.role is defined and service.role == 'participant'
+
+
+# Assume here benchmark is built
+- block:
+  # Consider for binaries and given version e.g., 22.04 ubuntu
+  - name: check if file bench is present on a node
+    stat:
+      path: '{{ data_path }}/rust-impl'
+    register: impl_ready
+
+  # Copy binary to the node if not present
+  - name: copy bench to a node file
+    copy:
+      src: '{{ experiment_folder }}/rust-impl'
+      dest: '/root/'
+      mode: '0755'
+    when: not impl_ready.stat.exists
+  
+  # We need all the keys
+  - name: copy public keys to a node
+    copy:
+      src: '{{ experiment_folder }}/keys'
+      dest: '/root/'
+    when: (experiment_run_index|int) == 0
+  # We need the config
+  - name: copy config to a node
+    copy:
+      src: '{{ experiment_folder }}/config/config.yaml'
+      dest: '/root/'
+
+  - name: create res directory
+    file:
+      path: /root/res
+      state: directory
+
+  - name: Start ECDSA frost bench service
+    command: >
+      run_service_action {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start or service.sync_start is not defined else 0 }} {{ service.run_time | default(0) }} {{ 1 if service.sync_stop is defined and service.sync_stop else 0 }} /root/rust-impl run 0
+    async: 259200 # 1 month
+    poll: 0
+  when: service.role is defined and service.role == 'client'

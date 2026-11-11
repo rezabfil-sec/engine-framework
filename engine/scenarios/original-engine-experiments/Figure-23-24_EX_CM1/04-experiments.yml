@@ -1,0 +1,20 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+  # Figure-23-24_EX_CM1 - Experiments with four iperf3 flows. CBS configured only on the source interface
+  ## Figure-23-24_EX_CM1 - 1 hop with four cbs flows (2 policed, 2 best-effort). CBS configured only on the source interface
+  - { network: 'net-41', stack: 'stack-73',  action: 'action-1', time: 45, name: '4-queue_2-cbs_2-be_4-streams_1-hop_no-hop-cbs-iperf-line-limit100-45s'  }
+  ## Figure-23-24_EX_CM1 - 2 hop with four cbs flows (2 policed, 2 best-effort). CBS configured only on the source interface
+  - { network: 'net-41', stack: 'stack-72',  action: 'action-1', time: 45, name: '4-queue_2-cbs_2-be_4-streams_2-hop_no-hop-cbs-iperf-line-limit100-45s'  }
+  ## Figure-23-24_EX_CM1 - 3 hop with four cbs flows (2 policed, 2 best-effort). CBS configured only on the source interface
+  - { network: 'net-43', stack: 'stack-74',  action: 'action-1', time: 45, name: '4-queue_2-cbs_2-be_4-streams_3-hop_no-hop-cbs-iperf-line-limit100-45s'  }
+  ## Figure-23-24_EX_CM1 - 4 hop with four cbs flows (2 policed, 2 best-effort). CBS configured only on the source interface
+  - { network: 'net-45', stack: 'stack-75',  action: 'action-1', time: 45, name: '4-queue_2-cbs_2-be_4-streams_4-hop_no-hop-cbs-iperf-line-limit100-45s'  }
+  ## Figure-23-24_EX_CM1 - 5 hop with four cbs flows (2 policed, 2 best-effort). CBS configured only on the source interface
+  - { network: 'net-147', stack: 'stack-176',  action: 'action-1', time: 45, name: '4-queue_2-cbs_2-be_4-streams_5-hop_no-hop-cbs-iperf-line-limit100-45s'  }
+  ## Figure-23-24_EX_CM1 - 6 hop with four cbs flows (2 policed, 2 best-effort). CBS configured only on the source interface
+  - { network: 'net-149', stack: 'stack-177',  action: 'action-1', time: 45, name: '4-queue_2-cbs_2-be_4-streams_6-hop_no-hop-cbs-iperf-line-limit100-45s'  }
+  ## Figure-23-24_EX_CM1 - 7 hop with four cbs flows (2 policed, 2 best-effort). CBS configured only on the source interface
+  - { network: 'net-1411', stack: 'stack-178',  action: 'action-1', time: 45, name: '4-queue_2-cbs_2-be_4-streams_7-hop_no-hop-cbs-iperf-line-limit100-45s'  }

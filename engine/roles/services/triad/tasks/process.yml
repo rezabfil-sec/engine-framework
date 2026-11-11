@@ -1,0 +1,14 @@
+---
+# triad process
+
+- name: copy triad plotting script
+  copy:
+    src: plot_triad.py
+    dest: '{{ triad_dir }}/plot_triad.py'
+
+- name: plot triad data
+  command: >
+    python3 plot_triad.py --triad-data triad.csv --output triad.pdf
+  args:
+    chdir: '{{ triad_dir }}'
+  when: service.plot | default(true)

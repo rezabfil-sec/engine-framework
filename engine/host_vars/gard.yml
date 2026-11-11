@@ -1,0 +1,76 @@
+---
+# variables for node gard
+# hard drive to store data
+# data_disk: "nvme0n1"
+
+# network card
+num_interfaces: 7
+node_ifaces:
+  # 1:
+  #   name: 'eno1np0'
+  #   mac: '3c:ec:ef:93:23:b8'
+  #   phc: '/dev/ptp1'
+  #   offload: no
+  1:
+    name: 'enp193s0f0'
+    mac: '50:7c:6f:17:f8:18'
+    phc: '/dev/ptp1'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  2:
+    name: 'enp193s0f1'
+    mac: '50:7c:6f:17:f8:19'
+    phc: '/dev/ptp2'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  3:
+    name: 'enp195s0f0'
+    mac: '50:7c:6f:17:f5:f0'
+    phc: '/dev/ptp3'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  4:
+    name: 'enp195s0f1'
+    mac: '50:7c:6f:17:f5:f1'
+    phc: '/dev/ptp4'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  5:
+    name: 'enp129s0f0'
+    mac: '6c:fe:54:40:60:b8'
+    phc: '/dev/ptp5'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  6:
+    name: 'enp129s0f1'
+    mac: '6c:fe:54:40:60:b9'
+    phc: '/dev/ptp6'
+    offload: no
+    sriov: yes
+    sriov_driver: 'ice'
+  # Does not have PTP!!
+  7:
+    name: 'eno2np1'
+    mac: '3c:ec:ef:93:23:b9'
+    phc: '/dev/ptp7'
+    offload: no
+    sriov: yes
+    sriov_driver: 'bnxt_en'
+# TEEs information
+# AMD
+tee_supported: yes
+tee_type: "SEV" # AMD SEV-SNP
+snp_fw_update: yes
+
+# Total number of CPUs
+# Hyper threading is on, so 64 vCPUs 
+number_vCPUs: 64
+# Unit in GB
+total_RAM: 512
+
+management_iface: eno1np0

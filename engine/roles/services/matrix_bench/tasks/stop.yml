@@ -1,0 +1,6 @@
+---
+# matrix bench stop
+
+- name: kill matrix_mul
+  command: pkill -f matrix_mul
+  ignore_errors: yes

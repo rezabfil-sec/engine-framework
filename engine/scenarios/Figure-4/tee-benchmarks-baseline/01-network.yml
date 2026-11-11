@@ -1,0 +1,33 @@
+---
+# 1. Network
+# Define the network properties
+#
+# Concepts:
+# --------
+# Network: The "network" variable has different network instances (net-1, net-2, etc.)
+#   as subelements. Every instance is split into two main parts:
+#  1 Flows: The network topology is entirely defined through the flows.
+#      Only nodes and interfaces that occur in a flow are part of the topology!
+#      It is recommended to add node-to-node flows to build the basic topology and
+#      on top of that add "long-distance" or more complex flows that are later used
+#      by services/applications.
+#  2 TSN: Map TSN configurations to nodes and interfaces
+#
+# TSNConfigs: The "tsnconfigs" variable contains the full tsn configurations
+#   that are referenced in the network instances.
+#
+
+# ------------------------------ FLOWS + TSN-map -------------------------------
+network:
+  # One instance of a network that is referenced later in the experiment definition
+  # multiple instances can be used to compare different network properties
+  net-1:
+    # Define the tsn mapping
+    # empty dictionary for no tsn configuration in the network
+    tsn: {}
+    qdisc: {}
+    iconfig: {}
+    ifaceconfigs: {}
+    flows:
+      1: 'subnet-1;:node-1:9,10:node-2:'
+    check: false

@@ -14,7 +14,6 @@
 - name: start services
   command: sleep 2
 
-
 - debug:
     msg: "Starting service {{ service.name }}"
   when: '(service.level is not defined and (level|int) == 0) or (service.level is defined and (service.level|int) == (level|int))'

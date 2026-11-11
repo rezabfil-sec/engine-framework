@@ -1,0 +1,29 @@
+- name: add LXC container as hosts to container group
+  add_host:
+    name: "{{ container.name }}"
+    ansible_ssh_host: "{{ node_name }}"
+    ansible_ssh_port: "{{ container.ssh_port }}"
+    node_ifaces: "{{ range(1, container.ifaces|length+1) | map('string') | map('regex_replace', '^(.*)$', '{key: \\1, value: {name: eno\\1, sriov: no, offload: no}}') | map('from_yaml') | list | items2dict }}"
+    management_iface: eth0
+    is_container: yes
+    groups: containers
+  loop: "{{ hostvars['localhost']['containers'][node_name] }}"
+  loop_control:
+    loop_var: container
+  when: node_name in hostvars["localhost"]["containers"].keys() and container_runtime == 'lxc'
+
+# TODO -- integration: currently, containerd only has one iface called eth0
+- name: add containerd container as hosts to container group
+  add_host:
+    name: "{{ container.name }}"
+    ansible_ssh_host: '{{ node_name if gcp is not defined else hostvars["localhost"].instance_ip[node_name] }}'
+    ansible_ssh_port: "{{ container.ssh_port }}"
+    ansible_user: root
+    node_ifaces: "{{ [1] | map('regex_replace', '^(.*)$', '{key: \\1, value: {name: eth0, sriov: no, offload: no}}') | map('from_yaml') | list | items2dict }}"
+    management_iface: eth0
+    is_container: yes
+    groups: containers
+  loop: "{{ hostvars['localhost']['containers'][node_name] }}"
+  loop_control:
+    loop_var: container
+  when: node_name in hostvars["localhost"]["containers"].keys() and container_runtime == 'containerd'

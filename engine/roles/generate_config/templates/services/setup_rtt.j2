@@ -1,0 +1,27 @@
+{% if service.role == 'client' -%}
+{% set typename = 'UdpApp' -%}
+{% set port = service.port | default(service_defaults['setup_rtt']['server_rtt_port']) -%}
+{% set prio = service.prio | default(service_defaults['setup_rtt']['client_rtt_priority']) -%}
+{% include 'services/io_app.j2' %}
+{% set module = 'source' -%}
+{% set num_packets = service.number_packets | default(service_defaults['setup_rtt']['client_rtt_send_packets']) if module == 'source' else service.number_packets | default(service_defaults['setup_rtt']['client_rtt_recv_packets']) -%}
+{% set interval = service.interval | default(service_defaults['setup_rtt']['client_rtt_packet_interval']) -%}
+{% set delay = service.delay | default(service_defaults['setup_rtt']['client_rtt_delay']) -%}
+{% include 'services/qdisc_app.j2' -%}
+{% set module = 'sink' -%}
+{% set num_packets = service.number_packets | default(service_defaults['setup_rtt']['client_rtt_recv_packets']) -%}
+{% include 'services/qdisc_app.j2' -%}
+{% elif service.role == 'server' -%}
+{% set typename = 'RecvSendUdpApp' -%}
+{% set port = service.port | default(service_defaults['setup_rtt']['server_rtt_port']) -%}
+{% set prio = service.prio | default(service_defaults['setup_rtt']['server_rtt_priority']) -%}
+{% include 'services/io_app.j2' %}
+{% set module = 's' -%}
+{% set num_packets = service.number_packets | default(service_defaults['setup_rtt']['server_rtt_packets']) -%}
+{% set delay = service.delta | default(service_defaults['setup_rtt']['server_rtt_delta']) -%}
+{% include 'services/qdisc_app.j2' %}
+{% else -%}
+# {{node_mapping[services_key]}}, service {{device_numServices[services_key]}} has invalid role
+{% endif -%}
+{% if device_numApps.update({services_key: device_numApps[services_key] + 1}) %}{% endif -%}
+{% if device_numServices.update({services_key: device_numServices[services_key] + 1}) %}{% endif -%}

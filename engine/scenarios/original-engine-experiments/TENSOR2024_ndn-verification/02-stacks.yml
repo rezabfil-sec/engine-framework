@@ -1,0 +1,43 @@
+---
+# 2. Application and protocol stack
+#
+# Services are usually a synonym for applications
+# Services can be started grouped by nodes. The same service can be run multiple
+# times, with the same or different parameters. The service parameters vary heavily.
+# All available services and their parameters can be seen in the roles/services folder.
+
+# Further information about services:
+# Services are started during an experiment, the experiment can run in a signal
+# or timer mode, both are explained in more detail in the 04-experiment.yml file
+# In both cases every service is sending a signal to the experiment run script when it stops:
+# 0 if the service finished successfully and 1 when an error occurred.
+#
+# In all cases if a failure signal (1) is received by the experiment runner the
+# experiment is aborted.
+# When running the experiment in signal mode, the experiment finishes only when all
+# registered services send a success signal to the runner. To register a service
+# the parameter "signal: yes" must be defined in the service entry. Usually all
+# service are started with the run_service wrapper script that takes care of the
+# signaling and sending registered signals to the experiment runner.
+stacks:  
+  stack-207:
+    name: 'ndn-traffic 7-hop test - no soft interests'
+    services:
+      node-1:
+        - { name: ndn-traffic, role: source, content: /node-1/prio3/test, bytes: 1250, content_delay: 0, freshness_period: 1, level: 0, signal: yes, use_core: 2 }
+        - { name: ndn-traffic, role: source, content: /node-1/prio2/test, bytes: 1250, content_delay: 0, freshness_period: 1, level: 0, signal: yes, use_core: 3 }
+      node-8:
+        - { name: ndn-traffic, role: client, content: /node-1/prio3/test, prefix: yes, sequence: yes, fresh: yes, soft: no, sync_start: yes, sync_stop: yes, interval: 250, level: 1, signal: yes, use_core: 2 }
+        - { name: ndn-traffic, role: client, content: /node-1/prio2/test, prefix: yes, sequence: yes, fresh: yes, soft: no, sync_start: yes, sync_stop: yes, interval: 250, level: 1, signal: yes, use_core: 3 }
+    protocols: {}
+
+  stack-307:
+    name: 'ndn-traffic 7-hop test - soft interests'
+    services:
+      node-1:
+        - { name: ndn-traffic, role: push_source, content: /node-1/prio3/test, bytes: 1250, content_delay: 0, generation_interval: 250, freshness_period: 0, level: 0, signal: yes, use_core: 2 } # freshness_period is in MILISECONDS!!!!!! all else in microseconds!!!
+        - { name: ndn-traffic, role: push_source, content: /node-1/prio2/test, bytes: 1250, content_delay: 0, generation_interval: 250, freshness_period: 0, level: 0, signal: yes, use_core: 3 } # freshness_period is in MILISECONDS!!!!!! all else in microseconds!!!
+      node-8:
+        - { name: ndn-traffic, role: client, content: /node-1/prio3/test, prefix: yes, sequence: no, fresh: no, soft: yes, sync_start: yes, sync_stop: yes, interval: 500000, int_lifetime: 501, level: 1, signal: yes, use_core: 2 }
+        - { name: ndn-traffic, role: client, content: /node-1/prio2/test, prefix: yes, sequence: no, fresh: no, soft: yes, sync_start: yes, sync_stop: yes, interval: 500000, int_lifetime: 501, level: 1, signal: yes, use_core: 3 }
+    protocols: {}

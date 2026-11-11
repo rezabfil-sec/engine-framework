@@ -1,0 +1,108 @@
+# explanation: Ansible stores the sockets used for persistent SSH connections and 
+# the socket names are a hash of hostname, port, and other features unlikely to change. 
+# So, on container restart, the -- now invalid -- socket will still 
+# exist (lifetime by default 60 seconds) and this causes Ansible to not establish a connection.
+# TODO: is there a better way to do this?
+- name: fail if ANSIBLE_SSH_CONTROL_PATH is not set
+  fail:
+    msg: "ANSIBLE_SSH_CONTROL_PATH is not set; please set it to %(directory)s/ansible-ssh-%%h-%%p to use containerd"
+  when: lookup('env', 'ANSIBLE_SSH_CONTROL_PATH') is not defined
+
+- name: remove socket from ~/.ansible/cp if it exists
+  file:
+    path: "{{ lookup('env', 'HOME') }}/.ansible/cp/ansible-ssh-{{ inventory_hostname }}-{{ container.ssh_port }}"
+    state: absent
+  delegate_to: localhost
+
+# scenarios might redefine the Kata configuration file
+- name: replace Kata configuration
+  template:
+    src: "{{ kata_config }}.j2"
+    dest: "/etc/kata-containers/configuration.toml"
+    mode: "0644"
+  when: containerd_runtime == 'io.containerd.run.kata.v2'
+
+# if there is a data disk, then it will be mounted to /data
+# cf. setup_node.yml
+- name: set data disk mount argument
+  set_fact:
+    data_disk_mount: "-v /data:/mnt:rw"
+  when: data_disk | length > 0
+
+- name: create container
+  shell: >
+    {{ containerd_cli }} run
+    --name {{ container.name }}
+    --hostname {{ container.name }}
+    --cap-add CAP_SYS_ADMIN
+    --cap-add CAP_NET_ADMIN
+    --cap-add CAP_SYS_RESOURCE
+    --cap-add CAP_SYS_TIME
+    --ulimit nofile=1048576:1048576
+    --snapshotter native
+    --runtime {{ containerd_runtime }}
+    --publish {{ container.ssh_port }}:22
+    --cni-netconfpath {{ containerd_cni_path }}
+    {{ data_disk_mount | default('') }}
+    --detach
+    -v /etc/localtime:/etc/localtime:ro
+    {{ containerd_image }}:latest
+  when: gcp is not defined
+
+# needed to make apt-get etc. work with some virtio-9p versions
+- name: remount /tmp for Kata containers
+  command: "{{ containerd_cli }} exec {{ container.name }} -- mount -t ramfs -o size=20M,mode=1777 ramfs /tmp"
+  when: containerd_runtime == 'io.containerd.run.kata.v2' and gcp is not defined
+
+# GCP START ====================================================================
+- name: create bridge, containers on GCP, and define ip routing
+  block:
+  - name: create bridge networks for containers
+    shell: '{{containerd_cli}} network create -d bridge --subnet={{ hostvars["localhost"].node_bridge[hostname.stdout] }} {{hostname.stdout}}-bridge'
+    ignore_errors: true
+
+  - name: create containers on GCP VM
+    shell: >
+      {{ containerd_cli }} run
+      --name {{ container.name }}
+      --hostname {{ container.name }}
+      --cap-add CAP_SYS_ADMIN
+      --cap-add CAP_NET_ADMIN
+      --cap-add CAP_SYS_RESOURCE
+      --cpus {{gcp_config.container_rec.cpu}}
+      --memory {{gcp_config.container_rec.memory}}
+      --ulimit nofile=1048576:1048576
+      --snapshotter native
+      --runtime {{ containerd_runtime }}
+      --publish {{ container.ssh_port }}:22
+      --network {{hostname.stdout}}-bridge
+      --detach
+      -v /etc/localtime:/etc/localtime:ro
+      {{ containerd_image }}:latest
+
+  - name: define ip routing in container hosts for container networking
+    shell: '{{ route }}'
+    loop: '{{ hostvars["localhost"].vm_ip_routing_containers[hostname.stdout] }}'
+    loop_control:
+      loop_var: route
+    ignore_errors: true
+    when: '{{hostvars["localhost"].vm_ip_routing_containers[hostname.stdout]}}'
+
+  - name: get ip address of containers
+    shell: '{{ containerd_cli }} exec {{container.name}} hostname -i'
+    register: container_eth0_raw
+
+  # NOTE: for now, container interface is hardcoded to eth0
+  - set_fact:
+      container_eth0: '{{container_eth0_raw.stdout}}'
+
+  - set_fact:
+      container_ip: '{{ hostvars["localhost"].container_ip | combine({container.name: container_eth0}, recursive=true) }}'
+    delegate_to: localhost
+    delegate_facts: true
+
+  - name: set MTU for interface to overcome C3 container networking error
+    shell: '{{ containerd_cli }} exec {{ container.name }} ip li set mtu 1400 dev eth0'
+
+  when: 'gcp is defined' # and (hostvars["localhost"].container_names[container.name] in stacks[experiment.stack].services.keys())'
+# GCP END  =====================================================================

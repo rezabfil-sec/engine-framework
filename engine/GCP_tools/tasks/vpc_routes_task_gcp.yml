@@ -1,0 +1,30 @@
+- debug:
+    msg: '{{subnetwork_nodes.stdout}}'
+
+- set_fact:
+    subnetwork_nodes : '{{subnetwork_nodes.stdout}}'
+
+- debug:
+    msg: '{{subnetwork_nodes | to_json}}'
+
+- debug:
+    msg: '{{node_bridge | to_json}}'
+
+- debug:
+    msg: '{{instance_selflink | to_json}}'
+
+- debug:
+    msg:  '{{network_interfaces | to_json}}'
+
+- name: Extract VPC network bridge routes information
+  script: ../files/extract_network_bridge_gcp.py '{{subnetwork_nodes | to_json}}' '{{node_bridge | to_json}}' '{{instance_selflink | to_json}}' '{{network_interfaces | to_json}}'
+  register: network_bridge_routes
+
+- set_fact:
+    network_bridge_routes: "{{network_bridge_routes.stdout}}"
+
+- name: Add VPC network bridge routes
+  include_tasks: ./helper/vpc_routes_helper_task_gcp.yml 
+  with_dict: '{{network_bridge_routes}}'
+  loop_control:
+    loop_var: network_routes

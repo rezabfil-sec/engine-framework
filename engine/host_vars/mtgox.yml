@@ -1,0 +1,102 @@
+---
+# variables for node mtgox
+
+# network card
+num_interfaces: 17
+node_ifaces:
+  1:
+    name: 'eno1'
+    mac: 'ac:1f:6b:48:1f:74'
+    phc: '/dev/ptp5'
+    offload: no
+  2:
+    name: 'eno2'
+    mac: 'ac:1f:6b:48:1f:75'
+    phc: '/dev/ptp7'
+    offload: no
+  3:
+    name: 'enp4s0'
+    mac: '6c:b3:11:4a:37:34'
+    phc: '/dev/ptp5'
+    offload: no
+  4:
+    name: 'ens3f0'
+    mac: '3c:fd:fe:be:7e:d0'
+    phc: '/dev/ptp7'
+    offload: no
+  5:
+    name: 'ens3f1'
+    mac: '3c:fd:fe:be:7e:d1'
+    phc: '/dev/ptp5'
+    offload: no
+  6:
+    name: 'ens3f2'
+    mac: '3c:fd:fe:be:7e:d2'
+    phc: '/dev/ptp7'
+    offload: no
+  7:
+    name: 'ens3f3'
+    mac: '3c:fd:fe:be:7e:d3'
+    phc: '/dev/ptp5'
+    offload: no
+  8:
+    name: 'ens2f0'
+    mac: '3c:fd:fe:bc:f9:74'
+    phc: '/dev/ptp7'
+    offload: no
+  9:
+    name: 'ens2f1'
+    mac: '3c:fd:fe:bc:f9:75'
+    phc: '/dev/ptp7'
+    offload: no
+  10:
+    name: 'ens4f0'
+    mac: '3c:fd:fe:be:76:b0'
+    phc: '/dev/ptp7'
+    offload: no
+  11:
+    name: 'ens4f1'
+    mac: '3c:fd:fe:be:76:b1'
+    phc: '/dev/ptp7'
+    offload: no
+  12:
+    name: 'ens4f2'
+    mac: '3c:fd:fe:be:76:b2'
+    phc: '/dev/ptp7'
+    offload: no
+  13:
+    name: 'ens4f3'
+    mac: '3c:fd:fe:be:76:b3'
+    phc: '/dev/ptp7'
+    offload: no
+  14:
+    name: 'ens6f0'
+    mac: '3c:fd:fe:be:7f:c8'
+    phc: '/dev/ptp7'
+    offload: no     
+  15:
+    name: 'ens6f1'
+    mac: '3c:fd:fe:be:7f:c9'
+    phc: '/dev/ptp7'
+    offload: no
+  16:
+    name: 'ens6f2'
+    mac: '3c:fd:fe:be:7f:ca'
+    phc: '/dev/ptp7'
+    offload: no     
+  17:
+    name: 'ens6f3'
+    mac: '3c:fd:fe:be:7f:cb'
+    phc: '/dev/ptp7'
+    offload: no
+
+# TEEs information
+tee_supported: no
+
+# Total number of CPUs
+# Hyper threading is on, so 12 vCPUs 
+number_vCPUs: 12
+# Unit in GB
+total_RAM: 128
+
+management_iface: 'eno1'

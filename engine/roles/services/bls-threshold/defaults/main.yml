@@ -1,0 +1,4 @@
+---
+# BLS service default values
+setup_dir: "{{ experiment_folder }}/setup"
+bls_dir: "/root/bls"

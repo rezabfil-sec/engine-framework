@@ -1,0 +1,4 @@
+
+# https://wiki.linuxfoundation.org/networking/netem
+# https://man7.org/linux/man-pages/man8/tc-netem.8.html
+qdisc add dev {{ iface.value.name if iface.value.name is defined else iface }} root handle 100:0 netem {{ qdisc.netem.filter }}

@@ -30,13 +30,14 @@ scene_files = [
     "01-network.yml",
     "02-stacks.yml",
     "03-actions.yml",
-    "04-experiments.yml"
+    "04-experiments.yml",
+    "05-process.yml"
 ]
 
 # TODO variables needed:
 # - nodes + node mapping -> either directly or from pre-defined topologies
 # - dictionary with every experiment and all variables for that experiment
-#   { exp-1: { network: .(flows)., nodes: { node-1: { service: .., tsn: .., flow_ifaces: .., use_ifaces: ..} node-2: .., ..}}, exp-2: .., exp-3: ..}
+#   { exp-1: { network: .(flows)., nodes: { node-1: { service: .., qdisc: .., flow_ifaces: .., use_ifaces: ..} node-2: .., ..}}, exp-2: .., exp-3: ..}
 # - a dictionary of experiments in the same category
 #   { single: [exp-1, exp-2, exp-5], node_failure: [exp-3,exp-5], ... }
 def extract(scene_dir):
@@ -68,7 +69,7 @@ def extract_nodes(scene_dir):
 
 
 # - dictionary with every experiment and all variables for that experiment
-#   { exp-1: { network: .(flows)., nodes: { node-1: { service: .., tsn: .., flow_ifaces: .., use_ifaces: ..} node-2: .., ..}}, exp-2: .., exp-3: ..}
+#   { exp-1: { network: .(flows)., nodes: { node-1: { service: .., qdisc: .., flow_ifaces: .., use_ifaces: ..} node-2: .., ..}}, exp-2: .., exp-3: ..}
 def extract_config(scene_dir):
     loadedExperiments = {}
     loadedNetworks = {}
@@ -106,7 +107,7 @@ def extract_config(scene_dir):
             # Prep node entry
             resDict[expIdent]['nodes'][node] = {}
             resDict[expIdent]['nodes'][node]['services'] = {}
-            resDict[expIdent]['nodes'][node]['tsn'] = {}
+            resDict[expIdent]['nodes'][node]['qdisc'] = {}
             resDict[expIdent]['nodes'][node]['flow_ifaces'] = {}
             resDict[expIdent]['nodes'][node]['use_ifaces'] = {}
 
@@ -120,19 +121,19 @@ def extract_config(scene_dir):
             # pprint.pprint(nodeInfo)
 
         
-        # Fill tsn data at the end
-        for tsn in network['tsn']:
-            relevantTsnConfig = loadedNetworks['tsnconfigs'][tsn]
-            # print(network['tsn'])
+        # Fill qdisc data at the end
+        for qdisc in network['qdisc']:
+            relevantQdiscConfig = loadedNetworks['qdiscconfigs'][qdisc]
+            # print(network['qdisc'])
             # print(resDict[expIdent]['nodes'])
-            # print(relevantTsnConfig)
-            for node in network['tsn'][tsn]:
+            # print(relevantQdiscConfig)
+            for node in network['qdisc'][qdisc]:
                 if ':' in node:
-                    if 'tsn' not in resDict[expIdent]['nodes'][node.split(':')[0]]:
-                        resDict[expIdent]['nodes'][node.split(':')[0]]['tsn'] = {}
-                    resDict[expIdent]['nodes'][node.split(':')[0]]['tsn'][node] = relevantTsnConfig
+                    if 'qdisc' not in resDict[expIdent]['nodes'][node.split(':')[0]]:
+                        resDict[expIdent]['nodes'][node.split(':')[0]]['qdisc'] = {}
+                    resDict[expIdent]['nodes'][node.split(':')[0]]['qdisc'][node] = relevantQdiscConfig
                 else:
-                    resDict[expIdent]['nodes'][node]['tsn'] = relevantTsnConfig
+                    resDict[expIdent]['nodes'][node]['qdisc'] = relevantQdiscConfig
         
         # Fill in the flow_ifaces data
         for flow in network['flows']:

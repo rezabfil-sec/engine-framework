@@ -2,7 +2,8 @@
 ## variables listed here are applicable to all nodes
 
 # Data folder path, store experiment data on the local node
-data_folder: 'XXX'
+data_folder: '/srv/testbed/vehiclenet/experiments'
+
 # Paths on the node
 file_paths:
   path_service_signal: "/root/service.signal"
@@ -15,47 +16,37 @@ data_path: "/data"
 # path on the node to store the custom scripts folder
 # they can be imported from scripts called by the "script" modules
 script_path: "/root"
+engine_path: "{{ playbook_dir }}/../.."
 # Path to other repos (better than download due to versions)
 others_path: "../others/"
 
-### POS installation
+pos_node_image: '"-s ubuntu-jammy@2023-12-10T20:10:44+00:00"'
 
-### Images used to boot the nodes
-# Possible <flag>s: 
-# -s            Staging
-# -u <username> User images
+## Special images for TEE-based setups
+# pos_node_image: '"-s ubuntu-focal-snp-iommu-avic-sriov@2023-08-25T21:04:30+00:00"'
 
-## Normal Ubuntu/Debian (Leave only one uncommented!):
-pos_node_image: '"-s ubuntu-focal@2021-11-10T21:06:06+00:00"'
+# ==============================================================================================
 
-## Ubuntu/Debian using the low latency kernel (Leave only one uncommented!):
-pos_node_image_low_latency: '"-s ubuntu-focal-lowlatency@2021-11-10T20:58:12+00:00"'
-
+# Image that works with flare and polynize
+pos_node_image_low_latency: '"-s ubuntu-jammy-lowlatency@2023-12-10T20:05:00+00:00"'
 
 ## Script flags for install.sh
 ## Do not change here, but in a corresponding scenario
 install_disable_cpu_ht: '-p'
 install_disable_cpu_turbo: '-u'
 install_set_cpu_perf: '-e'
+install_set_net_prio: '-g'
 no_flag: ''
 
 ## Default ansible group to use for the installation and node setup
 pos_group_default: 'None'
 
 ### node setup
-## TSN git repository variables
-git_tsn_branch: 'master'
-git_tsn_repo: 'XXX'
-git_tsn_user: 'XXX'
-git_tsn_token: 'XXX'
-## interface variables
-iface_vlan_id: '2'
-
-# In case SW restart does not work, simple comment out and use line below
-#SW_reboot_nodes: []
-SW_reboot_nodes: [abe,bart,homer,itchy,lisa,maggie,marge,milhouse,nelson,otto,ralph,scratchy]
+SW_reboot_nodes: [abe,bart,eliza,homer,itchy,lisa,mabel,maggie,marge,milhouse,ned,nelson,otto,ralph,rod,scratchy,todd,zia]
+# SW_reboot_nodes: [abe,bart,homer,itchy,lisa,maggie,marge,milhouse,nelson,otto,ralph,scratchy]
 nodes_hw: []
 nodes_sw: []
+nodes_cpu: []
 # map socket buffer priority to vlan priority [skb:vlan-pcp]
 # this information is handed to the vlan interfaces when creating them in the network step
 iface_prio_map: '0:0 1:1 2:2 3:3 4:4 5:5 6:6 7:7'
@@ -64,14 +55,10 @@ iface_prio_map: '0:0 1:1 2:2 3:3 4:4 5:5 6:6 7:7'
 
 # A list with the hardware interfaces of a node, this is defined in the host_vars files
 node_ifaces: {}
-# 1: { name: eno1, mac: "xx:xx..", phc: "/dev/ptp0", clock: "24..-1" }, 2: { ... }
 
 # A list with the flow interfaces on a node, this is filled during the network ovs_flows step
 # ip_src = the flow interface ip address, hw = the hardware interface key it is connected to
 flow_ifaces: []
-# - {"name": "flow1", "hw": "1", "role": "sink", "ip_src": <ipsrc>, "ip_dst": <ipdst>, "flow": 1}
-# - {"name": "flow3", "hw": "2", "role": "sink", "ip_src": <ipsrc>, "ip_dst": <ipdst>, "flow": 3}
-# - ...
 
 # A list with the active hardware interfaces that are part of the current experiment topology
 # This is filled during the network ovs_flows step, the number correspond to the node_ifaces keys
@@ -86,11 +73,23 @@ data_disk: ""
 # only 0-7 can be carried in the vlan pcp header field
 net_prio_list: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
 
+# Specifies that we want to use OvS setup - there cannot be a switch in the middle of connection
+# network_config: 'OvS'
+# Specifies we deploy IPs directly on physical iface and specific subnets as defined in network.yml
+#network_config: 'Physical'
+# Similar like "Physical", but in addition can be combined with creation of virtual interfaces
+network_config: 'Physical'
+
+update_network_driver: true
+## NOTE: In most of the cases for Coinbase we assume SRIOV or Physical deployments
+
 ### ptp clock sync
-# use either 'linuxptp' or 'excelfore', 'taprioSol1', or 'none', 'lidar_all'
-# lidar_all -- not to look for GM clock
-# taprioptp is meant for two nodes setup e.g. Todd and Rod to resolve TAPRIO + PTP issue
-ptp_clockmode: 'linuxptp'
+ptp_linuxptp_conf: 'gPTP'
+
+# ptp_linuxptp_mode: 'secext'
+ptp_linuxptp_mode: 'default'
+
+num_virtual_ifaces: 8
 
 # these are the repositories that are checked out and compiled for PTP
 # if a repository should be fixed to a certain tag/version, specify the branch variable
@@ -101,29 +100,102 @@ ptp_excelfore:
     url: 'https://github.com/xl4-shiro/xl4combase.git'
   - folder: 'excelfore-gptp'
     url: 'https://github.com/xl4-shiro/excelfore-gptp'
-ptp_linuxptp:
+ptp_linuxptp_default:
   - folder: 'linuxptp'
-    url: 'http://git.code.sf.net/p/linuxptp/code'
+    url: 'https://git.code.sf.net/p/linuxptp/code'
     branch: 'v3.1'
+
 # linuxptp checkclock
 ptp_cc:
   name: 'check_clocks'
   url: 'https://tsn.readthedocs.io/_downloads/f329e8dec804247b1dbb5835bd949e6f/check_clocks.c'
 
-# define node that has the Cisco Nexus SmartNIC for GPS sync
-smartnic_equipped: 'lisa'
 
-simulation:
-  setup:
-    engine:
-      location: '/data'
-      dir: 'engine'
-    inet:
-      location: '/opt'
-      dir: 'inet4.4'
-    opp:
-      location: '/opt'
-      dir: 'omnetpp-6.0'
-      scavetool: 'bin/opp_scavetool'
-    script:
-      install: '../../simulation/install.sh'
+# /*---------------------------------------*\
+#   Container variables
+# \*---------------------------------------*/
+
+# valid options: 'lxc', 'containerd', ''
+# for LXC
+#container_runtime: 'lxc'
+# For GCP
+container_runtime: 'containerd'
+
+# valid options: 'runc', 'io.containerd.run.kata.v2' -- only used with containerd
+containerd_runtime: 'io.containerd.run.kata.v2'
+
+# will be built from the corresponding dockerfile (cf. roles/setup/files/*.Dockerfile)
+containerd_image: 'engine-default'
+
+containerd_bridge: 'engine0'
+containerd_cni_path: '/opt/cni/net.d'
+
+# used for initial IPAM setup, even though we assign flow IPs later
+# TODO: this introduces unneeded IPs in the network, if possible, remove
+containerd_bridge_prefix: '10.254.'
+
+# default is nerdctl; docker CLI is not supported currently, but
+# could be added seamlessly
+containerd_cli: 'nerdctl'
+
+kata_config: 'kata-configuration-default'
+
+lxc_subnet_prefix: 192.168.30
+
+experiment_tmp_dir: 'experiment_tmp'
+
+algorand_api_port: 4100
+
+# |==========================================================|
+
+# /==========================================================\
+#       MISC
+# \==========================================================/
+# define node that has the Cisco Nexus SmartNIC for GPS sync
+smartnic_equipped: 'zia'
+
+# |==========================================================|
+
+
+# GCP PROJECT VARIABLES ----------------------------------------------------------
+gcp_config:
+  # GCP project id where VM has to be created in
+  project: FILL
+  # authentication
+  authentication:
+    # default User
+    user: "FILL"
+    # type of authentication method (machineaccount, serviceaccount, application, accesstoken)
+    auth_kind: FILL
+    # path to serviceaccount credential
+    service_account_file: PATH
+    # path to private key as specified by ansible_gcp.cfg
+    public_key_file: PATH
+  # disk description
+  disk:
+    # disk type (pd-ssd, pd-standard)
+    # confidential computing only supports pd-ssd
+    type: pd-balanced
+    size: 200
+    image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts
+  # scheduling description
+  scheduling:
+    # on host maintenance policy (MIGRATE, TERMINATE)
+    on_host_maintenance: TERMINATE
+  # instance description
+  instance:
+    service_account_email: "FILL"
+    service_account_scopes: 
+      - "https://www.googleapis.com/auth/devstorage.read_only"
+      - "https://www.googleapis.com/auth/logging.write"
+      - "https://www.googleapis.com/auth/monitoring.write"
+      - "https://www.googleapis.com/auth/servicecontrol"
+      - "https://www.googleapis.com/auth/service.management.readonly"
+      - "https://www.googleapis.com/auth/trace.append"
+    # min_cpu_platform
+    min_cpu_platform: AMD Milan # for confidential computing
+  # container resources limit
+  container_rec:
+    memory: 4g
+    cpu: 2
+#-----------------------------------------------------------------------------

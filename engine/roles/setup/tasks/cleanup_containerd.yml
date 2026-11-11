@@ -1,0 +1,30 @@
+---
+
+- name: get a list of all containers
+  shell: "{{ containerd_cli }} ps -q"
+  register: running_container_list
+
+- name: stop all containers
+  shell: "{{ containerd_cli }} stop {{ stop_container }}"
+  loop: "{{ running_container_list.stdout_lines }}"
+  loop_control:
+    loop_var: stop_container
+  ignore_errors: yes
+
+- name: prune stopped containers
+  command: "{{ containerd_cli }} container prune -f"
+
+- name: get a list of all networks
+  shell: "{{ containerd_cli }} network ls -q"
+  register: network_list
+
+- name: remove all networks
+  shell: "{{ containerd_cli }} network rm {{ remove_network }}"
+  loop: "{{ network_list.stdout_lines }}"
+  loop_control:
+    loop_var: remove_network
+  ignore_errors: yes
+
+- name: destroy bridge if it exists
+  shell: "ip link del {{ containerd_bridge }}"
+  ignore_errors: yes

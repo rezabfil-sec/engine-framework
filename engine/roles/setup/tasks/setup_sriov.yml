@@ -1,0 +1,98 @@
+---
+# Initial SR-IOV node configuration
+
+# delete SR-IOV ifaces if they exist
+# - name: (re-) create ovs bridge
+#   command: "{{ item }}"
+#   loop:
+#     - ovs-vsctl --if-exists del-br ovs0
+#     - ovs-vsctl --may-exist add-br ovs0 -- set bridge ovs0 fail_mode=secure
+#     - ip link set ovs0 up
+# - name: install ovs default drop flow
+#   command: ovs-ofctl mod-flows ovs0 priority=0,actions=drop
+
+
+# - name: sriov config
+#   copy:
+#     dest: /etc/modprobe.d/{{ item.value.sriov_driver }}.conf
+#     content: options {{ item.value.sriov_driver }} max_vfs=8
+#     loop: '{{ node_ifaces | dict2items }}'
+#     # when: iface.value.sriov is defined
+# - name: unique drivers
+#   set_fact:
+#     unique_drivers: "{{ [] }}"
+
+# - name: extract unique drivers
+#   set_fact:
+#     unique_drivers: "{{ unique_drivers + [item.value.sriov_driver] }}"
+#   when: item.value.sriov is defined
+#   loop: "{{ node_ifaces | dict2items }}"
+
+# - debug: var=unique_drivers
+# - name: sriov config
+#   shell: 'echo "options {{ item }} max_vfs=4" > /etc/modprobe.d/{{ item }}.conf'
+#   loop: '{{ node_ifaces | dict2items }}'
+#     # when: iface.value.sriov is defined
+
+# - name: check if drivers are taken
+#   shell: 'modprobe -r irdma  {{ item }}'
+#   # when: 'item == "ice"'
+#   loop: '{{ node_ifaces | dict2items }}'
+
+# - name: check if drivers are taken
+#   shell: 'modprobe -r mlx5_ib  {{ item }}'
+#   when: 'item == "mlx5_core"'
+#   loop: '{{ node_ifaces | dict2items }}'
+
+# Relevant to enforce random MAC addresses on each virtual
+# ifaces, otherwise can result in same MACs
+- name: copying right config
+  copy:
+    src: 'files/99-default.link'
+    dest: '/usr/lib/systemd/network/'
+
+- name: apply boosts config
+  shell: 'modprobe sch_mqprio && modprobe act_mirred && modprobe cls_flower'
+
+# echo "options igb max_vfs=2" > /etc/modprobe.d/igb.conf
+# TODO bnxt_en does not work - Broadcom drive. Possible cause by the fact that one of its ifaces is up for the mgm iface
+# connection to management node
+- name: sriov config for bnxt_en and ixgbe
+  shell: 'echo "options {{ item.value.sriov_driver }} max_vfs={{ num_virtual_ifaces }}" > /etc/modprobe.d/{{ item.value.sriov_driver }}.conf'
+  when: item.value.sriov is defined and item.value.sriov_driver is defined and (item.value.sriov_driver == "bnxt_en" or item.value.sriov_driver == "ixgbe")
+  loop: '{{ node_ifaces | dict2items }}'
+    # when: iface.value.sriov is defined
+
+- name: reload interface driver for ixgbe and bnxt_en
+  shell: 'modprobe -r {{ item.value.sriov_driver }} && modprobe {{ item.value.sriov_driver }}'
+  when: item.value.sriov is defined and item.value.sriov_driver is defined and (item.value.sriov_driver == "bnxt_en" or item.value.sriov_driver == "ixgbe")
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: restart interface driver melanox and ice and i40e
+  shell: 'echo 0 > /sys/class/net/{{ item.value.name }}/device/sriov_numvfs'
+  when: item.value.sriov is defined and item.value.sriov_driver is defined and (item.value.sriov_driver == "ice" or item.value.sriov_driver == "mlx5_core" or item.value.sriov_driver == "i40e")
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: create vfs for driver melanox and ice and i40e
+  shell: 'echo {{ num_virtual_ifaces }} > /sys/class/net/{{ item.value.name }}/device/sriov_numvfs'
+  when: item.value.sriov is defined and item.value.sriov_driver is defined and (item.value.sriov_driver == "ice" or item.value.sriov_driver == "mlx5_core" or item.value.sriov_driver == "i40e")
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: change vfs config options for ice
+  shell: 'nic={{ item.value.name }};for i in $(seq 0 {{ num_virtual_ifaces -1 }});do ip link set $nic vf $i trust on;done'
+  when: item.value.sriov is defined and item.value.sriov_driver is defined and (item.value.sriov_driver == "ice")
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: change vfs config options for i40e
+  shell: 'nic={{ item.value.name }};for i in $(seq 0 {{ num_virtual_ifaces -1 }});do ip link set $nic vf $i spoofchk off trust on;done'
+  when: item.value.sriov is defined and item.value.sriov_driver is defined and (item.value.sriov_driver == "i40e")
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: update hstamp_ctl
+  shell: 'hwstamp_ctl -i {{ item.value.name }} -r 1 -t 1'
+  when: item.value.sriov is defined and item.value.sriov_driver is defined and (item.value.sriov_driver == "ice" or item.value.sriov_driver == "mlx5_core")
+  loop: '{{ node_ifaces | dict2items }}'
+
+- name: apply boosts config
+  shell: 'intel_iommu=on && iommu=pt'
+  # when: item.sriov is defined

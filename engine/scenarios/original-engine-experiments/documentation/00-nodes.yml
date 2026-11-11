@@ -1,0 +1,61 @@
+---
+# 0. Nodes
+# Define and map nodes required for the scenario
+#
+# Scenario can be moved around in the infrastructure or
+# updated after a re-wiring of the network more easily.
+#
+
+# ---------------------------------------------
+# 0. Option
+# Specify the settings for CPU Isolation
+
+# Specify if you want to use the low-latency kernel
+# Set to "no" or leave out if you don't want to use the low-latency kernel
+(use_low_latency_kernel: "yes")
+
+# Set the number of isolated cores. Cores starting with core 0 will be isolated. 
+# Set to 0 or leave out if you want no cores to be isolated!
+(num_isolated_cores: 3)
+
+# Disable hyperthreading on nodes
+(disable_cpu_ht: "no")
+
+# Disable CPU turbo
+(disable_cpu_turbo: "no")
+
+# Set CPU to performance mode
+(set_cpu_perf: "yes")
+
+# ---------------------------------------------
+# 1. Option
+# Load the nodes for a pre-defined topology and its node mapping
+# Empty string to use own definition
+
+# A topology from the scenarios/topologies folder
+topology: ""
+# //
+topology: "topo-01"
+
+
+# ---------------------------------------------
+# 2. Option
+# Define your own required hosts and their mapping
+# if the topology variable is defined it takes precedence
+
+# A list with the required nodes with real hostname
+nodes: []
+# //
+nodes:
+  - otto
+  - maggie
+  - abe
+
+# The mapping of the above nodes to node-X names
+# the node-X names are used in the rest of the scenario configuration
+node_mapping: []
+# //
+node_mapping:
+  node-1: otto
+  node-2: maggie
+  node-3: abe

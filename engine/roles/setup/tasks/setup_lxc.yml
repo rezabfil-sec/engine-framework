@@ -1,0 +1,34 @@
+- name: install lxc dependencies
+  apt:
+    name: [lxc, lxc-dev, python3, python3-lxc, python-is-python3]
+    update_cache: true
+
+- name: install apparmor-utils for ubuntu
+  apt:
+    name: [ apparmor-utils ]
+  when: '"ubuntu" in pos_node_image'
+
+- name: copy lxc-net config
+  template:
+    src: lxc-net.j2
+    dest: /etc/default/lxc-net
+
+- name: create lxc dnsmasq conf
+  copy:
+    dest: "{{ lxc_dhcp_conf }}"
+    content: |
+      dhcp-hostsfile={{ lxc_dhcp_hosts }}
+
+- name: restart lxc-net service
+  systemd:
+    state: restarted
+    daemon_reload: true
+    name: lxc-net
+
+- name: deactivate apparmor
+  command: aa-teardown
+  when: '"debian" in pos_node_image'
+
+- name: dectivate apparmor
+  command: "systemctl disable apparmor.service"
+  when: '"ubuntu" in pos_node_image'

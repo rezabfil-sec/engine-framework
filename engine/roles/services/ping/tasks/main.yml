@@ -25,6 +25,7 @@
 # load ip of one node
 # possible because address of a flow is well-known:
 # 10.0.<flow-id>.<start=1/end=2>
+# TODO add flag for the reading of actual ip.dst only
 - block:
     - name: load destination ip
       set_fact:
@@ -58,3 +59,16 @@
   ignore_errors: '{{ "yes" if service.ignore is defined else "no" }}'
   loop_control:
     loop_var: ping_ip
+  when: network_config == "OvS" or network_config == "Physical"
+
+- name: execute ping
+  shell: >
+    run_service {{ 1 if service.signal | default(false) else 0 }} {{ service.wait | default(0) }} {{ 1 if service.sync_start is defined and service.sync_start else 0 }}
+    ping -D -O -c {{ service.count | default(ping_count) }}
+    -w {{ (( (service.count | default(ping_count)) * (service.interval | default(ping_interval))) | round | int) + 5 }}
+    -i {{ service.interval | default(ping_interval) }} {{ ping_ip }}
+  loop: '{{ dest_ip }}'
+  ignore_errors: '{{ "yes" if service.ignore is defined else "no" }}'
+  loop_control:
+    loop_var: ping_ip
+  when: network_config == "SRIOV"

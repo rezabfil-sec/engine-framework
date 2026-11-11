@@ -1,11 +1,14 @@
 ---
 # default experiment values
 node: 'node-0'
-tsn_config: ''
+node_is_used: false
+qdisc_config: ''
 flows: []
 services: []
 protocol: []
 action: []
+used_sriov_ifaces_host: []
+used_hw_ifaces_host: []
 
 # the number of signals registered by services
 service_signals: 0
@@ -16,4 +19,7 @@ experiment_time: 30
 experiment_timeout: 60
 
 # service level
-service_levels: [ 0, 1, 2 ]
+# When more levels needed, increase here
+# service_levels: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+service_levels: [ 0, 1, 2, 3, 4 ]
+#service_levels: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ]

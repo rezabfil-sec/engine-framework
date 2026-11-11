@@ -1,0 +1,6 @@
+---
+# matrix bench defaults
+
+mdir: matrix_bench
+matrix_dim: 1024
+repetitions: 64

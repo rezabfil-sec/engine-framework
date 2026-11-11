@@ -17,6 +17,13 @@ iperf_client_time: 86400
 # limit connection bitrate - 0 = unlimited
 iperf_client_limit: 0
 
+# begin variables specifying installation
+iperf_location: '/data'
+iperf_tar_path: '/srv/testbed/vehiclenet/software'
+iperf_multisend: 10
+iperf_version: '12'
+# end variables specifying installation
+
 ### simulation
 
 per_submodules_statistics:

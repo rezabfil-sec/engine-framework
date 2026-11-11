@@ -1,0 +1,21 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+
+# Table-9_EX_MQ1 - Pure MQPRIO with BE and 4 iperf flows on different queues limited to 100 mbit/s
+  # 1 hop
+  - { network: 'net-2', stack: 'stack-1',  action: 'action-1', time: 90, name: '4-queue_4-be_4-streams_1-hop_all-mqprio-iperf100-90s' }
+  # 2 hop
+  - { network: 'net-2', stack: 'stack-2',  action: 'action-1', time: 90, name: '4-queue_4-be_4-streams_2-hop_all-mqprio-iperf100-90s' }
+  # 3 hop
+  - { network: 'net-3', stack: 'stack-3',  action: 'action-1', time: 90, name: '4-queue_4-be_4-streams_3-hop_all-mqprio-iperf100-90s' }
+  # 4 hop
+  - { network: 'net-4', stack: 'stack-4',  action: 'action-1', time: 90, name: '4-queue_4-be_4-streams_4-hop_all-mqprio-iperf100-90s' }
+  # 5 hop
+  - { network: 'net-5', stack: 'stack-5',  action: 'action-1', time: 90, name: '4-queue_4-be_4-streams_5-hop_all-mqprio-iperf100-90s' }
+  # 6 hop
+  - { network: 'net-6', stack: 'stack-6',  action: 'action-1', time: 90, name: '4-queue_4-be_4-streams_6-hop_all-mqprio-iperf100-90s' }
+  # 7 hop
+  - { network: 'net-7', stack: 'stack-7',  action: 'action-1', time: 90, name: '4-queue_4-be_4-streams_7-hop_all-mqprio-iperf100-90s' }

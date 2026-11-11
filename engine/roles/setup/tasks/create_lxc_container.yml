@@ -1,0 +1,96 @@
+# TODO: This has to be done in case non-container node uses flow with SR-IOV interface somewhere else (prob sriov_flows.py)
+- name: set physical interface up if VF is used
+  shell: "ip link set {{ node_ifaces[(iface|string).split('.')[0]|int].name }} up"
+  when: (iface|string).split('.') | length > 1
+  loop: "{{ container.ifaces }}"
+  loop_control:
+    loop_var: iface
+  register: iface_up
+
+#- name: delete container
+#  lxc_container:
+#    name: "{{ container.name }}"
+#    state: absent
+
+- name: create container
+  lxc_container:
+    name: "{{ container.name }}"
+    template: download
+    state: stopped
+    # fs_size: 2G
+    # template_options: --dist debian --release bullseye --arch amd64
+    template_options: --dist ubuntu --release jammy --arch amd64
+
+# - name: debug variables
+#   debug:
+#     msg: "{{ node_ifaces[(iface|string).split('.')[0] |int].name}}{{'v' + (iface|string).split('.')[1] if (iface|string).split('.') | length > 1 }}"
+#   loop: "{{ container.ifaces }}"
+#   loop_control:
+#     loop_var: iface
+#     index_var: index
+
+- name: add container interface config
+  lxc_container:
+    name: "{{ container.name }}"
+    state: stopped
+    container_config:
+      # - "lxc.rootfs.options = idmap=container"
+      # - "lxc.cgroup.memory.limit_in_bytes = 2560M"
+      - "lxc.apparmor.profile = unconfined"
+      - "lxc.net.{{ index + 1 }}.type = phys"
+      - "lxc.net.{{ index + 1 }}.link = {{ node_ifaces[(iface|string).split('.')[0] |int].name}}{{'v' + (iface|string).split('.')[1] if (iface|string).split('.') | length > 1 }}"
+      - "lxc.net.{{ index + 1 }}.name = eno{{ index + 1 }}"
+  loop: "{{ container.ifaces }}"
+  loop_control:
+    loop_var: iface
+    index_var: index
+
+#- name: extract hw interfaces of host
+#  set_fact:
+#    used_hw_ifaces_host: "{{ used_hw_ifaces_host + [node_ifaces[(iface|string).split('.')[0]|int].name] }}"
+#  loop: "{{ container.ifaces }}"
+#  loop_control:
+#    loop_var: iface
+#- name: extract sr-iov interfaces of host
+#  set_fact:
+#    used_sriov_ifaces_host: "{{ used_sriov_ifaces_host + [ node_ifaces[(iface|string).split('.')[0]|int].name + 'v' + (iface|string).split('.')[1]|string]  }}"
+#  loop: "{{ container.ifaces }}"
+#  loop_control:
+#    loop_var: iface
+
+- name: add additional user container config
+  lxc_container:
+    name: "{{ container.name }}"
+    state: stopped
+    container_config: "{{ container.lxc_config }}"
+  when: container.lxc_config is defined
+
+- name: start container
+  lxc_container:
+    name: "{{ container.name }}"
+    state: started
+
+- name: set container facts
+  set_fact:
+    con_rootfs: "/var/lib/lxc/{{ container.name }}/rootfs"
+#    con_ip: "{{ lxc_subnet_prefix }}.{{ container_index + 2 }}"
+
+#- name: add container to dnsmasq hosts
+#  lineinfile:
+#    path: "{{ lxc_dhcp_hosts }}"
+#    line: "{{ container.name }},{{ con_ip }}"
+
+- name: install dependencies
+  lxc_container:
+    name: "{{ container.name }}"
+    container_command: "apt-get -y install openssh-server python3 curl rsync"
+
+#- name: install dependencies
+#  shell: |
+#    {{ con_exec }} apt-get -y install openssh-server python3 curl rsync
+
+- name: add ssh authorized keys
+  shell: |
+    mkdir {{ con_rootfs }}/root/.ssh
+    cp ~/.ssh/authorized_keys {{ con_rootfs }}/root/.ssh/authorized_keys
+

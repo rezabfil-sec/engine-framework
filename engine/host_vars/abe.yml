@@ -12,18 +12,34 @@ node_ifaces:
     mac: '6c:b3:11:52:53:fc'
     phc: '/dev/ptp0'
     clock: '6cb311.fffe.5253fc-1'
+    bandwidth: 1
+    sriov: no
   2:
     name: 'enp4s0'
     mac: '6c:b3:11:52:53:fd'
     phc: '/dev/ptp1'
     clock: '6cb311.fffe.5253fc-2'
+    bandwidth: 1
+    sriov: no
   3:
     name: 'enp5s0'
     mac: '6c:b3:11:52:53:fe'
-    phc: '/dev/ptp2'
+    phc: '/dev/ptp3'
     clock: '6cb311.fffe.5253fc-3'
+    bandwidth: 1
+    sriov: no
   4:
     name: 'enp6s0'
     mac: '6c:b3:11:52:53:ff'
-    phc: '/dev/ptp3'
+    phc: '/dev/ptp4'
     clock: '6cb311.fffe.5253fc-4'
+    bandwidth: 1
+    sriov: no
+
+# Total number of CPUs
+# Hyper threading is on, so 8 vCPUs 
+number_vCPUs: 8
+# Unit in GB
+total_RAM: 16
+
+management_iface: enp0s25

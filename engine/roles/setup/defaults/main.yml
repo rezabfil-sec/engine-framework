@@ -1,3 +1,26 @@
+ice_driver_version: "ice-1.13.7"
+ixgbe_driver_version: "ixgbe-5.19.6"
+i40e_driver_version: "i40e-2.23.17"
+iavf_driver_version: "iavf-4.9.1"
+
+kata_version: "3.2.0" # 3.2.0 needed for SEV-SNP, until Kata officially supports more recent (patched) kernels
+kata_guest_kernel_version: "6.7-126" # supports 5.19.2, 6.7-126 (recommended)
+kata_default_guest: "linux-guest-v{{ kata_guest_kernel_version }}"
+kata_snp_guest: "linux-snp-guest-v{{ kata_guest_kernel_version }}"
+ovmf_snp_version: "ovmf-edk2-stable202302"
+qemu_snp_version: "qemu-snp-3b6a2b6b7"
+snp_firmware: "amd_sev_fam19h_model0xh.sbin"
+
+# - name: initialize hw interfaces host
+#   set_fact:
+#     used_hw_ifaces_host: "{{ [] }}"
+
+# - name: initialize sriov interfaces host
+#   set_fact:
+#     used_sriov_ifaces_host: "{{ [] }}"
+lxc_dhcp_conf: /etc/lxc/dnsmasq.conf
+lxc_dhcp_hosts: /etc/lxc/dnsmasq-hosts.conf
+
 ndn_repositories: [ppa:named-data/ppa]
 ndn_apt: [psmisc, ndn-tools, libpsync, libchronosync, ndncert, nlsr]
 # ndn dependencies that will be compiled manually

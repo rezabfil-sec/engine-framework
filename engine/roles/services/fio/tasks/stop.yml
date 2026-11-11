@@ -1,0 +1,11 @@
+---
+# fio stop
+
+- name: remove fio temp dir
+  file:
+    path: "{{ fio_location }}"
+    state: absent
+
+- name: kill fio
+  command: pkill -f fio
+  ignore_errors: yes

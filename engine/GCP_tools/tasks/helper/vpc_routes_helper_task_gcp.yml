@@ -1,0 +1,15 @@
+- name: adding routes to the network  
+  gcp_compute_route:
+    auth_kind: serviceaccount
+    service_account_file: "{{ gcp_config.authentication.service_account_file }}"
+    project: '{{gcp_config.project}}'
+    network: 
+      selfLink: '{{network_entry.network_selflink}}'
+    dest_range: '{{network_entry.bridge}}'
+    name: '{{network_entry.vm_name}}-{{ 99999999 | random | to_uuid }}'
+    next_hop_instance: 
+      selfLink: '{{network_entry.vm_selflink}}'
+  loop: "{{network_routes.value}}"
+  loop_control:
+    loop_var: network_entry
+  when: network_routes.value | length > 1

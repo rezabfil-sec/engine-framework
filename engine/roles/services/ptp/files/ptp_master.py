@@ -144,7 +144,7 @@ def read_logs(lines):
                         return "Too large offset"
 
 
-def read_logs_once(lines, given_interfaces, num_interfaces):
+def read_logs_once(lines, given_interfaces, num_interfaces, provided_interfaces):
     #given_interfaces = []
     #{% for item in node_ifaces | dict2items %}
     #given_interfaces.append("{{ item.value.name}} ")
@@ -191,7 +191,7 @@ def execute_cmd(command):
     return output.decode('utf-8')
 
 # Find group local master
-def search_local_master(log_path, num_ifaces):
+def search_local_master():
     # pmc returns a number of responses within 1 hop, as long as other devices chose themselves as GM, we wait
     # Takes around 60s for network to stabilize
     counter = 2
@@ -234,6 +234,21 @@ def search_local_master(log_path, num_ifaces):
         print("This node is not the GM")
         return 0
 
+def find_unique_ptp(given_interfaces):
+    phc_values = []
+    # List info for each iface regarding PTP clock
+    for iface in given_interfaces:
+        cmd = 'ethtool -T ' + str(iface)
+        response = execute_cmd(cmd)
+        print(response)
+        start = response.find('PTP Hardware Clock:')
+        end = start + 22
+        # will fail if the device does not have PTP link
+        phc_value = int(response[start:end].split(":")[1])
+        phc_values.append(phc_value)
+        print(phc_value,phc_values)
+    return len(list(dict.fromkeys(phc_values)))
+        
 
 def help():
     print("(C) 2020, IVNRI PTP analysis tool")
@@ -278,17 +293,25 @@ def main():
             given_interfaces = str(a).split(",")
 
     num_interfaces = len(used_ifaces)
+    # Check how many PTP clocks found
+    # some ifaces share the same PHC 
+    unique_ptp_clocks = find_unique_ptp(given_interfaces)
+    if unique_ptp_clocks < num_interfaces:
+        num_interfaces = unique_ptp_clocks
+        print("Less PHC than ifaces")
+    # sys.exit(0)
     if not some_option:
         print("Please provide some option!")
         print(" -h for help")
         sys.exit(0)
     if find_master:
+        provided_interfaces = given_interfaces
         given_interfaces = given_interfaces[:num_interfaces]
         print(given_interfaces)
-        gm_found = search_local_master(log_path, num_interfaces)
+        gm_found = search_local_master()
         if gm_found == "GM found":
            loglines = read_log(log_path, 5)
-           values = read_logs_once(loglines, given_interfaces, num_interfaces)
+           values = read_logs_once(loglines, given_interfaces, num_interfaces, provided_interfaces)
            time.sleep(10)
            print(values[1])
            return values[1]

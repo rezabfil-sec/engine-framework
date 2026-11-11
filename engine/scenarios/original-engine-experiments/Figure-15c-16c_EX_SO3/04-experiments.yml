@@ -1,0 +1,7 @@
+---
+# 4. Experiments (combination of Network, Stack, Services)
+# Actual experiments to run in the infrastructure.
+
+experiments:
+  # Figure-15c-16c_EX_SO3 - 2 hop with one cbs flow. CBS applied on all hops. Configuration with CPU turbo turned on, without SMT and with governor in performance mode
+  - { network: 'net-42', stack: 'stack-82',  action: 'action-1', time: 120, name: '4-queue_2-cbs_2-be_1-streams_2-hop_with-hop-cbs-iperf-line-limit100-2min-cpuperf-noht'  }

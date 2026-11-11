@@ -31,7 +31,7 @@ def mode(mode, node_mapping, network, host_vars):
         print("Invalid mode.")
         exit()
 
-def map_node_to_taprio_ifaces(net, tsnconfigs):
+def map_node_to_taprio_ifaces(net, qdiscconfigs):
     '''
         Maps nodes to interfaces where taprio is configured
 
@@ -41,9 +41,9 @@ def map_node_to_taprio_ifaces(net, tsnconfigs):
         not only individual interfaces.
     '''
     node_to_taprio_ifaces_mapping = {}
-    if 'tsn' in net.keys():
-        for tsn_key, node_ifaces_list in net['tsn'].items():
-            if len(tsnconfigs[tsn_key]['taprio'])>0:
+    if 'qdisc' in net.keys():
+        for qdisc_key, node_ifaces_list in net['qdisc'].items():
+            if len(qdiscconfigs[qdisc_key]['taprio'])>0:
                 for node_ifaces in node_ifaces_list:
                     node, ifaces_raw = node_ifaces.split(':')
                     if node not in node_to_taprio_ifaces_mapping.keys():
@@ -60,7 +60,7 @@ def map_node_to_taprio_ifaces(net, tsnconfigs):
 def mac_flows(node_mapping, network, host_vars):
     net_ports = {}
     for net_key, net_value in network['network'].items():
-        net_ports[net_key] = mac(node_mapping, net_value['flows'], map_node_to_taprio_ifaces(net_value, network['tsnconfigs']), host_vars)
+        net_ports[net_key] = mac(node_mapping, net_value['flows'], map_node_to_taprio_ifaces(net_value, network['qdiscconfigs']), host_vars)
     return net_ports
 
 def mac(node_mapping, flows, node_to_taprio_ifaces_mapping, host_vars):

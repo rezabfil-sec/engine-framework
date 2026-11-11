@@ -1,0 +1,14 @@
+# Lower bound of range for n
+min_players: 5
+# Upper bound of range for n
+max_players: 25
+# Experiment schemes, can be both or only one scheme. Accepted values: "GG18", "GG20"
+schemes: ["GG18", "GG20"]
+# Broadcast type. Accepted values: "BestEffort", "Echo", "Optimized"
+bc_type: "Optimized"
+# Base port used for processes. Supervisor listens on base_port, protocol process i on base_port + i
+base_port: 10000
+# Number of runs
+num_dkg_runs: 200
+num_dkr_runs: 200
+num_sig_runs: 200

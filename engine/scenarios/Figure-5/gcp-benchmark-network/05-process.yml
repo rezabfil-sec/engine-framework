@@ -1,0 +1,21 @@
+---
+# File that serves like a meta file for processing pipeline
+# Defines groups that should be added together for visualization
+# grouping relevant variables
+# Applies to per-group experiments - corresponds to the meta group info
+- groups_to_add: [ 1, 2 ]
+# Applies to cross-experiment groups
+# Must contain all or subset of nodes present in groups_to_add
+- groups_to_add_cross: [ 1 ]
+# visualization related variables
+# Defines limit of outliers to be removed at the end
+- limit: 10
+# Defines offset of outliers to be skipped at the beginning
+- offset: 10
+# Defines format of y-axis for experiments 
+- delay_format: "us"
+# - delay_format: "ms"
+# Defines flow name for legend of given experiments
+- label_format: "flow"
+# - label_format: "algorand"
+# Extend here by possibly additional stuff relevant for process
